@@ -113,7 +113,7 @@ export interface IJupyterExecution extends IAsyncDisposable {
 
 export const IJupyterDebugger = Symbol('IJupyterDebugger');
 export interface IJupyterDebugger {
-    startDebugging(server: INotebookServer): Promise<void>;
+    startDebugging(server: INotebookServer, breakOnEnter: boolean): Promise<void>;
     stopDebugging(server: INotebookServer): Promise<void>;
     onRestart(server: INotebookServer): void;
 }

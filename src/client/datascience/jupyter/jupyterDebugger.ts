@@ -54,12 +54,15 @@ export class JupyterDebugger implements IJupyterDebugger, ICellHashListener {
     ) {
     }
 
-    public async startDebugging(server: INotebookServer): Promise<void> {
+    public async startDebugging(server: INotebookServer, breakOnEnter: boolean): Promise<void> {
         traceInfo('start debugging');
 
         // Try to connect to this server
         const config = await this.connect(server);
         if (config) {
+            // Add another property for the cell hash provider to read.
+            config.breakOnEnter = breakOnEnter;
+
             // First check if this is a live share session. Skip debugging attach on the guest
             // tslint:disable-next-line: no-any
             const hasRole = (server as any) as ILiveShareHasRole;

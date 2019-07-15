@@ -279,7 +279,8 @@ export class CellHashProvider implements ICellHashProvider, IInteractiveWindowLi
                     }
                 }
             });
-            if (!anyExisting || anyExisting.length <= 0) {
+            if (this.debugService.activeDebugSession.configuration.breakOnEnter &&
+                (this.configService.getSettings().datascience.runByLine || !anyExisting || anyExisting.length === 0)) {
                 // There are no matching breakpoints, We need to inject a breakpoint into our cell
                 source.splice(0, 0, 'breakpoint()\n');
                 cell.data.source = source;

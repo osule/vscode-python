@@ -755,9 +755,9 @@ export class InteractiveWindow extends WebViewHost<IInteractiveWindowMapping> im
                     await this.jupyterServer.setInitialDirectory(path.dirname(file));
                 }
 
+                // Attach our debugger.
                 if (debug) {
-                    // Attach our debugger
-                    await this.jupyterDebugger.startDebugging(this.jupyterServer);
+                    await this.jupyterDebugger.startDebugging(this.jupyterServer, debug ? true : false);
                 }
 
                 // Attempt to evaluate this cell in the jupyter notebook
@@ -795,10 +795,9 @@ export class InteractiveWindow extends WebViewHost<IInteractiveWindowMapping> im
         } finally {
             status.dispose();
 
-            if (debug) {
-                if (this.jupyterServer) {
-                    await this.jupyterDebugger.stopDebugging(this.jupyterServer);
-                }
+            // Stop debugging no matter what. Just running a cell might start debugging
+            if (this.jupyterServer) {
+                await this.jupyterDebugger.stopDebugging(this.jupyterServer);
             }
         }
     }

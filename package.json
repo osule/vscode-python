@@ -1418,6 +1418,12 @@
                     "description": "Whether to check if Python is installed (also warn when using the macOS-installed Python).",
                     "scope": "resource"
                 },
+                "python.dataScience.runByLine": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether or not to show 'Run by line' to start debugging a cell.",
+                    "scope": "resource"
+                },
                 "python.envFile": {
                     "type": "string",
                     "description": "Absolute path to a file containing environment variable definitions.",

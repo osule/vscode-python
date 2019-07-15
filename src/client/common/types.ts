@@ -329,6 +329,7 @@ export interface IDataScienceSettings {
     textOutputLimit?: number;
     magicCommandsAsComments?: boolean;
     remoteDebuggerPort?: number;
+    runByLine?: boolean;
 }
 
 export const IConfigurationService = Symbol('IConfigurationService');
