@@ -2,23 +2,34 @@
 // Licensed under the MIT License.
 'use strict';
 import * as hashjs from 'hash.js';
-import { inject, injectable } from 'inversify';
+import { inject, injectable, multiInject, optional } from 'inversify';
 import {
     Event,
     EventEmitter,
     Position,
     Range,
+    SourceBreakpoint,
     TextDocumentChangeEvent,
     TextDocumentContentChangeEvent
 } from 'vscode';
 
-import { IDocumentManager } from '../../common/application/types';
+import { IDebugService, IDocumentManager } from '../../common/application/types';
+import { traceError } from '../../common/logger';
 import { IConfigurationService } from '../../common/types';
-import { generateCells } from '../cellFactory';
-import { concatMultilineString } from '../common';
+import { noop } from '../../common/utils/misc';
+import { CellMatcher } from '../cellMatcher';
+import { splitMultilineString } from '../common';
 import { Identifiers } from '../constants';
-import { InteractiveWindowMessages, IRemoteAddCode, SysInfoReason } from '../interactive-window/interactiveWindowTypes';
-import { ICellHash, ICellHashProvider, IFileHashes, IInteractiveWindowListener } from '../types';
+import { InteractiveWindowMessages, SysInfoReason } from '../interactive-window/interactiveWindowTypes';
+import {
+    ICell,
+    ICellHash,
+    ICellHashListener,
+    ICellHashProvider,
+    IFileHashes,
+    IInteractiveWindowListener,
+    INotebookExecutionLogger
+} from '../types';
 
 interface IRangedCellHash extends ICellHash {
     code: string;
@@ -31,25 +42,31 @@ interface IRangedCellHash extends ICellHash {
 // This class provides hashes for debugging jupyter cells. Call getHashes just before starting debugging to compute all of the
 // hashes for cells.
 @injectable()
-export class CellHashProvider implements ICellHashProvider, IInteractiveWindowListener {
+export class CellHashProvider implements ICellHashProvider, IInteractiveWindowListener, INotebookExecutionLogger {
 
     // tslint:disable-next-line: no-any
-    private postEmitter: EventEmitter<{message: string; payload: any}> = new EventEmitter<{message: string; payload: any}>();
+    private postEmitter: EventEmitter<{ message: string; payload: any }> = new EventEmitter<{ message: string; payload: any }>();
     // Map of file to Map of start line to actual hash
-    private hashes : Map<string, IRangedCellHash[]> = new Map<string, IRangedCellHash[]>();
+    private hashes: Map<string, IRangedCellHash[]> = new Map<string, IRangedCellHash[]>();
     private executionCount: number = 0;
+    private updateEventEmitter: EventEmitter<void> = new EventEmitter<void>();
 
     constructor(
         @inject(IDocumentManager) private documentManager: IDocumentManager,
-        @inject(IConfigurationService) private configService: IConfigurationService
-        )
-    {
+        @inject(IConfigurationService) private configService: IConfigurationService,
+        @inject(IDebugService) private debugService: IDebugService,
+        @multiInject(ICellHashListener) @optional() private listeners: ICellHashListener[] | undefined
+    ) {
         // Watch document changes so we can update our hashes
         this.documentManager.onDidChangeTextDocument(this.onChangedDocument.bind(this));
     }
 
     public dispose() {
         this.hashes.clear();
+    }
+
+    public get updated(): Event<void> {
+        return this.updateEventEmitter.event;
     }
 
     // tslint:disable-next-line: no-any
@@ -60,17 +77,12 @@ export class CellHashProvider implements ICellHashProvider, IInteractiveWindowLi
     // tslint:disable-next-line: no-any
     public onMessage(message: string, payload?: any): void {
         switch (message) {
-            case InteractiveWindowMessages.RemoteAddCode:
-                if (payload) {
-                    this.onAboutToAddCode(payload);
-                }
-                break;
-
             case InteractiveWindowMessages.AddedSysInfo:
                 if (payload && payload.type) {
                     const reason = payload.type as SysInfoReason;
                     if (reason !== SysInfoReason.Interrupt) {
                         this.hashes.clear();
+                        this.executionCount = 0;
                     }
                 }
                 break;
@@ -89,24 +101,25 @@ export class CellHashProvider implements ICellHashProvider, IInteractiveWindowLi
         }).filter(e => e.hashes.length > 0);
     }
 
-    private onAboutToAddCode(args: IRemoteAddCode) {
-        // Make sure this is valid
-        if (args && args.code && args.line !== undefined && args.file) {
-            // First make sure not a markdown cell. Those can be ignored. Just get out the first code cell.
-            // Regardless of how many 'code' cells exist in the code sent to us, we'll only ever send one at most.
-            // The code sent to this function is either a cell as defined by #%% or the selected text (which is treated as one cell)
-            const cells = generateCells(this.configService.getSettings().datascience, args.code, args.file, args.line, true, args.id);
-            const codeCell = cells.find(c => c.data.cell_type === 'code');
-            if (codeCell) {
+    public async preExecute(cell: ICell, silent: boolean): Promise<void> {
+        try {
+            if (!silent) {
                 // When the user adds new code, we know the execution count is increasing
                 this.executionCount += 1;
 
                 // Skip hash on unknown file though
-                if (args.file !== Identifiers.EmptyFileName) {
-                    this.addCellHash(concatMultilineString(codeCell.data.source), codeCell.line, codeCell.file, this.executionCount);
+                if (cell.file !== Identifiers.EmptyFileName) {
+                    await this.addCellHash(cell, this.executionCount);
                 }
             }
+        } catch (exc) {
+            // Don't let exceptions in a preExecute mess up normal operation
+            traceError(exc);
         }
+    }
+
+    public async postExecute(_cell: ICell, _silent: boolean): Promise<void> {
+        noop();
     }
 
     private onChangedDocument(e: TextDocumentChangeEvent) {
@@ -121,7 +134,7 @@ export class CellHashProvider implements ICellHashProvider, IInteractiveWindowLi
         }
     }
 
-    private handleContentChange(docText: string, c: TextDocumentContentChangeEvent, hashes: IRangedCellHash[]) : string {
+    private handleContentChange(docText: string, c: TextDocumentContentChangeEvent, hashes: IRangedCellHash[]): string {
         // First compute the number of lines that changed
         const lineDiff = c.text.split('\n').length - docText.substr(c.rangeOffset, c.rangeLength).split('\n').length;
         const offsetDiff = c.text.length - c.rangeLength;
@@ -151,39 +164,70 @@ export class CellHashProvider implements ICellHashProvider, IInteractiveWindowLi
         return appliedText;
     }
 
-    private applyChange(docText: string, c: TextDocumentContentChangeEvent) : string {
+    private applyChange(docText: string, c: TextDocumentContentChangeEvent): string {
         const before = docText.substr(0, c.rangeOffset);
         const after = docText.substr(c.rangeOffset + c.rangeLength);
         return `${before}${c.text}${after}`;
     }
 
-    private addCellHash(code: string, startLine: number, file: string, expectedCount: number) {
+    private async addCellHash(cell: ICell, expectedCount: number): Promise<void> {
         // Find the text document that matches. We need more information than
         // the add code gives us
-        const doc = this.documentManager.textDocuments.find(d => d.fileName === file);
+        const doc = this.documentManager.textDocuments.find(d => d.fileName === cell.file);
         if (doc) {
-            // The code we get is not actually what's in the document. The interactiveWindow massages it somewhat.
-            // We need the real code so that we can match document edits later.
-            const split = code.split('\n');
-            const lineCount = split.length;
-            const line = doc.lineAt(startLine);
-            const endLine = doc.lineAt(Math.min(startLine + lineCount - 1, doc.lineCount - 1));
-            const startOffset = doc.offsetAt(new Position(startLine, 0));
+            const cellMatcher = new CellMatcher(this.configService.getSettings().datascience);
+
+            // Compute the code that will really be sent to jupyter
+            const lines = splitMultilineString(cell.data.source);
+            const stripped = lines.filter(l => !cellMatcher.isCode(l));
+
+            // Figure out our true 'start' line. This is what we need to tell the debugger is
+            // actually the start of the code as that's what Jupyter will be getting.
+            let trueStartLine = cell.line;
+            for (let i = 0; i < stripped.length; i += 1) {
+                if (stripped[i] !== lines[i]) {
+                    trueStartLine += i + 1;
+                    break;
+                }
+            }
+            const line = doc.lineAt(trueStartLine);
+            const endLine = doc.lineAt(Math.min(trueStartLine + stripped.length - 1, doc.lineCount - 1));
+
+            // Use the original values however to track edits. This is what we need
+            // to move around
+            const startOffset = doc.offsetAt(new Position(cell.line, 0));
             const endOffset = doc.offsetAt(endLine.rangeIncludingLineBreak.end);
-            const realCode = doc.getText(new Range(line.range.start, endLine.rangeIncludingLineBreak.end));
-            const hash : IRangedCellHash = {
-                hash: hashjs.sha1().update(code).digest('hex').substr(0, 12),
-                line: startLine + 1,
-                endLine: startLine + lineCount,
+
+            // Jupyter also removes blank lines at the end.
+            let lastLine = stripped[stripped.length - 1];
+            while (lastLine.length === 0 || lastLine === '\n') {
+                stripped.splice(stripped.length - 1, 1);
+                lastLine = stripped[stripped.length - 1];
+            }
+            // Make sure the last line with actual content ends with a linefeed
+            if (!lastLine.endsWith('\n')) {
+                stripped[stripped.length - 1] = `${lastLine}\n`;
+            }
+
+            // Compute the runtime line and adjust our cell/stripped source for debugging
+            const runtimeLine = this.adjustRuntimeForDebugging(cell, stripped, startOffset, endOffset);
+            const hashedCode = stripped.join('');
+            const realCode = doc.getText(new Range(new Position(cell.line, 0), endLine.rangeIncludingLineBreak.end));
+
+            const hash: IRangedCellHash = {
+                hash: hashjs.sha1().update(hashedCode).digest('hex').substr(0, 12),
+                line: line.lineNumber + 1,
+                endLine: endLine.lineNumber + 1,
                 executionCount: expectedCount,
                 startOffset,
                 endOffset,
                 deleted: false,
-                code,
-                realCode
+                code: hashedCode,
+                realCode,
+                runtimeLine
             };
 
-            let list = this.hashes.get(file);
+            let list = this.hashes.get(cell.file);
             if (!list) {
                 list = [];
             }
@@ -206,7 +250,46 @@ export class CellHashProvider implements ICellHashProvider, IInteractiveWindowLi
             if (!inserted) {
                 list.push(hash);
             }
-            this.hashes.set(file, list);
+            this.hashes.set(cell.file, list);
+
+            // Tell listeners we have new hashes.
+            if (this.listeners) {
+                const hashes = this.getHashes();
+                await Promise.all(this.listeners.map(l => l.hashesUpdated(hashes)));
+            }
         }
+    }
+
+    private adjustRuntimeForDebugging(cell: ICell, source: string[], cellStartOffset: number, cellEndOffset: number): number {
+        if (this.debugService.activeDebugSession && this.configService.getSettings().datascience.stopOnFirstLineWhileDebugging) {
+            // See if any breakpoints in any cell that's already run or in the cell we're about to run
+            const anyExisting = this.debugService.breakpoints.filter(b => {
+                // tslint:disable-next-line: no-any
+                if ((b as any).location) {
+                    const sb = b as SourceBreakpoint;
+                    const sbFile = sb.location.uri.fsPath;
+                    if (sbFile === cell.file) {
+                        const doc = this.documentManager.textDocuments.find(d => d.fileName === sb.location.uri.fsPath);
+                        const startOffset = doc ? doc.offsetAt(sb.location.range.start) : -1;
+
+                        // Check if this breakpoint is in our current code.
+                        if (startOffset >= cellStartOffset && startOffset <= cellEndOffset) {
+                            return true;
+                        }
+                    }
+                }
+            });
+            if (!anyExisting || anyExisting.length <= 0) {
+                // There are no matching breakpoints, We need to inject a breakpoint into our cell
+                source.splice(0, 0, 'breakpoint()\n');
+                cell.data.source = source;
+                cell.extraLines = [0];
+
+                // Start on the second line
+                return 2;
+            }
+        }
+        // No breakpoint necessary, start on the first line
+        return 1;
     }
 }

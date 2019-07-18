@@ -18,9 +18,9 @@ export interface IMainPanelState {
     cellVMs: ICellViewModel[];
     editCellVM?: ICellViewModel;
     busy: boolean;
-    skipNextScroll? : boolean;
-    undoStack : ICellViewModel[][];
-    redoStack : ICellViewModel[][];
+    skipNextScroll?: boolean;
+    undoStack: ICellViewModel[][];
+    redoStack: ICellViewModel[][];
     submittedText: boolean;
     history: InputHistory;
     rootStyle?: string;
@@ -48,14 +48,14 @@ const darkStyle = `
 `;
 
 // This function generates test state when running under a browser instead of inside of
-export function generateTestState(inputBlockToggled : (id: string) => void, filePath: string = '') : IMainPanelState {
+export function generateTestState(inputBlockToggled: (id: string) => void, filePath: string = ''): IMainPanelState {
     return {
-        cellVMs : generateVMs(inputBlockToggled, filePath),
+        cellVMs: generateVMs(inputBlockToggled, filePath),
         editCellVM: createEditableCellVM(1),
         busy: true,
-        skipNextScroll : false,
-        undoStack : [],
-        redoStack : [],
+        skipNextScroll: false,
+        undoStack: [],
+        redoStack: [],
         submittedText: false,
         history: new InputHistory(),
         rootStyle: darkStyle,
@@ -78,7 +78,7 @@ export function generateTestState(inputBlockToggled : (id: string) => void, file
     };
 }
 
-export function createEditableCellVM(executionCount: number) : ICellViewModel {
+export function createEditableCellVM(executionCount: number): ICellViewModel {
     return {
         cell:
         {
@@ -105,7 +105,7 @@ export function createEditableCellVM(executionCount: number) : ICellViewModel {
     };
 }
 
-export function extractInputText(inputCell: ICell, settings: IDataScienceSettings | undefined) : string {
+export function extractInputText(inputCell: ICell, settings: IDataScienceSettings | undefined): string {
     let source = inputCell.data.cell_type === 'code' ? inputCell.data.source : [];
     const matcher = new CellMatcher(settings);
 
@@ -120,47 +120,47 @@ export function extractInputText(inputCell: ICell, settings: IDataScienceSetting
     return concatMultilineString(source);
 }
 
-export function createCellVM(inputCell: ICell, settings: IDataScienceSettings | undefined, inputBlockToggled : (id: string) => void) : ICellViewModel {
+export function createCellVM(inputCell: ICell, settings: IDataScienceSettings | undefined, inputBlockToggled: (id: string) => void): ICellViewModel {
     let inputLinesCount = 0;
     const inputText = inputCell.data.cell_type === 'code' ? extractInputText(inputCell, settings) : '';
     if (inputText) {
         inputLinesCount = inputText.split('\n').length;
     }
 
-   return {
-       cell: inputCell,
-       editable: false,
-       inputBlockOpen: true,
-       inputBlockShow: true,
-       inputBlockText: inputText,
-       inputBlockCollapseNeeded: (inputLinesCount > 1),
-       inputBlockToggled: inputBlockToggled
-   };
+    return {
+        cell: inputCell,
+        editable: false,
+        inputBlockOpen: true,
+        inputBlockShow: true,
+        inputBlockText: inputText,
+        inputBlockCollapseNeeded: (inputLinesCount > 1),
+        inputBlockToggled: inputBlockToggled
+    };
 }
 
-function generateVMs(inputBlockToggled : (id: string) => void, filePath: string) : ICellViewModel [] {
+function generateVMs(inputBlockToggled: (id: string) => void, filePath: string): ICellViewModel[] {
     const cells = generateCells(filePath);
-    return cells.map((cell : ICell) => {
+    return cells.map((cell: ICell) => {
         return createCellVM(cell, undefined, inputBlockToggled);
     });
 }
 
-function generateCells(filePath: string) : ICell[] {
+function generateCells(filePath: string): ICell[] {
     const cellData = generateCellData();
-    return cellData.map((data : nbformat.ICodeCell | nbformat.IMarkdownCell | nbformat.IRawCell | IMessageCell, key : number) => {
+    return cellData.map((data: nbformat.ICodeCell | nbformat.IMarkdownCell | nbformat.IRawCell | IMessageCell, key: number) => {
         return {
-            id : key.toString(),
-            file : path.join(filePath, 'foo.py'),
-            line : 1,
+            id: key.toString(),
+            file: path.join(filePath, 'foo.py'),
+            line: 1,
             state: key === cellData.length - 1 ? CellState.executing : CellState.finished,
             type: key === 3 ? 'preview' : 'execute',
-            data : data
+            data: data
         };
     });
 }
 
 //tslint:disable:max-func-body-length
-function generateCellData() : (nbformat.ICodeCell | nbformat.IMarkdownCell | nbformat.IRawCell | IMessageCell)[] {
+function generateCellData(): (nbformat.ICodeCell | nbformat.IMarkdownCell | nbformat.IRawCell | IMessageCell)[] {
 
     // Hopefully new entries here can just be copied out of a jupyter notebook (ipynb)
     return [
@@ -188,7 +188,7 @@ function generateCellData() : (nbformat.ICodeCell | nbformat.IMarkdownCell | nbf
             outputs: [
                 {
                     data: {
-// tslint:disable-next-line: no-multiline-string
+                        // tslint:disable-next-line: no-multiline-string
                         'text/html': [`
                             <div style="
                             overflow: auto;
@@ -380,7 +380,7 @@ function generateCellData() : (nbformat.ICodeCell | nbformat.IMarkdownCell | nbf
                         </table>
                         <p>5 rows × 3000 columns</p>
                         </div>`
-                    ]
+                        ]
                     },
                     execution_count: 4,
                     metadata: {},

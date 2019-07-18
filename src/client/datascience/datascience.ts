@@ -44,12 +44,12 @@ export class DataScience implements IDataScience {
         @inject(IDocumentManager) private documentManager: IDocumentManager,
         @inject(IApplicationShell) private appShell: IApplicationShell,
         @inject(IWorkspaceService) private workspace: IWorkspaceService
-        ) {
+    ) {
         this.commandListeners = this.serviceContainer.getAll<IDataScienceCommandListener>(IDataScienceCommandListener);
         this.dataScienceSurveyBanner = this.serviceContainer.get<IPythonExtensionBanner>(IPythonExtensionBanner, BANNER_NAME_DS_SURVEY);
     }
 
-    public get activationStartTime() : number {
+    public get activationStartTime(): number {
         return this.startTime;
     }
 
@@ -203,7 +203,7 @@ export class DataScience implements IDataScience {
     @captureTelemetry(Telemetry.SelectJupyterURI)
     public async selectJupyterURI(): Promise<void> {
         const quickPickOptions = [localize.DataScience.jupyterSelectURILaunchLocal(), localize.DataScience.jupyterSelectURISpecifyURI()];
-        const selection = await this.appShell.showQuickPick(quickPickOptions);
+        const selection = await this.appShell.showQuickPick(quickPickOptions, { ignoreFocusOut: true });
         switch (selection) {
             case localize.DataScience.jupyterSelectURILaunchLocal():
                 return this.setJupyterURIToLocal();
@@ -214,6 +214,18 @@ export class DataScience implements IDataScience {
             default:
                 // If user cancels quick pick we will get undefined as the selection and fall through here
                 break;
+        }
+    }
+
+    public async debugCell(file: string, startLine: number, startChar: number, endLine: number, endChar: number): Promise<void> {
+        this.dataScienceSurveyBanner.showBanner().ignoreErrors();
+
+        if (file) {
+            const codeWatcher = this.getCodeWatcher(file);
+
+            if (codeWatcher) {
+                return codeWatcher.debugCell(new vscode.Range(startLine, startChar, endLine, endChar));
+            }
         }
     }
 
@@ -244,7 +256,18 @@ export class DataScience implements IDataScience {
         }
     }
 
-    private getCurrentCodeLens() : vscode.CodeLens | undefined {
+    private async runCurrentCellAndAddBelow(): Promise<void> {
+        this.dataScienceSurveyBanner.showBanner().ignoreErrors();
+
+        const activeCodeWatcher = this.getCurrentCodeWatcher();
+        if (activeCodeWatcher) {
+            return activeCodeWatcher.runCurrentCellAndAddBelow();
+        } else {
+            return Promise.resolve();
+        }
+    }
+
+    private getCurrentCodeLens(): vscode.CodeLens | undefined {
         const activeEditor = this.documentManager.activeTextEditor;
         const activeCodeWatcher = this.getCurrentCodeWatcher();
         if (activeEditor && activeCodeWatcher) {
@@ -281,6 +304,20 @@ export class DataScience implements IDataScience {
             const activeCodeWatcher = this.getCurrentCodeWatcher();
             if (activeCodeWatcher) {
                 return activeCodeWatcher.runCellAndAllBelow(currentCodeLens.range.start.line, currentCodeLens.range.start.character);
+            }
+        } else {
+            return Promise.resolve();
+        }
+    }
+
+    private async debugCurrentCellFromCursor(): Promise<void> {
+        this.dataScienceSurveyBanner.showBanner().ignoreErrors();
+
+        const currentCodeLens = this.getCurrentCodeLens();
+        if (currentCodeLens) {
+            const activeCodeWatcher = this.getCurrentCodeWatcher();
+            if (activeCodeWatcher) {
+                return activeCodeWatcher.debugCurrentCell();
             }
         } else {
             return Promise.resolve();
@@ -360,6 +397,12 @@ export class DataScience implements IDataScience {
         this.disposableRegistry.push(disposable);
         disposable = this.commandManager.registerCommand(Commands.AddCellBelow, this.addCellBelow, this);
         this.disposableRegistry.push(disposable);
+        disposable = this.commandManager.registerCommand(Commands.RunCurrentCellAndAddBelow, this.runCurrentCellAndAddBelow, this);
+        this.disposableRegistry.push(disposable);
+        disposable = this.commandManager.registerCommand(Commands.DebugCell, this.debugCell, this);
+        this.disposableRegistry.push(disposable);
+        disposable = this.commandManager.registerCommand(Commands.DebugCurrentCellPalette, this.debugCurrentCellFromCursor, this);
+        this.disposableRegistry.push(disposable);
         this.commandListeners.forEach((listener: IDataScienceCommandListener) => {
             listener.register(this.commandManager);
         });
@@ -380,7 +423,7 @@ export class DataScience implements IDataScience {
     }
 
     @debounceAsync(1)
-    private async sendSettingsTelemetry() : Promise<void> {
+    private async sendSettingsTelemetry(): Promise<void> {
         try {
             // Get our current settings. This is what we want to send.
             // tslint:disable-next-line:no-any

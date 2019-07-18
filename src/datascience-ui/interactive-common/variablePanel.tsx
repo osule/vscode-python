@@ -16,6 +16,7 @@ export interface IVariablePanelProps {
     testMode?: boolean;
     variables: IJupyterVariable[];
     pendingVariableCount: number;
+    debugging: boolean;
     showDataExplorer(targetVariable: string, numberOfColumns: number): void;
     refreshVariables(): void;
     variableExplorerToggled(open: boolean): void;
@@ -34,6 +35,7 @@ export class VariablePanel extends React.Component<IVariablePanelProps> {
                     <VariableExplorer
                         pendingVariableCount={this.props.pendingVariableCount}
                         variables={this.props.variables}
+                        debugging={this.props.debugging}
                         baseTheme={this.props.baseTheme}
                         skipDefault={this.props.skipDefault}
                         showDataExplorer={this.props.showDataExplorer}

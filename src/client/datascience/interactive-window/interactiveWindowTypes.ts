@@ -56,11 +56,13 @@ export namespace InteractiveWindowMessages {
     export const LoadTmLanguageResponse = 'load_tmlanguage_response';
     export const OpenLink = 'open_link';
     export const ShowPlot = 'show_plot';
+    export const StartDebugging = 'start_debugging';
+    export const StopDebugging = 'stop_debugging';
 }
 
 // These are the messages that will mirror'd to guest/hosts in
 // a live share session
-export const InteractiveWindowRemoteMessages : string[] = [
+export const InteractiveWindowRemoteMessages: string[] = [
     InteractiveWindowMessages.AddedSysInfo,
     InteractiveWindowMessages.RemoteAddCode
 ];
@@ -92,6 +94,7 @@ export interface IExecuteInfo {
     id: string;
     file: string;
     line: number;
+    debug: boolean;
 }
 
 export interface IRemoteAddCode extends IExecuteInfo {
@@ -194,31 +197,33 @@ export class IInteractiveWindowMapping {
     public [InteractiveWindowMessages.Started]: never | undefined;
     public [InteractiveWindowMessages.AddedSysInfo]: IAddedSysInfo;
     public [InteractiveWindowMessages.RemoteAddCode]: IRemoteAddCode;
-    public [InteractiveWindowMessages.Activate] : never | undefined;
+    public [InteractiveWindowMessages.Activate]: never | undefined;
     public [InteractiveWindowMessages.ShowDataViewer]: IShowDataViewer;
     public [InteractiveWindowMessages.GetVariablesRequest]: number;
     public [InteractiveWindowMessages.GetVariablesResponse]: IJupyterVariablesResponse;
     public [InteractiveWindowMessages.GetVariableValueRequest]: IJupyterVariable;
     public [InteractiveWindowMessages.GetVariableValueResponse]: IJupyterVariable;
     public [InteractiveWindowMessages.VariableExplorerToggle]: boolean;
-    public [CssMessages.GetCssRequest] : IGetCssRequest;
-    public [CssMessages.GetCssResponse] : IGetCssResponse;
-    public [InteractiveWindowMessages.ProvideCompletionItemsRequest] : IProvideCompletionItemsRequest;
-    public [InteractiveWindowMessages.CancelCompletionItemsRequest] : ICancelIntellisenseRequest;
-    public [InteractiveWindowMessages.ProvideCompletionItemsResponse] : IProvideCompletionItemsResponse;
-    public [InteractiveWindowMessages.ProvideHoverRequest] : IProvideHoverRequest;
-    public [InteractiveWindowMessages.CancelHoverRequest] : ICancelIntellisenseRequest;
-    public [InteractiveWindowMessages.ProvideHoverResponse] : IProvideHoverResponse;
-    public [InteractiveWindowMessages.ProvideSignatureHelpRequest] : IProvideSignatureHelpRequest;
-    public [InteractiveWindowMessages.CancelSignatureHelpRequest] : ICancelIntellisenseRequest;
-    public [InteractiveWindowMessages.ProvideSignatureHelpResponse] : IProvideSignatureHelpResponse;
-    public [InteractiveWindowMessages.AddCell] : IAddCell;
-    public [InteractiveWindowMessages.EditCell] : IEditCell;
-    public [InteractiveWindowMessages.RemoveCell] : IRemoveCell;
+    public [CssMessages.GetCssRequest]: IGetCssRequest;
+    public [CssMessages.GetCssResponse]: IGetCssResponse;
+    public [InteractiveWindowMessages.ProvideCompletionItemsRequest]: IProvideCompletionItemsRequest;
+    public [InteractiveWindowMessages.CancelCompletionItemsRequest]: ICancelIntellisenseRequest;
+    public [InteractiveWindowMessages.ProvideCompletionItemsResponse]: IProvideCompletionItemsResponse;
+    public [InteractiveWindowMessages.ProvideHoverRequest]: IProvideHoverRequest;
+    public [InteractiveWindowMessages.CancelHoverRequest]: ICancelIntellisenseRequest;
+    public [InteractiveWindowMessages.ProvideHoverResponse]: IProvideHoverResponse;
+    public [InteractiveWindowMessages.ProvideSignatureHelpRequest]: IProvideSignatureHelpRequest;
+    public [InteractiveWindowMessages.CancelSignatureHelpRequest]: ICancelIntellisenseRequest;
+    public [InteractiveWindowMessages.ProvideSignatureHelpResponse]: IProvideSignatureHelpResponse;
+    public [InteractiveWindowMessages.AddCell]: IAddCell;
+    public [InteractiveWindowMessages.EditCell]: IEditCell;
+    public [InteractiveWindowMessages.RemoveCell]: IRemoveCell;
     public [InteractiveWindowMessages.LoadOnigasmAssemblyRequest]: never | undefined;
     public [InteractiveWindowMessages.LoadOnigasmAssemblyResponse]: Buffer;
     public [InteractiveWindowMessages.LoadTmLanguageRequest]: never | undefined;
     public [InteractiveWindowMessages.LoadTmLanguageResponse]: string | undefined;
     public [InteractiveWindowMessages.OpenLink]: string | undefined;
     public [InteractiveWindowMessages.ShowPlot]: string | undefined;
+    public [InteractiveWindowMessages.StartDebugging]: never | undefined;
+    public [InteractiveWindowMessages.StopDebugging]: never | undefined;
 }
