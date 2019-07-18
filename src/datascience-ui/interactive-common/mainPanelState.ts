@@ -32,6 +32,7 @@ export interface IMainPanelState {
     currentExecutionCount: number;
     variables: IJupyterVariable[];
     pendingVariableCount: number;
+    debugging: boolean;
 }
 
 // tslint:disable-next-line: no-multiline-string
@@ -74,7 +75,8 @@ export function generateTestState(inputBlockToggled: (id: string) => void, fileP
                 count: 100
             }
         ],
-        pendingVariableCount: 0
+        pendingVariableCount: 0,
+	debugging: false
     };
 }
 
@@ -106,14 +108,19 @@ export function createEditableCellVM(executionCount: number): ICellViewModel {
 }
 
 export function extractInputText(inputCell: ICell, settings: IDataScienceSettings | undefined): string {
-    let source = inputCell.data.cell_type === 'code' ? inputCell.data.source : [];
+    const source = inputCell.data.cell_type === 'code' ? splitMultilineString(inputCell.data.source) : [];
     const matcher = new CellMatcher(settings);
 
     // Eliminate the #%% on the front if it has nothing else on the line
     if (source.length > 0) {
         const title = matcher.exec(source[0].trim());
         if (title !== undefined && title.length <= 0) {
-            source = source.slice(1);
+            source.splice(0, 1);
+        }
+        // Eliminate the lines to hide if we're debugging
+        if (inputCell.extraLines) {
+            inputCell.extraLines.forEach(i => source.splice(i, 1));
+            inputCell.extraLines = undefined;
         }
     }
 

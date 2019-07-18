@@ -178,6 +178,36 @@ export class VariableExplorer extends React.Component<IVariableExplorerProps, IV
             gridRows: this.internalSortRows(this.state.gridRows, sortColumn, sortDirection)
         });
     }
+    
+    private renderGrid() {
+        if (this.state.open) {
+            if (this.props.debugging) {
+                return (
+                    <span className='span-debug-message'>{getLocString('DataScience.variableExplorerDisabledDuringDebugging', 'Variables are not available while debugging.')}</span>
+                );
+            } else {
+                return (
+                    <div id='variable-explorer-data-grid' role='table' aria-label={getLocString('DataScience.collapseVariableExplorerLabel', 'Variables')}>
+                    <AdazzleReactDataGrid
+                        columns = {this.state.gridColumns.map(c => { return {...defaultColumnProperties, ...c }; })}
+                        rowGetter = {this.getRow}
+                        rowsCount = {this.state.gridRows.length}
+                        minHeight = {this.state.gridHeight}
+                        headerRowHeight = {this.state.fontSize + 9}
+                        rowHeight = {this.state.fontSize + 9}
+                        onRowDoubleClick = {this.rowDoubleClick}
+                        onGridSort = {this.sortRows}
+                        emptyRowsView = {VariableExplorerEmptyRowsView}
+                        rowRenderer = {VariableExplorerRowRenderer}
+                    />
+                </div>
+                );
+            }
+        } else {
+            return null;
+        }
+    }
+
 
     private variablesSame(a: IJupyterVariable[], b: IJupyterVariable[]) {
         if (a === b) { return true; }

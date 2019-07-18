@@ -232,6 +232,14 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
                 this.setState({currentExecutionCount: 0});
                 break;
 
+            case InteractiveWindowMessages.StartDebugging:
+                this.setState({debugging: true});
+                break;
+
+            case InteractiveWindowMessages.StopDebugging:
+                this.setState({debugging: false});
+                break;
+
             default:
                 break;
         }
@@ -580,24 +588,25 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
                    c.cell.file === cell.file;
             });
         if (index >= 0) {
-            // Update this cell
-            this.state.cellVMs[index].cell = cell;
-
             // This means the cell existed already so it was actual executed code.
             // Use its execution count to update our execution count.
             const newExecutionCount = cell.data.execution_count ?
                 Math.max(this.state.currentExecutionCount, parseInt(cell.data.execution_count.toString(), 10)) :
                 this.state.currentExecutionCount;
             if (newExecutionCount !== this.state.currentExecutionCount) {
-                this.setState({ currentExecutionCount: newExecutionCount });
-
                 // We also need to update our variable explorer when the execution count changes
                 // Use the ref here to maintain var explorer independence
                 this.refreshVariables();
-            } else {
-                // Force an update anyway as we did change something
-                this.forceUpdate();
             }
+
+            // Update our state but only the cell vms.
+            const newVMs = [...this.state.cellVMs];
+            newVMs[index].cell = cell;
+            this.setState({
+                cellVMs : newVMs,
+                currentExecutionCount : newExecutionCount
+            });
+
         } else if (allowAdd) {
             // This is an entirely new cell (it may have started out as finished)
             this.addCell(cell);
@@ -691,8 +700,8 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
     }
 
     // When the variable explorer wants to refresh state (say if it was expanded)
-    private refreshVariables = () => {
-        this.sendMessage(InteractiveWindowMessages.GetVariablesRequest, this.state.currentExecutionCount);
+    private refreshVariables = (newExecutionCount?: number) => {
+        this.sendMessage(InteractiveWindowMessages.GetVariablesRequest, newExecutionCount === undefined ? this.state.currentExecutionCount : newExecutionCount);
     }
 
     // Find the display value for one specific variable
