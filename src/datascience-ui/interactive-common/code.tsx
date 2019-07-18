@@ -121,7 +121,7 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
     }
 
     private getWatermarkString = () : string => {
-        return getLocString('DataScience.inputWatermark', 'Shift-enter to run');
+        return getLocString('DataScience.inputWatermark', 'Type code here and press shift-enter to run');
     }
 
     private editorDidMount = (editor: monacoEditor.editor.IStandaloneCodeEditor) => {

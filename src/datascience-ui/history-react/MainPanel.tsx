@@ -180,6 +180,7 @@ export class MainPanel extends React.Component<IMainPanelProps> {
        return {
         variables: this.props.value.variables,
         pendingVariableCount: this.props.value.pendingVariableCount,
+        debugging: this.props.value.debugging,
         busy: this.props.value.busy,
         showDataExplorer: this.showDataViewer,
         skipDefault: this.props.skipDefault,

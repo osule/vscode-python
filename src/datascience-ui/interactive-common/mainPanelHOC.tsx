@@ -62,7 +62,8 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
             editorOptions: this.computeEditorOptions(),
             currentExecutionCount: 0,
             variables: [],
-            pendingVariableCount: 0
+            pendingVariableCount: 0,
+            debugging: false
         };
 
         // Add test state if necessary
