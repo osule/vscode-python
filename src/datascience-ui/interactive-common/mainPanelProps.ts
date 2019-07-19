@@ -3,7 +3,7 @@
 'use strict';
 import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 
-import { IInteractiveWindowMapping } from '../../client/datascience/interactive-window/interactiveWindowTypes';
+import { IInteractiveWindowMapping } from '../../client/datascience/interactive-common/interactiveWindowTypes';
 import { Event } from '../react-common/event';
 import { ICellViewModel } from './cell';
 import { IMainPanelState } from './mainPanelState';

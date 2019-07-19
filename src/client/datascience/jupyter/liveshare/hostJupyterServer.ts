@@ -17,7 +17,7 @@ import { IAsyncDisposableRegistry, IConfigurationService, IDisposableRegistry, I
 import { createDeferred } from '../../../common/utils/async';
 import * as localize from '../../../common/utils/localize';
 import { Identifiers, LiveShare, LiveShareCommands, RegExpValues } from '../../constants';
-import { IExecuteInfo } from '../../interactive-window/interactiveWindowTypes';
+import { IExecuteInfo } from '../../interactive-common/interactiveWindowTypes';
 import {
     ICell,
     IDataScience,

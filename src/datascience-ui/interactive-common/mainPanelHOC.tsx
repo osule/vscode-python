@@ -13,7 +13,7 @@ import { Identifiers } from '../../client/datascience/constants';
 import {
     IInteractiveWindowMapping,
     InteractiveWindowMessages
-} from '../../client/datascience/interactive-window/interactiveWindowTypes';
+} from '../../client/datascience/interactive-common/interactiveWindowTypes';
 import {
     CellState,
     ICell,

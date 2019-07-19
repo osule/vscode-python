@@ -173,15 +173,10 @@ export interface IDataScienceErrorHandler {
     handleError(err: Error): void;
 }
 
-export const IInteractiveWindow = Symbol('IInteractiveWindow');
-export interface IInteractiveWindow extends Disposable {
-    closed: Event<IInteractiveWindow>;
+export interface IInteractiveBase extends Disposable {
     ready: Promise<void>;
     onExecutedCode: Event<string>;
     show(): Promise<void>;
-    addCode(code: string, file: string, line: number, editor?: TextEditor, runningStopWatch?: StopWatch): Promise<boolean>;
-    addMessage(message: string): Promise<void>;
-    debugCode(code: string, file: string, line: number, editor?: TextEditor, runningStopWatch?: StopWatch): Promise<boolean>;
     startProgress(): void;
     stopProgress(): void;
     undoCells(): void;
@@ -189,6 +184,15 @@ export interface IInteractiveWindow extends Disposable {
     removeAllCells(): void;
     interruptKernel(): Promise<void>;
     restartKernel(): Promise<void>;
+}
+
+export const IInteractiveWindow = Symbol('IInteractiveWindow');
+export interface IInteractiveWindow extends IInteractiveBase {
+    closed: Event<IInteractiveWindow>;
+    show(): Promise<void>;
+    addCode(code: string, file: string, line: number, editor?: TextEditor, runningStopWatch?: StopWatch): Promise<boolean>;
+    addMessage(message: string): Promise<void>;
+    debugCode(code: string, file: string, line: number, editor?: TextEditor, runningStopWatch?: StopWatch): Promise<boolean>;
     expandAllCells(): void;
     collapseAllCells(): void;
     exportCells(): void;

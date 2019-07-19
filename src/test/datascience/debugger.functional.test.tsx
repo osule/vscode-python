@@ -16,8 +16,8 @@ import { createDeferred, waitForPromise } from '../../client/common/utils/async'
 import { EXTENSION_ROOT_DIR } from '../../client/constants';
 import {
     InteractiveWindowMessageListener
-} from '../../client/datascience/interactive-window/interactiveWindowMessageListener';
-import { InteractiveWindowMessages } from '../../client/datascience/interactive-window/interactiveWindowTypes';
+} from '../../client/datascience/interactive-common/interactiveWindowMessageListener';
+import { InteractiveWindowMessages } from '../../client/datascience/interactive-common/interactiveWindowTypes';
 import { IInteractiveWindow, IInteractiveWindowProvider, IJupyterExecution } from '../../client/datascience/types';
 import { InteractivePanel } from '../../datascience-ui/history-react/interactivePanel';
 import { DataScienceIocContainer } from './dataScienceIocContainer';

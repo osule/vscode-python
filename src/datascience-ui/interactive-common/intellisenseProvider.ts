@@ -11,7 +11,7 @@ import {
     IProvideCompletionItemsResponse,
     IProvideHoverResponse,
     IProvideSignatureHelpResponse
-} from '../../client/datascience/interactive-window/interactiveWindowTypes';
+} from '../../client/datascience/interactive-common/interactiveWindowTypes';
 import { IMessageHandler, PostOffice } from '../react-common/postOffice';
 
 interface IRequestData<T> {
@@ -59,7 +59,7 @@ export class IntellisenseProvider implements monacoEditor.languages.CompletionIt
     public provideHover(
         model: monacoEditor.editor.ITextModel,
         position: monacoEditor.Position,
-        token: monacoEditor.CancellationToken) : monacoEditor.languages.ProviderResult<monacoEditor.languages.Hover> {
+        token: monacoEditor.CancellationToken): monacoEditor.languages.ProviderResult<monacoEditor.languages.Hover> {
         // Emit a new request
         const requestId = uuid();
         const promise = createDeferred<monacoEditor.languages.Hover>();

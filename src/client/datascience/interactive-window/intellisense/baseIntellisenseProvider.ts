@@ -22,7 +22,6 @@ import { traceWarning } from '../../../common/logger';
 import { IFileSystem, TemporaryFile } from '../../../common/platform/types';
 import { createDeferred, Deferred, waitForPromise } from '../../../common/utils/async';
 import { Identifiers, Settings } from '../../constants';
-import { IInteractiveWindowListener, IInteractiveWindowProvider, IJupyterExecution } from '../../types';
 import {
     IAddCell,
     ICancelIntellisenseRequest,
@@ -33,7 +32,8 @@ import {
     IProvideHoverRequest,
     IProvideSignatureHelpRequest,
     IRemoveCell
-} from '../interactiveWindowTypes';
+} from '../../interactive-common/interactiveWindowTypes';
+import { IInteractiveWindowListener, IInteractiveWindowProvider, IJupyterExecution } from '../../types';
 import { convertStringsToSuggestions } from './conversion';
 import { IntellisenseDocument } from './intellisenseDocument';
 

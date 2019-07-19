@@ -15,11 +15,11 @@ import { noop } from '../../client/common/utils/misc';
 import { generateCellsFromDocument } from '../../client/datascience/cellFactory';
 import { concatMultilineString } from '../../client/datascience/common';
 import { EditorContexts } from '../../client/datascience/constants';
-import { InteractiveWindow } from '../../client/datascience/interactive-window/interactiveWindow';
 import {
     InteractiveWindowMessageListener
-} from '../../client/datascience/interactive-window/interactiveWindowMessageListener';
-import { InteractiveWindowMessages } from '../../client/datascience/interactive-window/interactiveWindowTypes';
+} from '../../client/datascience/interactive-common/interactiveWindowMessageListener';
+import { InteractiveWindowMessages } from '../../client/datascience/interactive-common/interactiveWindowTypes';
+import { InteractiveWindow } from '../../client/datascience/interactive-window/interactiveWindow';
 import { IInteractiveWindow, IInteractiveWindowProvider } from '../../client/datascience/types';
 import { InteractivePanel } from '../../datascience-ui/history-react/interactivePanel';
 import { ImageButton } from '../../datascience-ui/react-common/imageButton';

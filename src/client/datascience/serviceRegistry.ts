@@ -17,14 +17,14 @@ import { DataScienceCodeLensProvider } from './editor-integration/codelensprovid
 import { CodeWatcher } from './editor-integration/codewatcher';
 import { Decorator } from './editor-integration/decorator';
 import { DataScienceErrorHandler } from './errorHandler/errorHandler';
-import { DebugListener } from './interactive-window/debugListener';
+import { DebugListener } from './interactive-common/debugListener';
+import { LinkProvider } from './interactive-common/linkProvider';
+import { ShowPlotListener } from './interactive-common/showPlotListener';
 import { DotNetIntellisenseProvider } from './interactive-window/intellisense/dotNetIntellisenseProvider';
 import { JediIntellisenseProvider } from './interactive-window/intellisense/jediIntellisenseProvider';
 import { InteractiveWindow } from './interactive-window/interactiveWindow';
 import { InteractiveWindowCommandListener } from './interactive-window/interactiveWindowCommandListener';
 import { InteractiveWindowProvider } from './interactive-window/interactiveWindowProvider';
-import { LinkProvider } from './interactive-window/linkProvider';
-import { ShowPlotListener } from './interactive-window/showPlotListener';
 import { JupyterCommandFactory } from './jupyter/jupyterCommand';
 import { JupyterDebugger } from './jupyter/jupyterDebugger';
 import { JupyterExecutionFactory } from './jupyter/jupyterExecutionFactory';

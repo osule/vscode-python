@@ -6,15 +6,16 @@ import '../../common/extensions';
 import { inject, injectable } from 'inversify';
 import { Event, EventEmitter } from 'vscode';
 
+import { IApplicationShell } from '../../common/application/types';
 import { noop } from '../../common/utils/misc';
-import { IInteractiveWindowListener, IPlotViewerProvider } from '../types';
+import { IInteractiveWindowListener } from '../types';
 import { InteractiveWindowMessages } from './interactiveWindowTypes';
 
 // tslint:disable: no-any
 @injectable()
-export class ShowPlotListener implements IInteractiveWindowListener {
-    private postEmitter: EventEmitter<{message: string; payload: any}> = new EventEmitter<{message: string; payload: any}>();
-    constructor(@inject(IPlotViewerProvider) private provider: IPlotViewerProvider) {
+export class LinkProvider implements IInteractiveWindowListener {
+    private postEmitter: EventEmitter<{ message: string; payload: any }> = new EventEmitter<{ message: string; payload: any }>();
+    constructor(@inject(IApplicationShell) private applicationShell: IApplicationShell) {
         noop();
     }
 
@@ -24,10 +25,9 @@ export class ShowPlotListener implements IInteractiveWindowListener {
 
     public onMessage(message: string, payload?: any): void {
         switch (message) {
-            case InteractiveWindowMessages.ShowPlot:
+            case InteractiveWindowMessages.OpenLink:
                 if (payload) {
-                    this.provider.showPlot(payload).ignoreErrors();
-                    break;
+                    this.applicationShell.openUrl(payload.toString());
                 }
                 break;
             default:
