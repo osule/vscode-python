@@ -29,7 +29,7 @@ import { ICellViewModel } from './cell';
 import { InputHistory } from './inputHistory';
 import { IntellisenseProvider } from './intellisenseProvider';
 import { IMainPanelHOCProps, IMainPanelProps } from './mainPanelProps';
-import { createCellVM, createEditableCellVM, extractInputText, generateTestState, IMainPanelState } from './mainPanelState';
+import { createCellVM, extractInputText, generateTestState, IMainPanelState } from './mainPanelState';
 import { initializeTokenizer, registerMonacoLanguage } from './tokenizer';
 
 // tslint:disable-next-line: max-func-body-length
@@ -58,7 +58,6 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
             redoStack : [],
             submittedText: false,
             history: new InputHistory(),
-            editCellVM: getSettings && getSettings().allowInput ? createEditableCellVM(1) : undefined,
             editorOptions: this.computeEditorOptions(),
             currentExecutionCount: 0,
             variables: [],
@@ -148,6 +147,20 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
                     editableCodeCreated={this.editableCodeCreated}
                     codeChange={this.codeChange}
                     activated={this.activatedEventEmitter.event}
+                    openLink={this.openLink}
+                    gotoCellCode={this.gotoCellCode}
+                    copyCellCode={this.copyCellCode}
+                    canCollapseAll={this.canCollapseAll}
+                    canExpandAll={this.canExpandAll}
+                    canExport={this.canExport}
+                    canUndo={this.canUndo}
+                    canRedo={this.canRedo}
+                    export={this.export}
+                    restartKernel={this.restartKernel}
+                    interruptKernel={this.interruptKernel}
+                    showPlot={this.showPlot}
+                    showDataViewer={this.showDataViewer}
+                    variableExplorerToggled={this.variableExplorerToggled}
                 />
             </div>
         );
@@ -474,10 +487,6 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
         }
     }
 
-    private getEditCell() : ICellViewModel | undefined {
-        return this.state.editCellVM;
-    }
-
     private inputBlockToggled = (id: string) => {
         // Create a shallow copy of the array, let not const as this is the shallow array copy that we will be changing
         const cellVMArray: ICellViewModel[] = [...this.state.cellVMs];
@@ -648,45 +657,39 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
         }
     }
 
-    private getInputExecutionCount = () : number => {
-        return this.state.currentExecutionCount + 1;
-    }
-
-    private submitInput = (code: string) => {
+    private submitInput = (code: string, inputCell: ICellViewModel) => {
         // This should be from our last entry. Switch this entry to read only, and add a new item to our list
-        let editCell = this.getEditCell();
-        if (editCell) {
+        if (inputCell) {
             // Change this editable cell to not editable.
-            editCell.cell.state = CellState.executing;
-            editCell.cell.data.source = code;
+            inputCell.cell.state = CellState.executing;
+            inputCell.cell.data.source = code;
 
             // Change type to markdown if necessary
             const split = code.splitLines({trim: false});
             const firstLine = split[0];
             const matcher = new CellMatcher(getSettings());
             if (matcher.isMarkdown(firstLine)) {
-                editCell.cell.data.cell_type = 'markdown';
-                editCell.cell.data.source = generateMarkdownFromCodeLines(split);
-                editCell.cell.state = CellState.finished;
+                inputCell.cell.data.cell_type = 'markdown';
+                inputCell.cell.data.source = generateMarkdownFromCodeLines(split);
+                inputCell.cell.state = CellState.finished;
             }
 
             // Update input controls (always show expanded since we just edited it.)
-            editCell = createCellVM(editCell.cell, getSettings(), this.inputBlockToggled);
+            inputCell = createCellVM(inputCell.cell, getSettings(), this.inputBlockToggled);
             const collapseInputs = getSettings().collapseCellInputCodeByDefault;
-            editCell = this.alterCellVM(editCell, true, !collapseInputs);
+            inputCell = this.alterCellVM(inputCell, true, !collapseInputs);
 
             // Generate a new id (as the edit cell always has the same one)
-            editCell.cell.id = uuid();
+            inputCell.cell.id = uuid();
 
             // Indicate this is direct input so that we don't hide it if the user has
             // hide all inputs turned on.
-            editCell.directInput = true;
+            inputCell.directInput = true;
 
             // Stick in a new cell at the bottom that's editable and update our state
             // so that the last cell becomes busy
             this.setState({
-                cellVMs: [...this.state.cellVMs, editCell],
-                editCellVM: createEditableCellVM(this.getInputExecutionCount()),
+                cellVMs: [...this.state.cellVMs, inputCell],
                 undoStack : this.pushStack(this.state.undoStack, this.state.cellVMs),
                 redoStack: this.state.redoStack,
                 skipNextScroll: false,
@@ -694,8 +697,8 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
             });
 
             // Send a message to execute this code if necessary.
-            if (editCell.cell.state !== CellState.finished) {
-                this.sendMessage(InteractiveWindowMessages.SubmitNewCell, { code, id: editCell.cell.id });
+            if (inputCell.cell.state !== CellState.finished) {
+                this.sendMessage(InteractiveWindowMessages.SubmitNewCell, { code, id: inputCell.cell.id });
             }
         }
     }
@@ -834,5 +837,73 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
         } else if (this.tmlangugePromise) {
             this.tmlangugePromise.resolve(undefined);
         }
+    }
+
+    private showPlot = (imageHtml: string) => {
+        this.sendMessage(InteractiveWindowMessages.ShowPlot, imageHtml);
+    }
+
+    private showDataViewer = (targetVariable: string, numberOfColumns: number) => {
+        this.sendMessage(InteractiveWindowMessages.ShowDataViewer, { variableName: targetVariable, columnSize: numberOfColumns });
+    }
+
+    private openLink = (uri: monacoEditor.Uri) => {
+        this.sendMessage(InteractiveWindowMessages.OpenLink, uri.toString());
+    }
+
+    private canCollapseAll = () => {
+        return this.getNonEditCellVMs().length > 0;
+    }
+
+    private canExpandAll = () => {
+        return this.getNonEditCellVMs().length > 0;
+    }
+
+    private canExport = () => {
+        return this.getNonEditCellVMs().length > 0;
+    }
+
+    private canRedo = () => {
+        return this.state.redoStack.length > 0 ;
+    }
+
+    private canUndo = () => {
+        return this.state.undoStack.length > 0 ;
+    }
+
+    private gotoCellCode = (index: number) => {
+        // Find our cell
+        const cellVM = this.state.cellVMs[index];
+
+        // Send a message to the other side to jump to a particular cell
+        this.sendMessage(InteractiveWindowMessages.GotoCodeCell, { file : cellVM.cell.file, line: cellVM.cell.line });
+    }
+
+    private copyCellCode = (index: number) => {
+        // Find our cell
+        const cellVM = this.state.cellVMs[index];
+
+        // Send a message to the other side to jump to a particular cell
+        this.sendMessage(InteractiveWindowMessages.CopyCodeCell, { source: extractInputText(cellVM.cell, getSettings()) });
+    }
+
+    private restartKernel = () => {
+        // Send a message to the other side to restart the kernel
+        this.sendMessage(InteractiveWindowMessages.RestartKernel);
+    }
+
+    private interruptKernel = () => {
+        // Send a message to the other side to restart the kernel
+        this.sendMessage(InteractiveWindowMessages.Interrupt);
+    }
+
+    private export = () => {
+        // Send a message to the other side to export our current list
+        const cellContents: ICell[] = this.state.cellVMs.map((cellVM: ICellViewModel, _index: number) => { return cellVM.cell; });
+        this.sendMessage(InteractiveWindowMessages.Export, cellContents);
+    }
+
+    private variableExplorerToggled = (open: boolean) => {
+        this.sendMessage(InteractiveWindowMessages.VariableExplorerToggle, open);
     }
 };

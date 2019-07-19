@@ -10,12 +10,12 @@ import { Identifiers } from '../../client/datascience/constants';
 import { MainPanelHOC } from '../interactive-common/mainPanelHOC';
 import { IVsCodeApi } from '../react-common/postOffice';
 import { detectBaseTheme } from '../react-common/themeDetector';
-import { MainPanel } from './MainPanel';
+import { InteractivePanel } from './interactivePanel';
 
 // This special function talks to vscode from a web panel
 export declare function acquireVsCodeApi(): IVsCodeApi;
 const baseTheme = detectBaseTheme();
-const HOC = MainPanelHOC(MainPanel);
+const HOC = MainPanelHOC(InteractivePanel);
 
 // tslint:disable:no-typeof-undefined
 ReactDOM.render(

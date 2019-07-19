@@ -21,7 +21,7 @@ import {
 } from '../../client/datascience/interactive-window/interactiveWindowMessageListener';
 import { InteractiveWindowMessages } from '../../client/datascience/interactive-window/interactiveWindowTypes';
 import { IInteractiveWindow, IInteractiveWindowProvider } from '../../client/datascience/types';
-import { MainPanel } from '../../datascience-ui/history-react/MainPanel';
+import { InteractivePanel } from '../../datascience-ui/history-react/interactivePanel';
 import { ImageButton } from '../../datascience-ui/react-common/imageButton';
 import { DataScienceIocContainer } from './dataScienceIocContainer';
 import { createDocument } from './editor-integration/helpers';
@@ -409,7 +409,7 @@ for _ in range(50):
         assert.equal(ioc.getContext(EditorContexts.HaveRedoableCells), false, 'Should not have redoable before starting');
 
         // Get an update promise so we can wait for the add code
-        const updatePromise = waitForUpdate(wrapper, MainPanel);
+        const updatePromise = waitForUpdate(wrapper, InteractivePanel);
 
         // Send some code to the interactive window
         await interactiveWindow.addCode('a=1\na', 'foo.py', 2);
