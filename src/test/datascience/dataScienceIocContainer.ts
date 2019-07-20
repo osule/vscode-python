@@ -102,7 +102,7 @@ import { CodeWatcher } from '../../client/datascience/editor-integration/codewat
 import { DataScienceErrorHandler } from '../../client/datascience/errorHandler/errorHandler';
 import {
     DotNetIntellisenseProvider
-} from '../../client/datascience/interactive-window/intellisense/dotNetIntellisenseProvider';
+} from '../../client/datascience/interactive-common/intellisense/dotNetIntellisenseProvider';
 import { InteractiveWindow } from '../../client/datascience/interactive-window/interactiveWindow';
 import {
     InteractiveWindowCommandListener

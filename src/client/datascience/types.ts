@@ -5,7 +5,7 @@ import { nbformat } from '@jupyterlab/coreutils';
 import { Kernel, KernelMessage } from '@jupyterlab/services/lib/kernel';
 import { JSONObject } from '@phosphor/coreutils';
 import { Observable } from 'rxjs/Observable';
-import { CancellationToken, CodeLens, CodeLensProvider, Disposable, Event, Range, TextDocument, TextEditor } from 'vscode';
+import { CancellationToken, CodeLens, CodeLensProvider, Disposable, Event, Range, TextDocument, TextEditor, Uri } from 'vscode';
 
 import { ICommandManager } from '../common/application/types';
 import { ExecutionResult, ObservableExecutionResult, SpawnOptions } from '../common/process/types';
@@ -160,17 +160,17 @@ export interface INotebookExporter extends Disposable {
     translateToNotebook(cells: ICell[], directoryChange?: string): Promise<JSONObject | undefined>;
 }
 
+export const IDataScienceErrorHandler = Symbol('IDataScienceErrorHandler');
+export interface IDataScienceErrorHandler {
+    handleError(err: Error): void;
+}
+
 export const IInteractiveWindowProvider = Symbol('IInteractiveWindowProvider');
 export interface IInteractiveWindowProvider {
     onExecutedCode: Event<string>;
     getActive(): IInteractiveWindow | undefined;
     getOrCreateActive(): Promise<IInteractiveWindow>;
     getNotebookOptions(): Promise<INotebookServerOptions>;
-}
-
-export const IDataScienceErrorHandler = Symbol('IDataScienceErrorHandler');
-export interface IDataScienceErrorHandler {
-    handleError(err: Error): void;
 }
 
 export interface IInteractiveBase extends Disposable {
@@ -189,7 +189,6 @@ export interface IInteractiveBase extends Disposable {
 export const IInteractiveWindow = Symbol('IInteractiveWindow');
 export interface IInteractiveWindow extends IInteractiveBase {
     closed: Event<IInteractiveWindow>;
-    show(): Promise<void>;
     addCode(code: string, file: string, line: number, editor?: TextEditor, runningStopWatch?: StopWatch): Promise<boolean>;
     addMessage(message: string): Promise<void>;
     debugCode(code: string, file: string, line: number, editor?: TextEditor, runningStopWatch?: StopWatch): Promise<boolean>;
@@ -197,6 +196,21 @@ export interface IInteractiveWindow extends IInteractiveBase {
     collapseAllCells(): void;
     exportCells(): void;
     previewNotebook(notebookFile: string): Promise<void>;
+}
+
+// For native editing, the provider acts like the IDocumentManager for normal docs
+export const INotebookEditorProvider = Symbol('INotebookEditorProvider');
+export interface INotebookEditorProvider {
+    open(file: Uri): Promise<INotebookEditor>;
+    show(file: Uri): Promise<INotebookEditor | undefined>;
+}
+
+// For native editing, the INotebookEditor acts like a TextEditor and a TextDocument together
+export const INotebookEditor = Symbol('INotebookEditor');
+export interface INotebookEditor extends IInteractiveBase {
+    closed: Event<INotebookEditor>;
+    readonly file: Uri;
+    load(contents: string, file: Uri): Promise<void>;
 }
 
 export const IInteractiveWindowListener = Symbol('IInteractiveWindowListener');

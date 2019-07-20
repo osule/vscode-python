@@ -104,13 +104,16 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         @unmanaged() private statusProvider: IStatusProvider,
         @unmanaged() private jupyterExecution: IJupyterExecution,
         @unmanaged() protected fileSystem: IFileSystem,
-        @unmanaged() private configuration: IConfigurationService,
+        @unmanaged() protected configuration: IConfigurationService,
         @unmanaged() private commandManager: ICommandManager,
         @unmanaged() private jupyterExporter: INotebookExporter,
         @unmanaged() workspaceService: IWorkspaceService,
         @unmanaged() private dataExplorerProvider: IDataViewerProvider,
         @unmanaged() private jupyterVariables: IJupyterVariables,
-        @unmanaged() private jupyterDebugger: IJupyterDebugger
+        @unmanaged() private jupyterDebugger: IJupyterDebugger,
+        @unmanaged() indexPath: string,
+        @unmanaged() title: string,
+        @unmanaged() viewColumn: ViewColumn
     ) {
         super(
             configuration,
@@ -119,9 +122,9 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
             themeFinder,
             workspaceService,
             (c, v, d) => new InteractiveWindowMessageListener(liveShare, c, v, d),
-            path.join(EXTENSION_ROOT_DIR, 'out', 'datascience-ui', 'history-react', 'index_bundle.js'),
-            localize.DataScience.historyTitle(),
-            ViewColumn.Two);
+            indexPath,
+            title,
+            viewColumn);
 
         // Create our unique id. We use this to skip messages we send to other interactive windows
         this._id = uuid();

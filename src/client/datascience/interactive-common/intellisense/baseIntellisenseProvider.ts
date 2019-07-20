@@ -32,7 +32,7 @@ import {
     IProvideHoverRequest,
     IProvideSignatureHelpRequest,
     IRemoveCell
-} from '../../interactive-common/interactiveWindowTypes';
+} from '../interactiveWindowTypes';
 import { IInteractiveWindowListener, IInteractiveWindowProvider, IJupyterExecution } from '../../types';
 import { convertStringsToSuggestions } from './conversion';
 import { IntellisenseDocument } from './intellisenseDocument';

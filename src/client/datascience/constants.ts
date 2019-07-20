@@ -194,6 +194,7 @@ export namespace LiveShare {
     export const CommandBrokerService = 'commmandBrokerService';
     export const WebPanelMessageService = 'webPanelMessageService';
     export const InteractiveWindowProviderService = 'interactiveWindowProviderService';
+    export const NotebookEditorProviderService = 'notebookEditorProviderService';
     export const GuestCheckerService = 'guestCheckerService';
     export const LiveShareBroadcastRequest = 'broadcastRequest';
     export const ResponseLifetime = 15000;
@@ -217,6 +218,7 @@ export namespace LiveShareCommands {
     export const interrupt = 'interrupt';
     export const interactiveWindowCreate = 'interactiveWindowCreate';
     export const interactiveWindowCreateSync = 'interactiveWindowCreateSync';
+    export const editorLoadContents = 'editorLoadContents';
     export const disposeServer = 'disposeServer';
     export const guestCheck = 'guestCheck';
 }

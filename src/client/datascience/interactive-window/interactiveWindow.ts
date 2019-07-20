@@ -5,8 +5,9 @@ import '../../common/extensions';
 
 import { nbformat } from '@jupyterlab/coreutils';
 import { inject, injectable, multiInject } from 'inversify';
+import * as path from 'path';
 import * as uuid from 'uuid/v4';
-import { Event, EventEmitter, TextEditor } from 'vscode';
+import { Event, EventEmitter, TextEditor, ViewColumn } from 'vscode';
 
 import {
     IApplicationShell,
@@ -19,6 +20,7 @@ import {
 import { IFileSystem } from '../../common/platform/types';
 import { IConfigurationService, IDisposableRegistry, ILogger } from '../../common/types';
 import * as localize from '../../common/utils/localize';
+import { EXTENSION_ROOT_DIR } from '../../constants';
 import { IInterpreterService } from '../../interpreter/contracts';
 import { captureTelemetry } from '../../telemetry';
 import { Identifiers, Telemetry } from '../constants';
@@ -90,7 +92,11 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
             workspaceService,
             dataExplorerProvider,
             jupyterVariables,
-            jupyterDebugger);
+            jupyterDebugger,
+            path.join(EXTENSION_ROOT_DIR, 'out', 'datascience-ui', 'history-react', 'index_bundle.js'),
+            localize.DataScience.historyTitle(),
+            ViewColumn.Two);
+
     }
 
     public dispose() {
