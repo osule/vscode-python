@@ -13,6 +13,7 @@ export interface IMainPanelHOCProps {
     testMode?: boolean;
     baseTheme: string;
     codeTheme: string;
+    hasCollapseableInputs: boolean;
 }
 
 export interface IMainPanelProps extends IMainPanelHOCProps {
@@ -44,4 +45,5 @@ export interface IMainPanelProps extends IMainPanelHOCProps {
     showPlot(imageHtml: string): void;
     showDataViewer(targetVariable: string, numberOfColumns: number): void;
     variableExplorerToggled(open: boolean): void;
+    stopBusy(): void;
 }

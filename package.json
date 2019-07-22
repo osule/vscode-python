@@ -1371,6 +1371,7 @@
                 },
                 "python.dataScience.autoPreviewNotebooksInInteractivePane": {
                     "type": "boolean",
+                    "deprecationMessage": "No longer supported. Notebooks open directly in their own editor now.",
                     "default": false,
                     "description": "When opening ipynb files, automatically preview the contents in the Python Interactive window.",
                     "scope": "resource"

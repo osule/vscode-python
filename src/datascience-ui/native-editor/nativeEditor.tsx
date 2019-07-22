@@ -1,20 +1,21 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 'use strict';
+import './nativeEditor.css';
 
 import * as React from 'react';
 
+import { InteractiveWindowMessages } from '../../client/datascience/interactive-common/interactiveWindowTypes';
 import { Cell } from '../interactive-common/cell';
 import { ContentPanel, IContentPanelProps } from '../interactive-common/contentPanel';
 import { IMainPanelProps } from '../interactive-common/mainPanelProps';
 import { IToolbarPanelProps, ToolbarPanel } from '../interactive-common/toolbarPanel';
 import { IVariablePanelProps, VariablePanel } from '../interactive-common/variablePanel';
 import { getLocString } from '../react-common/locReactSide';
+import { IMessageHandler } from '../react-common/postOffice';
 import { getSettings } from '../react-common/settingsReactSide';
 
-import './nativeEditor.css';
-
-export class NativeEditor extends React.Component<IMainPanelProps> {
+export class NativeEditor extends React.Component<IMainPanelProps> implements IMessageHandler {
     private mainPanelRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     private editCellRef: React.RefObject<Cell> = React.createRef<Cell>();
 
@@ -37,6 +38,20 @@ export class NativeEditor extends React.Component<IMainPanelProps> {
                 </main>
             </div>
         );
+    }
+
+    // tslint:disable-next-line: no-any
+    public handleMessage = (msg: string, _payload?: any) => {
+        switch (msg) {
+            case InteractiveWindowMessages.LoadAllCells:
+                // Stop being busy as we've loaded our first set of cells.
+                this.props.stopBusy();
+                break;
+
+            default:
+                break;
+        }
+        return false;
     }
 
     private activated = () => {
@@ -95,13 +110,16 @@ export class NativeEditor extends React.Component<IMainPanelProps> {
             onCodeCreated: this.props.readOnlyCodeCreated,
             onCodeChange: this.props.codeChange,
             openLink: this.props.openLink,
-            expandImage: this.props.showPlot
+            expandImage: this.props.showPlot,
+            editable: true,
+            newCellVM: this.props.value.editCellVM,
+            submitInput: this.props.submitInput
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {
        return {
-        collapseAll: this.props.collapseAll,
-        expandAll: this.props.expandAll,
+        collapseAll: undefined,
+        expandAll: undefined,
         export: this.props.export,
         restartKernel: this.props.restartKernel,
         interruptKernel: this.props.interruptKernel,
@@ -109,8 +127,8 @@ export class NativeEditor extends React.Component<IMainPanelProps> {
         redo: this.props.redo,
         clearAll: this.props.clearAll,
         skipDefault: this.props.skipDefault,
-        canCollapseAll: this.props.canCollapseAll(),
-        canExpandAll: this.props.canExpandAll(),
+        canCollapseAll: false,
+        canExpandAll: false,
         canExport: this.props.canExport(),
         canUndo: this.props.canUndo(),
         canRedo: this.props.canRedo(),

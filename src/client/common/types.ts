@@ -319,7 +319,6 @@ export interface IDataScienceSettings {
     enableCellCodeLens?: boolean;
     askForLargeDataFrames?: boolean;
     enableAutoMoveToNextCell?: boolean;
-    autoPreviewNotebooksInInteractivePane?: boolean;
     allowUnauthorizedRemoteConnection?: boolean;
     askForKernelRestart?: boolean;
     enablePlotViewer?: boolean;

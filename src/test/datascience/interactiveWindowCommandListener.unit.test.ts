@@ -149,7 +149,6 @@ suite('Interactive window command listener', async () => {
             variableExplorerExclude: 'module;function;builtin_function_or_method',
             codeRegularExpression: '^(#\\s*%%|#\\s*\\<codecell\\>|#\\s*In\\[\\d*?\\]|#\\s*In\\[ \\])',
             markdownRegularExpression: '^(#\\s*%%\\s*\\[markdown\\]|#\\s*\\<markdowncell\\>)',
-            autoPreviewNotebooksInInteractivePane: true,
             enablePlotViewer: true
         };
 
@@ -166,9 +165,6 @@ suite('Interactive window command listener', async () => {
         when(fileSystem.deleteDirectory(anything())).thenResolve();
         when(fileSystem.writeFile(anything(), argThat(o => { lastFileContents = o; return true; }))).thenResolve();
         when(fileSystem.arePathsSame(anything(), anything())).thenReturn(true);
-
-        // mocks doesn't work with resolving things that also have promises, so use typemoq instead.
-        interactiveWindow.setup(s => s.previewNotebook(TypeMoq.It.isAny())).returns(() => Promise.resolve());
 
         when(interactiveWindowProvider.getActive()).thenReturn(interactiveWindow.object);
         when(interactiveWindowProvider.getOrCreateActive()).thenResolve(interactiveWindow.object);

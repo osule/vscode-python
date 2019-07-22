@@ -40,7 +40,7 @@ export function runMountedTest(name: string, testFunc: (wrapper: ReactWrapper<an
         if (await jupyterExecution.isNotebookSupported()) {
             addMockData(ioc, 'a=1\na', 1);
             const HOC = MainPanelHOC(InteractivePanel);
-            const wrapper = mountWebView(ioc, <HOC baseTheme='vscode-light' codeTheme='light_vs' testMode={true} skipDefault={true} />);
+            const wrapper = mountWebView(ioc, <HOC baseTheme='vscode-light' codeTheme='light_vs'  hasCollapseableInputs={true} testMode={true} skipDefault={true} />);
             await testFunc(wrapper);
         } else {
             // tslint:disable-next-line:no-console

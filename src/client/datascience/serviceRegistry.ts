@@ -18,10 +18,13 @@ import { CodeWatcher } from './editor-integration/codewatcher';
 import { Decorator } from './editor-integration/decorator';
 import { DataScienceErrorHandler } from './errorHandler/errorHandler';
 import { DebugListener } from './interactive-common/debugListener';
-import { LinkProvider } from './interactive-common/linkProvider';
-import { ShowPlotListener } from './interactive-common/showPlotListener';
 import { DotNetIntellisenseProvider } from './interactive-common/intellisense/dotNetIntellisenseProvider';
 import { JediIntellisenseProvider } from './interactive-common/intellisense/jediIntellisenseProvider';
+import { LinkProvider } from './interactive-common/linkProvider';
+import { ShowPlotListener } from './interactive-common/showPlotListener';
+import { IpynbCommandListener } from './interactive-ipynb/ipynbCommandListener';
+import { IpynbEditor } from './interactive-ipynb/ipynbEditor';
+import { IpynbProvider } from './interactive-ipynb/ipynbEditorProvider';
 import { InteractiveWindow } from './interactive-window/interactiveWindow';
 import { InteractiveWindowCommandListener } from './interactive-window/interactiveWindowCommandListener';
 import { InteractiveWindowProvider } from './interactive-window/interactiveWindowProvider';
@@ -59,6 +62,8 @@ import {
     IJupyterPasswordConnect,
     IJupyterSessionManager,
     IJupyterVariables,
+    INotebookEditor,
+    INotebookEditorProvider,
     INotebookExecutionLogger,
     INotebookExporter,
     INotebookImporter,
@@ -90,7 +95,7 @@ export function registerTypes(serviceManager: IServiceManager) {
     serviceManager.addSingleton<IDataScienceCodeLensProvider>(IDataScienceCodeLensProvider, wrapType(DataScienceCodeLensProvider));
     serviceManager.addSingleton<IDataScience>(IDataScience, wrapType(DataScience));
     serviceManager.addSingleton<IJupyterExecution>(IJupyterExecution, wrapType(JupyterExecutionFactory));
-    serviceManager.add<IDataScienceCommandListener>(IDataScienceCommandListener, wrapType(InteractiveWindowCommandListener));
+    serviceManager.addSingleton<IDataScienceCommandListener>(IDataScienceCommandListener, wrapType(InteractiveWindowCommandListener));
     serviceManager.addSingleton<IInteractiveWindowProvider>(IInteractiveWindowProvider, wrapType(InteractiveWindowProvider));
     serviceManager.add<IInteractiveWindow>(IInteractiveWindow, wrapType(InteractiveWindow));
     serviceManager.add<INotebookExporter>(INotebookExporter, wrapType(JupyterExporter));
@@ -121,4 +126,7 @@ export function registerTypes(serviceManager: IServiceManager) {
     serviceManager.addBinding(ICellHashProvider, IInteractiveWindowListener);
     serviceManager.addBinding(ICellHashProvider, INotebookExecutionLogger);
     serviceManager.addBinding(IJupyterDebugger, ICellHashListener);
+    serviceManager.addSingleton<INotebookEditorProvider>(INotebookEditorProvider, wrapType(IpynbProvider));
+    serviceManager.add<INotebookEditor>(INotebookEditor, wrapType(IpynbEditor));
+    serviceManager.addSingleton<IDataScienceCommandListener>(IDataScienceCommandListener, wrapType(IpynbCommandListener));
 }

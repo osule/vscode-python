@@ -18,8 +18,8 @@ export interface IToolbarPanelProps {
     canUndo: boolean;
     canRedo: boolean;
     skipDefault?: boolean;
-    collapseAll(): void;
-    expandAll(): void;
+    collapseAll?(): void;
+    expandAll?(): void;
     export(): void;
     restartKernel(): void;
     interruptKernel(): void;
@@ -56,10 +56,10 @@ export class ToolbarPanel extends React.Component<IToolbarPanelProps> {
                     <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.export} disabled={!this.props.canExport} tooltip={getLocString('DataScience.export', 'Export as Jupyter notebook')}>
                         <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.SaveAs}/>
                     </ImageButton>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.expandAll} disabled={!this.props.canExpandAll} tooltip={getLocString('DataScience.expandAll', 'Expand all cell inputs')}>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.expandAll} hidden={!this.props.expandAll} disabled={!this.props.canExpandAll} tooltip={getLocString('DataScience.expandAll', 'Expand all cell inputs')}>
                         <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.ExpandAll}/>
                     </ImageButton>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.collapseAll} disabled={!this.props.canCollapseAll} tooltip={getLocString('DataScience.collapseAll', 'Collapse all cell inputs')}>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.collapseAll} hidden={!this.props.collapseAll} disabled={!this.props.canCollapseAll} tooltip={getLocString('DataScience.collapseAll', 'Collapse all cell inputs')}>
                         <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.CollapseAll}/>
                     </ImageButton>
                 </MenuBar>

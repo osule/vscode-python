@@ -85,7 +85,7 @@ suite('DataScience LiveShare tests', () => {
 
         // Setup our webview panel
         const HOC = MainPanelHOC(InteractivePanel);
-        result.createWebView(() => mount(<HOC baseTheme='vscode-light' codeTheme='light_vs' testMode={true} skipDefault={true} />), role);
+        result.createWebView(() => mount(<HOC baseTheme='vscode-light' codeTheme='light_vs' testMode={true}  hasCollapseableInputs={true} skipDefault={true} />), role);
 
         // Make sure the history provider and execution factory in the container is created (the extension does this on startup in the extension)
         // This is necessary to get the appropriate live share services up and running.

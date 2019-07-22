@@ -16,6 +16,7 @@ import { InputHistory } from './inputHistory';
 
 export interface IMainPanelState {
     cellVMs: ICellViewModel[];
+    editCellVM: ICellViewModel;
     busy: boolean;
     skipNextScroll?: boolean;
     undoStack: ICellViewModel[][];
@@ -51,6 +52,7 @@ const darkStyle = `
 export function generateTestState(inputBlockToggled: (id: string) => void, filePath: string = ''): IMainPanelState {
     return {
         cellVMs: generateVMs(inputBlockToggled, filePath),
+        editCellVM: createEditableCellVM(1),
         busy: true,
         skipNextScroll: false,
         undoStack: [],

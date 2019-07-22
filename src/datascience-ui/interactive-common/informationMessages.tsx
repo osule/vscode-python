@@ -19,8 +19,8 @@ export class InformationMessages extends React.Component<IInformationMessagesPro
 
     public render() {
         const output = this.props.messages.join('\n');
-        const wrapperClassName = this.props.type === 'preview' ? 'messages-wrapper messages-wrapper-preview' : 'messages-wrapper';
-        const outerClassName = this.props.type === 'preview' ? 'messages-outer messages-outer-preview' : 'messages-outer';
+        const wrapperClassName = 'messages-wrapper';
+        const outerClassName = 'messages-outer';
 
         return (
             <div className={wrapperClassName}>

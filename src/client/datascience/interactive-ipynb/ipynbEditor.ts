@@ -45,6 +45,7 @@ import {
 export class IpynbEditor extends InteractiveBase implements INotebookEditor {
     private closedEvent: EventEmitter<INotebookEditor> = new EventEmitter<INotebookEditor>();
     private _file: Uri = Uri.file('');
+    private _serverId = uuid();
 
     constructor(
         @multiInject(IInteractiveWindowListener) listeners: IInteractiveWindowListener[],
@@ -163,7 +164,7 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             enableDebugging: true,
             uri: serverURI,
             useDefaultConfig,
-            purpose: uuid()  // Each one of these is unique per file.
+            purpose: this._serverId  // Each one of these is unique per file.
         };
     }
 }

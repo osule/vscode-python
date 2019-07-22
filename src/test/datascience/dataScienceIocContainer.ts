@@ -408,7 +408,6 @@ export class DataScienceIocContainer extends UnitTestIocContainer {
             showJupyterVariableExplorer: true,
             variableExplorerExclude: 'module;function;builtin_function_or_method',
             liveShareConnectionTimeout: 100,
-            autoPreviewNotebooksInInteractivePane: true,
             enablePlotViewer: true,
             stopOnFirstLineWhileDebugging: true,
             stopOnError: true

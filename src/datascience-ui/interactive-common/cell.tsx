@@ -42,10 +42,11 @@ interface ICellProps {
     monacoTheme: string | undefined;
     editorOptions: monacoEditor.editor.IEditorOptions;
     editExecutionCount: number;
+    allowCollapse: boolean;
     gotoCode(): void;
     copyCode(): void;
     delete(): void;
-    submitNewCode(code: string): void;
+    submitNewCode(code: string, cellVM: ICellViewModel): void;
     onCodeChange(changes: monacoEditor.editor.IModelContentChange[], cellId: string, modelId: string): void;
     onCodeCreated(code: string, file: string, cellId: string, modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
@@ -177,10 +178,7 @@ export class Cell extends React.Component<ICellProps> {
         const allowsPlainInput = getSettings().showCellInputCode || this.props.cellVM.directInput || this.props.cellVM.editable;
         const shouldRender = allowsPlainInput || (results && results.length > 0);
         const cellOuterClass = this.props.cellVM.editable ? 'cell-outer-editable' : 'cell-outer';
-        let cellWrapperClass = this.props.cellVM.editable ? 'cell-wrapper' : 'cell-wrapper cell-wrapper-noneditable';
-        if (this.props.cellVM.cell.type === 'preview') {
-            cellWrapperClass += ' cell-wrapper-preview';
-        }
+        const cellWrapperClass = this.props.cellVM.editable ? 'cell-wrapper' : 'cell-wrapper cell-wrapper-noneditable';
 
         // Only render if we are allowed to.
         if (shouldRender) {
@@ -235,7 +233,7 @@ export class Cell extends React.Component<ICellProps> {
 
     private renderControls = () => {
         const busy = this.props.cellVM.cell.state === CellState.init || this.props.cellVM.cell.state === CellState.executing;
-        const collapseVisible = (this.props.cellVM.inputBlockCollapseNeeded && this.props.cellVM.inputBlockShow && !this.props.cellVM.editable);
+        const collapseVisible = (this.props.allowCollapse && this.props.cellVM.inputBlockCollapseNeeded && this.props.cellVM.inputBlockShow && !this.props.cellVM.editable);
         const executionCount = this.props.cellVM && this.props.cellVM.cell && this.props.cellVM.cell.data && this.props.cellVM.cell.data.execution_count ?
             this.props.cellVM.cell.data.execution_count.toString() : '-';
 
@@ -268,9 +266,7 @@ export class Cell extends React.Component<ICellProps> {
 
     private renderInputs = () => {
         if (this.showInputs()) {
-            const backgroundColor = this.props.cellVM.cell.type === 'preview' ?
-                'var(--override-peek-background, var(--vscode-peekViewEditor-background))'
-                : undefined;
+            const backgroundColor = undefined;
 
             return (
                 <div className='cell-input'>
@@ -283,7 +279,7 @@ export class Cell extends React.Component<ICellProps> {
                         testMode={this.props.testMode ? true : false}
                         readOnly={!this.props.cellVM.editable}
                         showWatermark={this.props.showWatermark}
-                        onSubmit={this.props.submitNewCode}
+                        onSubmit={this.onSubmit}
                         ref={this.updateCodeRef}
                         onChange={this.onCodeChange}
                         onCreated={this.onCodeCreated}
@@ -297,6 +293,10 @@ export class Cell extends React.Component<ICellProps> {
         } else {
             return null;
         }
+    }
+
+    private onSubmit = (code: string) => {
+        this.props.submitNewCode(code, this.props.cellVM);
     }
 
     private onCodeChange = (changes: monacoEditor.editor.IModelContentChange[], modelId: string) => {

@@ -19,6 +19,6 @@ const HOC = MainPanelHOC(InteractivePanel);
 
 // tslint:disable:no-typeof-undefined
 ReactDOM.render(
-  <HOC baseTheme={baseTheme} codeTheme={Identifiers.GeneratedThemeName} skipDefault={typeof acquireVsCodeApi !== 'undefined'}/>,
+  <HOC baseTheme={baseTheme} codeTheme={Identifiers.GeneratedThemeName} hasCollapseableInputs={true} skipDefault={typeof acquireVsCodeApi !== 'undefined'}/>,
   document.getElementById('root') as HTMLElement
 );

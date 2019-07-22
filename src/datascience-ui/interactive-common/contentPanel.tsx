@@ -24,6 +24,8 @@ export interface IContentPanelProps {
     skipNextScroll: boolean;
     monacoTheme: string | undefined;
     editorOptions: monacoEditor.editor.IEditorOptions;
+    editable: boolean;
+    newCellVM?: ICellViewModel;
     gotoCellCode(index: number): void;
     copyCellCode(index: number): void;
     deleteCell(index: number): void;
@@ -31,6 +33,7 @@ export interface IContentPanelProps {
     onCodeCreated(code: string, file: string, cellId: string, modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
     expandImage(imageHtml: string): void;
+    submitInput(code: string, cellVM: ICellViewModel): void;
 }
 
 export class ContentPanel extends React.Component<IContentPanelProps> {
@@ -55,6 +58,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                 <div id='cell-table'>
                     <div id='cell-table-body' role='list'>
                         {this.renderCells()}
+                        {this.renderEdit()}
                     </div>
                 </div>
                 <div ref={this.bottomRef}/>
@@ -71,7 +75,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                 <Cell
                     role='listitem'
                     editorOptions={this.props.editorOptions}
-                    history={undefined}
+                    history={this.props.editable ? this.props.history : undefined}
                     maxTextSize={maxTextSize}
                     autoFocus={false}
                     testMode={this.props.testMode}
@@ -79,6 +83,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                     submitNewCode={noop}
                     baseTheme={baseTheme}
                     codeTheme={this.props.codeTheme}
+                    allowCollapse={!this.props.editable}
                     showWatermark={false}
                     editExecutionCount={0}
                     gotoCode={() => this.props.gotoCellCode(index)}
@@ -92,6 +97,42 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                     />
             </ErrorBoundary>
         );
+    }
+
+    private renderEdit = () => {
+        if (this.props.editable && this.props.newCellVM) {
+            const maxOutputSize = getSettings().maxOutputSize;
+            const maxTextSize = maxOutputSize && maxOutputSize < 10000 && maxOutputSize > 0 ? maxOutputSize : undefined;
+            const baseTheme = getSettings().ignoreVscodeTheme ? 'vscode-light' : this.props.baseTheme;
+
+            return (
+                <Cell
+                    role='listitem'
+                    editorOptions={this.props.editorOptions}
+                    history={undefined}
+                    maxTextSize={maxTextSize}
+                    autoFocus={false}
+                    testMode={this.props.testMode}
+                    cellVM={this.props.newCellVM}
+                    submitNewCode={noop}
+                    baseTheme={baseTheme}
+                    codeTheme={this.props.codeTheme}
+                    allowCollapse={false}
+                    showWatermark={true}
+                    editExecutionCount={0}
+                    gotoCode={noop}
+                    copyCode={noop}
+                    delete={noop}
+                    onCodeChange={this.props.onCodeChange}
+                    onCodeCreated={this.props.onCodeCreated}
+                    monacoTheme={this.props.monacoTheme}
+                    openLink={this.props.openLink}
+                    expandImage={this.props.expandImage}
+                    />
+            );
+        } else {
+            return null;
+        }
     }
 
     private scrollIntoView() {

@@ -24,6 +24,9 @@ export class IpynbCommandListener implements IDataScienceCommandListener {
         // Listen to document open commands. We use this to launch an ipynb editor
         const disposable = this.documentManager.onDidOpenTextDocument(this.onOpenedDocument);
         this.disposableRegistry.push(disposable);
+
+        // Since we may have activated after a document was opened, also run open document for all documents
+        this.documentManager.textDocuments.forEach(this.onOpenedDocument);
     }
 
     public register(commandManager: ICommandManager): void {

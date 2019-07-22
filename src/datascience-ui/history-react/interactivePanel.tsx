@@ -1,11 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 'use strict';
-
 import * as React from 'react';
 
 import { noop } from '../../client/common/utils/misc';
-import { Cell, ICellViewModel } from '../interactive-common/cell';
+import { Cell } from '../interactive-common/cell';
 import { ContentPanel, IContentPanelProps } from '../interactive-common/contentPanel';
 import { IMainPanelProps } from '../interactive-common/mainPanelProps';
 import { createEditableCellVM } from '../interactive-common/mainPanelState';
@@ -13,15 +12,12 @@ import { IToolbarPanelProps, ToolbarPanel } from '../interactive-common/toolbarP
 import { IVariablePanelProps, VariablePanel } from '../interactive-common/variablePanel';
 import { ErrorBoundary } from '../react-common/errorBoundary';
 import { getLocString } from '../react-common/locReactSide';
+import { IMessageHandler } from '../react-common/postOffice';
 import { getSettings } from '../react-common/settingsReactSide';
 
 import './interactivePanel.css';
 
-interface IInteractivePanelState {
-    editCellVM?: ICellViewModel;
-}
-
-export class InteractivePanel extends React.Component<IMainPanelProps, IInteractivePanelState> {
+export class InteractivePanel extends React.Component<IMainPanelProps> implements IMessageHandler {
     private mainPanelRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     private editCellRef: React.RefObject<Cell> = React.createRef<Cell>();
 
@@ -51,6 +47,11 @@ export class InteractivePanel extends React.Component<IMainPanelProps, IInteract
                 </section>
             </div>
         );
+    }
+
+    // tslint:disable-next-line: no-any
+    public handleMessage(_msg: string, _payload?: any): boolean {
+        return false;
     }
 
     private activated = () => {
@@ -95,7 +96,7 @@ export class InteractivePanel extends React.Component<IMainPanelProps, IInteract
     private renderFooterPanel(baseTheme: string) {
         // Skip if the tokenizer isn't finished yet. It needs
         // to finish loading so our code editors work.
-        if (!this.props.value.tokenizerLoaded || !this.state.editCellVM) {
+        if (!this.props.value.tokenizerLoaded || !this.props.value.editCellVM) {
             return null;
         }
 
@@ -113,9 +114,10 @@ export class InteractivePanel extends React.Component<IMainPanelProps, IInteract
                         maxTextSize={maxTextSize}
                         autoFocus={document.hasFocus()}
                         testMode={this.props.testMode}
-                        cellVM={this.state.editCellVM}
-                        submitNewCode={this.submitInput}
+                        cellVM={this.props.value.editCellVM}
+                        submitNewCode={this.props.submitInput}
                         baseTheme={baseTheme}
+                        allowCollapse={false}
                         codeTheme={this.props.codeTheme}
                         showWatermark={!this.props.value.submittedText}
                         gotoCode={noop}
@@ -132,12 +134,6 @@ export class InteractivePanel extends React.Component<IMainPanelProps, IInteract
                 </ErrorBoundary>
             </div>
         );
-    }
-
-    private submitInput = (code: string) => {
-        if (this.state.editCellVM) {
-            this.props.submitInput(code, this.state.editCellVM);
-        }
     }
 
     private getInputExecutionCount = () : number => {
@@ -161,7 +157,10 @@ export class InteractivePanel extends React.Component<IMainPanelProps, IInteract
             onCodeCreated: this.props.readOnlyCodeCreated,
             onCodeChange: this.props.codeChange,
             openLink: this.props.openLink,
-            expandImage: this.props.showPlot
+            expandImage: this.props.showPlot,
+            editable: false,
+            newCellVM: undefined,
+            submitInput: this.props.submitInput
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {

@@ -77,7 +77,6 @@ import { InteractiveWindowMessageListener } from './interactiveWindowMessageList
 @injectable()
 export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapping> implements IInteractiveBase {
     private disposed: boolean = false;
-    private loadPromise: Promise<void>;
     private interpreterChangedDisposable: Disposable;
     private unfinishedCells: ICell[] = [];
     private restartingKernel: boolean = false;
@@ -89,6 +88,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     private executeEvent: EventEmitter<string> = new EventEmitter<string>();
     private variableRequestStopWatch: StopWatch | undefined;
     private variableRequestPendingCount: number = 0;
+    private loadPromise: Promise<void> | undefined;
 
     constructor(
         @unmanaged() private readonly listeners: IInteractiveWindowListener[],
@@ -139,20 +139,12 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         // If our execution changes its liveshare session, we need to close our server
         this.jupyterExecution.sessionChanged(() => this.loadPromise = this.reloadAfterShutdown());
 
-        // Load on a background thread.
-        this.loadPromise = this.startServer();
-
         // For each listener sign up for their post events
         this.listeners.forEach(l => l.postMessage((e) => this.postMessageInternal(e.message, e.payload)));
     }
 
     public get id(): string {
         return this._id;
-    }
-
-    public get ready(): Promise<void> {
-        // We need this to ensure the interactive window is up and ready to receive messages.
-        return this.loadPromise;
     }
 
     public async show(): Promise<void> {
@@ -582,6 +574,53 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
                     editBuilder.insert(new Position(cells[1].line, 0), '#%%\n');
                 });
             }
+        }
+    }
+
+    protected startServer(): Promise<void> {
+        this.loadPromise = this.startServerImpl();
+        return this.loadPromise;
+    }
+
+    private async startServerImpl(): Promise<void> {
+        // Status depends upon if we're about to connect to existing server or not.
+        const status = (await this.jupyterExecution.getServer(await this.getNotebookOptions())) ?
+            this.setStatus(localize.DataScience.connectingToJupyter()) : this.setStatus(localize.DataScience.startingJupyter());
+
+        // Check to see if we support ipykernel or not
+        try {
+            const usable = await this.checkUsable();
+            if (!usable) {
+                // Not loading anymore
+                status.dispose();
+                this.dispose();
+
+                // Indicate failing.
+                throw new JupyterInstallError(localize.DataScience.jupyterNotSupported(), localize.DataScience.pythonInteractiveHelpLink());
+            }
+            // Then load the jupyter server
+            await this.loadJupyterServer();
+        } catch (e) {
+            if (e instanceof JupyterSelfCertsError) {
+                // On a self cert error, warn the user and ask if they want to change the setting
+                const enableOption: string = localize.DataScience.jupyterSelfCertEnable();
+                const closeOption: string = localize.DataScience.jupyterSelfCertClose();
+                this.applicationShell.showErrorMessage(localize.DataScience.jupyterSelfCertFail().format(e.message), enableOption, closeOption).then(value => {
+                    if (value === enableOption) {
+                        sendTelemetryEvent(Telemetry.SelfCertsMessageEnabled);
+                        this.configuration.updateSetting('dataScience.allowUnauthorizedRemoteConnection', true, undefined, ConfigurationTarget.Workspace).ignoreErrors();
+                    } else if (value === closeOption) {
+                        sendTelemetryEvent(Telemetry.SelfCertsMessageClose);
+                    }
+                    // Don't leave our Interactive Window open in a non-connected state
+                    this.dispose();
+                });
+                throw e;
+            } else {
+                throw e;
+            }
+        } finally {
+            status.dispose();
         }
     }
 
@@ -1091,48 +1130,6 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
             } else {
                 throw new JupyterInstallError(localize.DataScience.jupyterNotSupported(), localize.DataScience.pythonInteractiveHelpLink());
             }
-        }
-    }
-
-    private startServer = async (): Promise<void> => {
-        // Status depends upon if we're about to connect to existing server or not.
-        const status = (await this.jupyterExecution.getServer(await this.getNotebookOptions())) ?
-            this.setStatus(localize.DataScience.connectingToJupyter()) : this.setStatus(localize.DataScience.startingJupyter());
-
-        // Check to see if we support ipykernel or not
-        try {
-            const usable = await this.checkUsable();
-            if (!usable) {
-                // Not loading anymore
-                status.dispose();
-                this.dispose();
-
-                // Indicate failing.
-                throw new JupyterInstallError(localize.DataScience.jupyterNotSupported(), localize.DataScience.pythonInteractiveHelpLink());
-            }
-            // Then load the jupyter server
-            await this.loadJupyterServer();
-        } catch (e) {
-            if (e instanceof JupyterSelfCertsError) {
-                // On a self cert error, warn the user and ask if they want to change the setting
-                const enableOption: string = localize.DataScience.jupyterSelfCertEnable();
-                const closeOption: string = localize.DataScience.jupyterSelfCertClose();
-                this.applicationShell.showErrorMessage(localize.DataScience.jupyterSelfCertFail().format(e.message), enableOption, closeOption).then(value => {
-                    if (value === enableOption) {
-                        sendTelemetryEvent(Telemetry.SelfCertsMessageEnabled);
-                        this.configuration.updateSetting('dataScience.allowUnauthorizedRemoteConnection', true, undefined, ConfigurationTarget.Workspace).ignoreErrors();
-                    } else if (value === closeOption) {
-                        sendTelemetryEvent(Telemetry.SelfCertsMessageClose);
-                    }
-                    // Don't leave our Interactive Window open in a non-connected state
-                    this.dispose();
-                });
-                throw e;
-            } else {
-                throw e;
-            }
-        } finally {
-            status.dispose();
         }
     }
 

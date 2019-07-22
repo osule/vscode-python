@@ -562,19 +562,6 @@ for _ in range(50):
 
     }, () => { return ioc; });
 
-    runMountedTest('Preview', async (wrapper) => {
-
-        const testFile = path.join(srcDirectory(), 'sub', 'test.ipynb');
-
-        // Preview is much fewer renders than an add code since the data is already there.
-        await getCellResults(wrapper, 2, async () => {
-            const interactiveWindow = await getOrCreateInteractiveWindow();
-            await interactiveWindow.previewNotebook(testFile);
-        });
-
-        verifyHtmlOnCell(wrapper, '<img', CellPosition.Last);
-    }, () => { return ioc; });
-
     runMountedTest('LiveLossPlot', async (wrapper) => {
         // Only run this test when not mocking. Too complicated to mimic otherwise
         if (!ioc.mockJupyter) {

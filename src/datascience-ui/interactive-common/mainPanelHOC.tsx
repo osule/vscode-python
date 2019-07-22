@@ -29,7 +29,7 @@ import { ICellViewModel } from './cell';
 import { InputHistory } from './inputHistory';
 import { IntellisenseProvider } from './intellisenseProvider';
 import { IMainPanelHOCProps, IMainPanelProps } from './mainPanelProps';
-import { createCellVM, extractInputText, generateTestState, IMainPanelState } from './mainPanelState';
+import { createCellVM, createEditableCellVM, extractInputText, generateTestState, IMainPanelState } from './mainPanelState';
 import { initializeTokenizer, registerMonacoLanguage } from './tokenizer';
 
 // tslint:disable-next-line: max-func-body-length
@@ -45,12 +45,12 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
     private monacoIdToCellId: Map<string, string> = new Map<string, string>();
     private styleInjectorRef: React.RefObject<StyleInjector> = React.createRef<StyleInjector>();
     private activatedEventEmitter: EventEmitter<void> = new EventEmitter<void>();
+    private wrappedRef: React.RefObject<React.Component<IMainPanelProps>> = React.createRef<React.Component<IMainPanelProps>>();
 
     // tslint:disable-next-line:max-func-body-length
     constructor(props: IMainPanelHOCProps, _state: IMainPanelState) {
         super(props);
 
-        // Default state should show a busy message
         this.state = {
             cellVMs: [],
             busy: true,
@@ -62,7 +62,8 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
             currentExecutionCount: 0,
             variables: [],
             pendingVariableCount: 0,
-            debugging: false
+            debugging: false,
+            editCellVM: createEditableCellVM(1)
         };
 
         // Add test state if necessary
@@ -131,6 +132,7 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
                     monacoThemeChanged={this.monacoThemeChanged}
                     ref={this.styleInjectorRef} />
                 <WrappedComponent
+                    ref={this.wrappedRef}
                     {...this.props as P}
                     refreshVariables={this.refreshVariables}
                     deleteCell={this.deleteCell}
@@ -161,12 +163,13 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
                     showPlot={this.showPlot}
                     showDataViewer={this.showDataViewer}
                     variableExplorerToggled={this.variableExplorerToggled}
+                    stopBusy={this.stopBusy}
                 />
             </div>
         );
     }
 
-    // tslint:disable-next-line:no-any cyclomatic-complexity
+    // tslint:disable-next-line:no-any cyclomatic-complexity max-func-body-length
     public handleMessage = (msg: string, payload?: any) => {
         switch (msg) {
             case InteractiveWindowMessages.StartCell:
@@ -262,7 +265,23 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
                 break;
         }
 
+        if (this.wrappedRef.current && this.wrappedRef.current) {
+            // Just cast as an IMessageHandler. Can't figure out how to get
+            // typescript to allow me to have the component also implement an interface.
+            // tslint:disable-next-line: no-any
+            const wrappedHandler = (this.wrappedRef.current as any) as IMessageHandler;
+            if (wrappedHandler && wrappedHandler.handleMessage) {
+                wrappedHandler.handleMessage(msg, payload);
+            }
+        }
+
         return false;
+    }
+
+    private stopBusy = () => {
+        if (this.state.busy) {
+             this.setState({busy: false});
+        }
     }
 
     private computeEditorOptions() : monacoEditor.editor.IEditorOptions {
@@ -541,7 +560,7 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
 
     // Adjust the visibility or collapsed state of a cell
     private alterCellVM = (cellVM: ICellViewModel, visible: boolean, expanded: boolean) => {
-        if (cellVM.cell.data.cell_type === 'code') {
+        if (cellVM.cell.data.cell_type === 'code' && this.props.hasCollapseableInputs) {
             // If we are already in the correct state, return back our initial cell vm
             if (cellVM.inputBlockShow === visible && cellVM.inputBlockOpen === expanded) {
                 return cellVM;
