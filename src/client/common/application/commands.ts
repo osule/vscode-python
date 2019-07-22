@@ -27,6 +27,7 @@ interface ICommandNameWithoutArgumentTypeMapping {
     [Commands.Enable_Linter]: [];
     ['workbench.action.debug.stop']: [];
     ['workbench.action.reloadWindow']: [];
+    ['workbench.action.closeActiveEditor']: [];
     ['editor.action.formatDocument']: [];
     ['editor.action.rename']: [];
     [Commands.ViewOutput]: [];

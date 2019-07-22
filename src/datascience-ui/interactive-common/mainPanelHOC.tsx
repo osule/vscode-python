@@ -254,6 +254,10 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
                 this.setState({debugging: false});
                 break;
 
+            case InteractiveWindowMessages.LoadAllCells:
+                this.handleLoadAllCells(payload);
+                break;
+
             default:
                 break;
         }
@@ -836,6 +840,14 @@ class MainPanel extends React.Component<IMainPanelHOCProps, IMainPanelState> imp
             this.tmlangugePromise.resolve(payload.toString());
         } else if (this.tmlangugePromise) {
             this.tmlangugePromise.resolve(undefined);
+        }
+    }
+
+    // tslint:disable-next-line: no-any
+    private handleLoadAllCells(payload: any) {
+        if (payload && payload.cells) {
+            const cells = payload.cells as ICell[];
+            cells.forEach(c => this.finishCell(c));
         }
     }
 

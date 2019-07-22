@@ -153,6 +153,8 @@ export interface IJupyterKernelSpec extends IAsyncDisposable {
 export const INotebookImporter = Symbol('INotebookImporter');
 export interface INotebookImporter extends Disposable {
     importFromFile(file: string): Promise<string>;
+    importCellsFromFile(file: string): Promise<ICell[]>;
+    importCells(json: string): Promise<ICell[]>;
 }
 
 export const INotebookExporter = Symbol('INotebookExporter');
@@ -201,7 +203,8 @@ export interface IInteractiveWindow extends IInteractiveBase {
 // For native editing, the provider acts like the IDocumentManager for normal docs
 export const INotebookEditorProvider = Symbol('INotebookEditorProvider');
 export interface INotebookEditorProvider {
-    open(file: Uri): Promise<INotebookEditor>;
+    readonly activeEditor: INotebookEditor | undefined;
+    open(file: Uri, contents: string): Promise<INotebookEditor>;
     show(file: Uri): Promise<INotebookEditor | undefined>;
 }
 
@@ -210,6 +213,8 @@ export const INotebookEditor = Symbol('INotebookEditor');
 export interface INotebookEditor extends IInteractiveBase {
     closed: Event<INotebookEditor>;
     readonly file: Uri;
+    readonly visible: boolean;
+    readonly active: boolean;
     load(contents: string, file: Uri): Promise<void>;
 }
 

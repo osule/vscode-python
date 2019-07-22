@@ -58,6 +58,7 @@ export namespace InteractiveWindowMessages {
     export const ShowPlot = 'show_plot';
     export const StartDebugging = 'start_debugging';
     export const StopDebugging = 'stop_debugging';
+    export const LoadAllCells = 'load_all_cells';
 }
 
 // These are the messages that will mirror'd to guest/hosts in
@@ -171,6 +172,10 @@ export interface IShowDataViewer {
     columnSize: number;
 }
 
+export interface ILoadAllCells {
+    cells: ICell[];
+}
+
 // Map all messages to specific payloads
 export class IInteractiveWindowMapping {
     public [InteractiveWindowMessages.StartCell]: ICell;
@@ -226,4 +231,5 @@ export class IInteractiveWindowMapping {
     public [InteractiveWindowMessages.ShowPlot]: string | undefined;
     public [InteractiveWindowMessages.StartDebugging]: never | undefined;
     public [InteractiveWindowMessages.StopDebugging]: never | undefined;
+    public [InteractiveWindowMessages.LoadAllCells]: ILoadAllCells;
 }

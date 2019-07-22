@@ -140,7 +140,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         this.jupyterExecution.sessionChanged(() => this.loadPromise = this.reloadAfterShutdown());
 
         // Load on a background thread.
-        this.loadPromise = this.load();
+        this.loadPromise = this.startServer();
 
         // For each listener sign up for their post events
         this.listeners.forEach(l => l.postMessage((e) => this.postMessageInternal(e.message, e.payload)));
@@ -784,7 +784,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
                     await server.dispose();
                 }
             }
-            await this.load();
+            await this.startServer();
             await this.addSysInfo(SysInfoReason.New);
         } finally {
             status.dispose();
@@ -806,7 +806,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
             // if closing the host server kills it.
             this.jupyterServer = undefined;
         }
-        return this.load();
+        return this.startServer();
     }
 
     @captureTelemetry(Telemetry.GotoSourceCode, undefined, false)
@@ -1094,7 +1094,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         }
     }
 
-    private load = async (): Promise<void> => {
+    private startServer = async (): Promise<void> => {
         // Status depends upon if we're about to connect to existing server or not.
         const status = (await this.jupyterExecution.getServer(await this.getNotebookOptions())) ?
             this.setStatus(localize.DataScience.connectingToJupyter()) : this.setStatus(localize.DataScience.startingJupyter());

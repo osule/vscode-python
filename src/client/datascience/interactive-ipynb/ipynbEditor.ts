@@ -3,11 +3,10 @@
 'use strict';
 import '../../common/extensions';
 
-import { nbformat } from '@jupyterlab/coreutils';
 import { inject, injectable, multiInject } from 'inversify';
 import * as path from 'path';
 import * as uuid from 'uuid/v4';
-import { Event, EventEmitter, TextEditor, ViewColumn, Uri } from 'vscode';
+import { Event, EventEmitter, Uri, ViewColumn } from 'vscode';
 
 import {
     IApplicationShell,
@@ -23,21 +22,18 @@ import * as localize from '../../common/utils/localize';
 import { EXTENSION_ROOT_DIR } from '../../constants';
 import { IInterpreterService } from '../../interpreter/contracts';
 import { captureTelemetry } from '../../telemetry';
-import { Identifiers, Telemetry, Settings } from '../constants';
+import { Identifiers, Settings, Telemetry } from '../constants';
 import { InteractiveBase } from '../interactive-common/interactiveBase';
 import { InteractiveWindowMessages, ISubmitNewCell } from '../interactive-common/interactiveWindowTypes';
-import { INotebookEditorProvider, INotebookEditor } from '../types';
 import {
-    CellState,
-    ICell,
     ICodeCssGenerator,
     IDataViewerProvider,
-    IInteractiveWindow,
     IInteractiveWindowListener,
-    IInteractiveWindowProvider,
     IJupyterDebugger,
     IJupyterExecution,
     IJupyterVariables,
+    INotebookEditor,
+    INotebookEditorProvider,
     INotebookExporter,
     INotebookImporter,
     INotebookServerOptions,
@@ -71,7 +67,8 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         @inject(INotebookEditorProvider) private editorProvider: INotebookEditorProvider,
         @inject(IDataViewerProvider) dataExplorerProvider: IDataViewerProvider,
         @inject(IJupyterVariables) jupyterVariables: IJupyterVariables,
-        @inject(IJupyterDebugger) jupyterDebugger: IJupyterDebugger
+        @inject(IJupyterDebugger) jupyterDebugger: IJupyterDebugger,
+        @inject(INotebookImporter) private importer: INotebookImporter
     ) {
         super(
             listeners,
@@ -100,6 +97,14 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
 
     }
 
+    public get visible(): boolean {
+        return this.viewState.visible;
+    }
+
+    public get active(): boolean {
+        return this.viewState.active;
+    }
+
     public get file(): Uri {
         return this._file;
     }
@@ -111,8 +116,18 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         }
     }
 
-    public load(content: string, file: Uri): Promise<void> {
+    public async load(content: string, file: Uri): Promise<void> {
+        // Save our uri
+        this._file = file;
 
+        // Update our title to match
+        this.setTitle(path.basename(file.fsPath));
+
+        // Load the contents of this notebook into our cells.
+        const cells = await this.importer.importCells(content);
+
+        // If that works, send the cells to the web view
+        return this.postMessage(InteractiveWindowMessages.LoadAllCells, { cells });
     }
 
     public get closed(): Event<INotebookEditor> {
@@ -128,7 +143,7 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             this.submitCode(info.code, Identifiers.EmptyFileName, 0, info.id, undefined).ignoreErrors();
 
             // Activate the other side, and send as if came from a file
-            this.editorProvider.open(this.file).then(_v => {
+            this.editorProvider.show(this.file).then(_v => {
                 this.shareMessage(InteractiveWindowMessages.RemoteAddCode, { code: info.code, file: Identifiers.EmptyFileName, line: 0, id: info.id, originator: this.id, debug: false });
             }).ignoreErrors();
         }
@@ -148,7 +163,7 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             enableDebugging: true,
             uri: serverURI,
             useDefaultConfig,
-            purpose: Identifiers.HistoryPurpose
+            purpose: uuid()  // Each one of these is unique per file.
         };
     }
 }
