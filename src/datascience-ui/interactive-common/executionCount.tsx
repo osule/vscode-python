@@ -3,7 +3,6 @@
 
 'use strict';
 import * as React from 'react';
-import './executionCount.css';
 
 interface IExecutionCountProps {
     isBusy: boolean;

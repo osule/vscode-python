@@ -24,10 +24,7 @@ import { CollapseButton } from './collapseButton';
 import { ExecutionCount } from './executionCount';
 import { InformationMessages } from './informationMessages';
 import { InputHistory } from './inputHistory';
-import { MenuBar } from './menuBar';
 import { displayOrder, richestMimetype, transforms } from './transforms';
-
-import './cell.css';
 
 interface ICellProps {
     role?: string;
@@ -242,7 +239,7 @@ export class Cell extends React.Component<ICellProps> {
                             open={this.props.cellVM.inputBlockOpen}
                             onClick={this.toggleInputBlock}
                             tooltip={getLocString('DataScience.collapseInputTooltip', 'Collapse input block')} />
-                        <MenuBar baseTheme={this.props.baseTheme}>
+                        <div className='cell-menu-bar-outer'>
                             <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource}>
                                 <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
                             </ImageButton>
@@ -252,13 +249,13 @@ export class Cell extends React.Component<ICellProps> {
                             <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.delete} tooltip={this.getDeleteString()} hidden={this.props.cellVM.editable}>
                                 <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
                             </ImageButton>
-                        </MenuBar>
+                        </div>
                     </div>
                 );
         } else {
             return (
                     <div className='controls-div'>
-                        <MenuBar baseTheme={this.props.baseTheme}>
+                        <div className='cell-menu-bar-outer'>
                             <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource}>
                                 <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
                             </ImageButton>
@@ -268,7 +265,7 @@ export class Cell extends React.Component<ICellProps> {
                             <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.delete} tooltip={this.getDeleteString()} hidden={this.props.cellVM.editable}>
                                 <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
                             </ImageButton>
-                        </MenuBar>
+                        </div>
                     </div>
                 );
         }

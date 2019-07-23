@@ -4,7 +4,6 @@
 
 import * as React from 'react';
 import { getLocString } from '../react-common/locReactSide';
-import './collapseButton.css';
 
 interface ICollapseButtonProps {
     theme: string;
