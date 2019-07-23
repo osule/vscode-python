@@ -12,7 +12,7 @@ import { IDocumentManager } from '../../../client/common/application/types';
 import { EXTENSION_ROOT_DIR } from '../../../client/common/constants';
 import { traceError } from '../../../client/common/logger';
 import { Commands } from '../../../client/datascience/constants';
-import { InteractiveWindowMessages } from '../../../client/datascience/interactive-window/interactiveWindowTypes';
+import { InteractiveWindowMessages } from '../../../client/datascience/interactive-common/interactiveWindowTypes';
 import {
     ICell,
     ICodeLensFactory,

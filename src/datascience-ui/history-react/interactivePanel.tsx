@@ -27,6 +27,7 @@ interface IInteractivePanelProps {
 export class InteractivePanel extends React.Component<IInteractivePanelProps, IMainState> {
     private mainPanelRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     private editCellRef: React.RefObject<Cell> = React.createRef<Cell>();
+    private contentPanelRef: React.RefObject<ContentPanel> = React.createRef<ContentPanel>();
     private stateController: InteractivePanelStateController;
 
     constructor(props: IInteractivePanelProps) {
@@ -54,7 +55,8 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             expectingDark: this.props.baseTheme !== 'vscode-light',
             initialState: this.state,
             setState: this.setState.bind(this),
-            activate: this.activated.bind(this)
+            activate: this.activated.bind(this),
+            scrollToCell: this.scrollToCell.bind(this)
         });
     }
 
@@ -94,6 +96,12 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
         }
     }
 
+    private scrollToCell(id: string) {
+        if (this.contentPanelRef && this.contentPanelRef.current) {
+            this.contentPanelRef.current.scrollToCell(id);
+        }
+    }
+
     private renderToolbarPanel(baseTheme: string) {
         const toolbarProps = this.getToolbarProps(baseTheme);
         return <ToolbarPanel {...toolbarProps} />;
@@ -113,7 +121,7 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
 
         // Otherwise render our cells.
         const contentProps = this.getContentProps(baseTheme);
-        return <ContentPanel {...contentProps} />;
+        return <ContentPanel {...contentProps} ref={this.contentPanelRef} />;
     }
 
     private renderFooterPanel(baseTheme: string) {

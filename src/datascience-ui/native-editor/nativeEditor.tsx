@@ -25,6 +25,7 @@ interface INativeEditorProps {
 export class NativeEditor extends React.Component<INativeEditorProps, IMainState> {
     private mainPanelRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     private editCellRef: React.RefObject<Cell> = React.createRef<Cell>();
+    private contentPanelRef: React.RefObject<ContentPanel> = React.createRef<ContentPanel>();
     private stateController: NativeEditorStateController;
 
     constructor(props: INativeEditorProps) {
@@ -52,7 +53,8 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             expectingDark: this.props.baseTheme !== 'vscode-light',
             initialState: this.state,
             setState: this.setState.bind(this),
-            activate: this.activated.bind(this)
+            activate: this.activated.bind(this),
+            scrollToCell: this.scrollToCell.bind(this)
         });
     }
 
@@ -89,6 +91,12 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         }
     }
 
+    private scrollToCell(id: string) {
+        if (this.contentPanelRef && this.contentPanelRef.current) {
+            this.contentPanelRef.current.scrollToCell(id);
+        }
+    }
+
     private renderToolbarPanel(baseTheme: string) {
         const toolbarProps = this.getToolbarProps(baseTheme);
         return <ToolbarPanel {...toolbarProps} />;
@@ -108,7 +116,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
 
         // Otherwise render our cells.
         const contentProps = this.getContentProps(baseTheme);
-        return <ContentPanel {...contentProps} />;
+        return <ContentPanel {...contentProps} ref={this.contentPanelRef}/>;
     }
 
     private getContentProps = (baseTheme: string): IContentPanelProps => {
