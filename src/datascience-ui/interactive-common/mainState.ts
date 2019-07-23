@@ -16,7 +16,7 @@ import { InputHistory } from './inputHistory';
 
 export interface IMainState {
     cellVMs: ICellViewModel[];
-    editCellVM: ICellViewModel;
+    editCellVM: ICellViewModel | undefined;
     busy: boolean;
     skipNextScroll?: boolean;
     undoStack: ICellViewModel[][];

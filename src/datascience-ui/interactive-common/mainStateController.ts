@@ -1,7 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 'use strict';
+import * as fastDeepEqual from 'fast-deep-equal';
 import { min } from 'lodash';
+// tslint:disable-next-line: no-require-imports
+import cloneDeep = require('lodash/cloneDeep');
 import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import * as uuid from 'uuid/v4';
 
@@ -36,7 +39,7 @@ export interface IMainStateControllerProps {
     skipDefault: boolean;
     testMode: boolean;
     expectingDark: boolean;
-    setState(state: {}): void;
+    setState(state: {}, callback: () => void): void;
     activate(): void;
     scrollToCell(id: string): void;
 }
@@ -54,10 +57,11 @@ export class MainStateController implements IMessageHandler {
     // tslint:disable-next-line:max-func-body-length
     constructor(private props: IMainStateControllerProps) {
         this.state = { editorOptions: this.computeEditorOptions(), ...props.initialState };
+        let newState = cloneDeep(this.state);
 
         // Add test state if necessary
         if (!this.props.skipDefault) {
-            this.state = generateTestState(this.inputBlockToggled);
+            newState = generateTestState(this.inputBlockToggled);
         }
 
         // Setup the completion provider for monaco. We only need one
@@ -67,7 +71,7 @@ export class MainStateController implements IMessageHandler {
         if (this.props.skipDefault) {
             if (this.props.testMode) {
                 // Running a test, skip the tokenizer. We want the UI to display synchronously
-                this.state = { tokenizerLoaded: true, ...this.state };
+                newState = { tokenizerLoaded: true, ...newState };
 
                 // However we still need to register python as a language
                 registerMonacoLanguage();
@@ -86,6 +90,8 @@ export class MainStateController implements IMessageHandler {
         this.postOffice.sendUnsafeMessage(CssMessages.GetCssRequest, { isDark: this.props.expectingDark });
         this.postOffice.sendUnsafeMessage(CssMessages.GetMonacoThemeRequest, { isDark: this.props.expectingDark });
 
+        // Since the state isn't actually part of a react control, we need to force at least one update
+        setTimeout(() => this.setState(newState), 10);
     }
 
     public dispose() {
@@ -97,6 +103,11 @@ export class MainStateController implements IMessageHandler {
 
         // Get rid of our post office
         this.postOffice.dispose();
+    }
+
+    public requiresUpdate(nextState: IMainState): boolean {
+        // Compare all keys
+        return !fastDeepEqual(this.state, nextState);
     }
 
     // tslint:disable-next-line:no-any cyclomatic-complexity max-func-body-length
@@ -140,13 +151,13 @@ export class MainStateController implements IMessageHandler {
 
             case InteractiveWindowMessages.StartProgress:
                 if (!this.props.testMode) {
-                    this.props.setState({ busy: true });
+                    this.setState({ busy: true });
                 }
                 break;
 
             case InteractiveWindowMessages.StopProgress:
                 if (!this.props.testMode) {
-                    this.props.setState({ busy: false });
+                    this.setState({ busy: false });
                 }
                 break;
 
@@ -176,15 +187,15 @@ export class MainStateController implements IMessageHandler {
 
             case InteractiveWindowMessages.RestartKernel:
                 // this should be the response from a restart.
-                this.props.setState({ currentExecutionCount: 0 });
+                this.setState({ currentExecutionCount: 0 });
                 break;
 
             case InteractiveWindowMessages.StartDebugging:
-                this.props.setState({ debugging: true });
+                this.setState({ debugging: true });
                 break;
 
             case InteractiveWindowMessages.StopDebugging:
-                this.props.setState({ debugging: false });
+                this.setState({ debugging: false });
                 break;
 
             case InteractiveWindowMessages.LoadAllCells:
@@ -214,7 +225,7 @@ export class MainStateController implements IMessageHandler {
 
     public stopBusy = () => {
         if (this.state.busy) {
-            this.props.setState({ busy: false });
+            this.setState({ busy: false });
         }
     }
 
@@ -224,7 +235,7 @@ export class MainStateController implements IMessageHandler {
         const redoStack = this.state.redoStack.slice(0, this.state.redoStack.length - 1);
         const undoStack = this.pushStack(this.state.undoStack, this.state.cellVMs);
         this.sendMessage(InteractiveWindowMessages.Redo);
-        this.props.setState({
+        this.setState({
             cellVMs: cells,
             undoStack: undoStack,
             redoStack: redoStack,
@@ -241,7 +252,7 @@ export class MainStateController implements IMessageHandler {
         const undoStack = this.state.undoStack.slice(0, this.state.undoStack.length - 1);
         const redoStack = this.pushStack(this.state.redoStack, this.state.cellVMs);
         this.sendMessage(InteractiveWindowMessages.Undo);
-        this.props.setState({
+        this.setState({
             cellVMs: cells,
             undoStack: undoStack,
             redoStack: redoStack,
@@ -260,7 +271,7 @@ export class MainStateController implements IMessageHandler {
         }
 
         // Update our state
-        this.props.setState({
+        this.setState({
             cellVMs: this.state.cellVMs.filter((_c: ICellViewModel, i: number) => {
                 return i !== index;
             }),
@@ -422,7 +433,7 @@ export class MainStateController implements IMessageHandler {
 
             // Stick in a new cell at the bottom that's editable and update our state
             // so that the last cell becomes busy
-            this.props.setState({
+            this.setState({
                 cellVMs: [...this.state.cellVMs, inputCell],
                 undoStack: this.pushStack(this.state.undoStack, this.state.cellVMs),
                 redoStack: this.state.redoStack,
@@ -435,6 +446,12 @@ export class MainStateController implements IMessageHandler {
                 this.sendMessage(InteractiveWindowMessages.SubmitNewCell, { code, id: inputCell.cell.id });
             }
         }
+    }
+
+    private setState(newState: {}) {
+        this.props.setState(newState, () => {
+            this.state = { ...this.state, ...newState };
+        });
     }
 
     private computeEditorOptions(): monacoEditor.editor.IEditorOptions {
@@ -471,7 +488,7 @@ export class MainStateController implements IMessageHandler {
         // update our base theme if allowed. Don't do this
         // during testing as it will mess up the expected render count.
         if (!this.props.testMode) {
-            this.props.setState(
+            this.setState(
                 {
                     forceDark: newDark
                 }
@@ -483,7 +500,7 @@ export class MainStateController implements IMessageHandler {
         // update our base theme if allowed. Don't do this
         // during testing as it will mess up the expected render count.
         if (!this.props.testMode) {
-            this.props.setState(
+            this.setState(
                 {
                     monacoTheme: theme
                 }
@@ -501,7 +518,7 @@ export class MainStateController implements IMessageHandler {
             const showInputs = getSettings().showCellInputCode;
 
             // Also save the editor options. Intellisense options may have changed.
-            this.props.setState({
+            this.setState({
                 editorOptions: this.computeEditorOptions()
             });
 
@@ -547,7 +564,7 @@ export class MainStateController implements IMessageHandler {
 
     private clearAllSilent = () => {
         // Update our state
-        this.props.setState({
+        this.setState({
             cellVMs: [],
             undoStack: this.pushStack(this.state.undoStack, this.state.cellVMs),
             skipNextScroll: true,
@@ -573,7 +590,7 @@ export class MainStateController implements IMessageHandler {
 
             if (cellVM) {
                 const newList = [...this.state.cellVMs, cellVM];
-                this.props.setState({
+                this.setState({
                     cellVMs: newList,
                     undoStack: this.pushStack(this.state.undoStack, this.state.cellVMs),
                     redoStack: this.state.redoStack,
@@ -600,7 +617,7 @@ export class MainStateController implements IMessageHandler {
             // Mutate the shallow array copy
             cellVMArray[cellVMIndex] = this.alterCellVM(targetCellVM, true, !targetCellVM.inputBlockOpen);
 
-            this.props.setState({
+            this.setState({
                 skipNextScroll: true,
                 cellVMs: cellVMArray
             });
@@ -628,7 +645,7 @@ export class MainStateController implements IMessageHandler {
             return this.alterCellVM(value, visible, expanded);
         });
 
-        this.props.setState({
+        this.setState({
             skipNextScroll: true,
             cellVMs: newCells
         });
@@ -712,7 +729,7 @@ export class MainStateController implements IMessageHandler {
             // Update our state but only the cell vms.
             const newVMs = [...this.state.cellVMs];
             newVMs[index].cell = cell;
-            this.props.setState({
+            this.setState({
                 cellVMs: newVMs,
                 currentExecutionCount: newExecutionCount
             });
@@ -774,7 +791,7 @@ export class MainStateController implements IMessageHandler {
                 if (stateVariable >= 0) {
                     const newState = [...this.state.variables];
                     newState.splice(stateVariable, 1, variable);
-                    this.props.setState({
+                    this.setState({
                         variables: newState,
                         pendingVariableCount: Math.max(0, this.state.pendingVariableCount - 1)
                     });
@@ -791,7 +808,7 @@ export class MainStateController implements IMessageHandler {
 
             // Check to see if we have moved to a new execution count only send our update if we are on the same count as the request
             if (variablesResponse.executionCount === this.state.currentExecutionCount) {
-                this.props.setState({
+                this.setState({
                     variables: variablesResponse.variables,
                     pendingVariableCount: variablesResponse.variables.length
                 });
@@ -814,7 +831,7 @@ export class MainStateController implements IMessageHandler {
 
     // tslint:disable-next-line: no-any
     private tokenizerLoaded = (_e?: any) => {
-        this.props.setState({ tokenizerLoaded: true });
+        this.setState({ tokenizerLoaded: true });
     }
 
     private loadOnigasm = (): Promise<ArrayBuffer> => {
@@ -878,7 +895,7 @@ export class MainStateController implements IMessageHandler {
                 this.darkChanged(computedKnownDark);
             }
 
-            this.props.setState({
+            this.setState({
                 rootCss: response.css,
                 theme: response.theme,
                 knownDark: computedKnownDark

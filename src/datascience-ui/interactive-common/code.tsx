@@ -98,6 +98,7 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
                     editorMounted={this.editorDidMount}
                     options={options}
                     openLink={this.props.openLink}
+                    ref={this.editorRef}
                     forceBackground={this.props.forceBackgroundColor}
                 />
                 <div className={waterMarkClass}>{this.getWatermarkString()}</div>
@@ -146,8 +147,8 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
         if (this.state.model) {
             this.props.onChange(e.changes, this.state.model.id);
         }
-        if (!this.props.readOnly) {
-            this.setState({allowWatermark: false});
+        if (!this.props.readOnly && this.state.model) {
+            this.setState({allowWatermark:  this.state.model.getValueLength() === 0});
         }
     }
 

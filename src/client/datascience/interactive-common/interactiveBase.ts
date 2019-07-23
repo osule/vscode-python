@@ -573,7 +573,9 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     }
 
     protected startServer(): Promise<void> {
-        this.loadPromise = this.startServerImpl();
+        if (!this.loadPromise) {
+            this.loadPromise = this.startServerImpl();
+        }
         return this.loadPromise;
     }
 

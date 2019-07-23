@@ -45,7 +45,7 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             pendingVariableCount: 0,
             debugging: false,
             knownDark: false,
-            editCellVM: createEditableCellVM(1)
+            editCellVM: getSettings && getSettings().allowInput ? createEditableCellVM(1) : undefined
         };
 
         // Create our state controller. It manages updating our state.
@@ -58,6 +58,10 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             activate: this.activated.bind(this),
             scrollToCell: this.scrollToCell.bind(this)
         });
+    }
+
+    public shouldComponentUpdate(_nextProps: IInteractivePanelProps, nextState: IMainState): boolean {
+        return this.stateController.requiresUpdate(nextState);
     }
 
     public render() {
