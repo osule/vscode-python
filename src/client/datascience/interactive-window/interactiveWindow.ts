@@ -135,6 +135,11 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
         this.postMessage(InteractiveWindowMessages.CollapseAll).ignoreErrors();
     }
 
+    @captureTelemetry(Telemetry.ScrolledToCell)
+    public scrollToCell(id: string): void {
+        this.postMessage(InteractiveWindowMessages.ScrollToCell, { id }).ignoreErrors();
+    }
+
     @captureTelemetry(Telemetry.SubmitCellThroughInput, undefined, false)
     // tslint:disable-next-line:no-any
     protected submitNewCell(info: ISubmitNewCell) {

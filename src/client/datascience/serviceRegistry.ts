@@ -129,4 +129,5 @@ export function registerTypes(serviceManager: IServiceManager) {
     serviceManager.addSingleton<INotebookEditorProvider>(INotebookEditorProvider, wrapType(IpynbProvider));
     serviceManager.add<INotebookEditor>(INotebookEditor, wrapType(IpynbEditor));
     serviceManager.addSingleton<IDataScienceCommandListener>(IDataScienceCommandListener, wrapType(IpynbCommandListener));
+    serviceManager.addBinding(ICodeLensFactory, IInteractiveWindowListener);
 }

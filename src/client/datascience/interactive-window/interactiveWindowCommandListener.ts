@@ -98,6 +98,7 @@ export class InteractiveWindowCommandListener implements IDataScienceCommandList
         this.disposableRegistry.push(commandManager.registerCommand(Commands.ExpandAllCells, () => this.expandAllCells()));
         this.disposableRegistry.push(commandManager.registerCommand(Commands.CollapseAllCells, () => this.collapseAllCells()));
         this.disposableRegistry.push(commandManager.registerCommand(Commands.ExportOutputAsNotebook, () => this.exportCells()));
+        this.disposableRegistry.push(commandManager.registerCommand(Commands.ScrollToCell, (_file: string, id: string) => this.scrollToCell(id)));
     }
 
     // tslint:disable:no-any
@@ -378,6 +379,13 @@ export class InteractiveWindowCommandListener implements IDataScienceCommandList
         editor.edit((editBuilder) => {
             editBuilder.insert(new Position(editor.document.lineCount, 0), '\n');
         });
-
     }
+
+    private async scrollToCell(id: string): Promise<void> {
+        if (id) {
+            const interactiveWindow = await this.interactiveWindowProvider.getOrCreateActive();
+            interactiveWindow.scrollToCell(id);
+        }
+    }
+
 }

@@ -38,6 +38,7 @@ export interface IMainStateControllerProps {
     expectingDark: boolean;
     setState(state: {}): void;
     activate(): void;
+    scrollToCell(id: string): void;
 }
 
 // tslint:disable-next-line: max-func-body-length
@@ -196,6 +197,12 @@ export class MainStateController implements IMessageHandler {
 
             case CssMessages.GetMonacoThemeResponse:
                 this.handleMonacoThemeResponse(payload);
+                break;
+
+            case InteractiveWindowMessages.ScrollToCell:
+                if (payload.id) {
+                    this.props.scrollToCell(payload.id);
+                }
                 break;
 
             default:
@@ -676,6 +683,7 @@ export class MainStateController implements IMessageHandler {
 
     private sendInfo = () => {
         const info: IInteractiveWindowInfo = {
+            visibleCells: this.getNonEditCellVMs().map(cvm => cvm.cell),
             cellCount: this.getNonEditCellVMs().length,
             undoCount: this.state.undoStack.length,
             redoCount: this.state.redoStack.length
