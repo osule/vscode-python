@@ -405,36 +405,38 @@ export class MainStateController implements IMessageHandler {
     public submitInput = (code: string, inputCell: ICellViewModel) => {
         // This should be from our last entry. Switch this entry to read only, and add a new item to our list
         if (inputCell) {
+            let newCell = cloneDeep(inputCell);
+
             // Change this editable cell to not editable.
-            inputCell.cell.state = CellState.executing;
-            inputCell.cell.data.source = code;
+            newCell.cell.state = CellState.executing;
+            newCell.cell.data.source = code;
 
             // Change type to markdown if necessary
             const split = code.splitLines({ trim: false });
             const firstLine = split[0];
             const matcher = new CellMatcher(getSettings());
             if (matcher.isMarkdown(firstLine)) {
-                inputCell.cell.data.cell_type = 'markdown';
-                inputCell.cell.data.source = generateMarkdownFromCodeLines(split);
-                inputCell.cell.state = CellState.finished;
+                newCell.cell.data.cell_type = 'markdown';
+                newCell.cell.data.source = generateMarkdownFromCodeLines(split);
+                newCell.cell.state = CellState.finished;
             }
 
             // Update input controls (always show expanded since we just edited it.)
-            inputCell = createCellVM(inputCell.cell, getSettings(), this.inputBlockToggled);
+            newCell = createCellVM(newCell.cell, getSettings(), this.inputBlockToggled);
             const collapseInputs = getSettings().collapseCellInputCodeByDefault;
-            inputCell = this.alterCellVM(inputCell, true, !collapseInputs);
+            newCell = this.alterCellVM(newCell, true, !collapseInputs);
 
             // Generate a new id (as the edit cell always has the same one)
-            inputCell.cell.id = uuid();
+            newCell.cell.id = uuid();
 
             // Indicate this is direct input so that we don't hide it if the user has
             // hide all inputs turned on.
-            inputCell.directInput = true;
+            newCell.directInput = true;
 
             // Stick in a new cell at the bottom that's editable and update our state
             // so that the last cell becomes busy
             this.setState({
-                cellVMs: [...this.state.cellVMs, inputCell],
+                cellVMs: [...this.state.cellVMs, newCell],
                 undoStack: this.pushStack(this.state.undoStack, this.state.cellVMs),
                 redoStack: this.state.redoStack,
                 skipNextScroll: false,
@@ -442,10 +444,57 @@ export class MainStateController implements IMessageHandler {
             });
 
             // Send a message to execute this code if necessary.
-            if (inputCell.cell.state !== CellState.finished) {
-                this.sendMessage(InteractiveWindowMessages.SubmitNewCell, { code, id: inputCell.cell.id });
+            if (newCell.cell.state !== CellState.finished) {
+                this.sendMessage(InteractiveWindowMessages.SubmitNewCell, { code, id: newCell.cell.id });
             }
         }
+    }
+
+    // Adjust the visibility or collapsed state of a cell
+    protected alterCellVM(cellVM: ICellViewModel, visible: boolean, expanded: boolean): ICellViewModel {
+        if (cellVM.cell.data.cell_type === 'code') {
+            // If we are already in the correct state, return back our initial cell vm
+            if (cellVM.inputBlockShow === visible && cellVM.inputBlockOpen === expanded) {
+                return cellVM;
+            }
+
+            const newCellVM = { ...cellVM };
+            if (cellVM.inputBlockShow !== visible) {
+                if (visible) {
+                    // Show the cell, the rest of the function will add on correct collapse state
+                    newCellVM.inputBlockShow = true;
+                } else {
+                    // Hide this cell
+                    newCellVM.inputBlockShow = false;
+                }
+            }
+
+            // No elseif as we want newly visible cells to pick up the correct expand / collapse state
+            if (cellVM.inputBlockOpen !== expanded && cellVM.inputBlockCollapseNeeded && cellVM.inputBlockShow) {
+                if (expanded) {
+                    // Expand the cell
+                    const newText = extractInputText(cellVM.cell, getSettings());
+
+                    newCellVM.inputBlockOpen = true;
+                    newCellVM.inputBlockText = newText;
+                } else {
+                    // Collapse the cell
+                    let newText = extractInputText(cellVM.cell, getSettings());
+                    if (newText.length > 0) {
+                        newText = newText.split('\n', 1)[0];
+                        newText = newText.slice(0, 255); // Slice to limit length, slicing past length is fine
+                        newText = newText.concat('...');
+                    }
+
+                    newCellVM.inputBlockOpen = false;
+                    newCellVM.inputBlockText = newText;
+                }
+            }
+
+            return newCellVM;
+        }
+
+        return cellVM;
     }
 
     private setState(newState: {}) {
@@ -649,53 +698,6 @@ export class MainStateController implements IMessageHandler {
             skipNextScroll: true,
             cellVMs: newCells
         });
-    }
-
-    // Adjust the visibility or collapsed state of a cell
-    private alterCellVM = (cellVM: ICellViewModel, visible: boolean, expanded: boolean) => {
-        if (cellVM.cell.data.cell_type === 'code') {
-            // If we are already in the correct state, return back our initial cell vm
-            if (cellVM.inputBlockShow === visible && cellVM.inputBlockOpen === expanded) {
-                return cellVM;
-            }
-
-            const newCellVM = { ...cellVM };
-            if (cellVM.inputBlockShow !== visible) {
-                if (visible) {
-                    // Show the cell, the rest of the function will add on correct collapse state
-                    newCellVM.inputBlockShow = true;
-                } else {
-                    // Hide this cell
-                    newCellVM.inputBlockShow = false;
-                }
-            }
-
-            // No elseif as we want newly visible cells to pick up the correct expand / collapse state
-            if (cellVM.inputBlockOpen !== expanded && cellVM.inputBlockCollapseNeeded && cellVM.inputBlockShow) {
-                if (expanded) {
-                    // Expand the cell
-                    const newText = extractInputText(cellVM.cell, getSettings());
-
-                    newCellVM.inputBlockOpen = true;
-                    newCellVM.inputBlockText = newText;
-                } else {
-                    // Collapse the cell
-                    let newText = extractInputText(cellVM.cell, getSettings());
-                    if (newText.length > 0) {
-                        newText = newText.split('\n', 1)[0];
-                        newText = newText.slice(0, 255); // Slice to limit length, slicing past length is fine
-                        newText = newText.concat('...');
-                    }
-
-                    newCellVM.inputBlockOpen = false;
-                    newCellVM.inputBlockText = newText;
-                }
-            }
-
-            return newCellVM;
-        }
-
-        return cellVM;
     }
 
     private sendInfo = () => {

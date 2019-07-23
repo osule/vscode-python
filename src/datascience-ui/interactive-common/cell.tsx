@@ -173,7 +173,6 @@ export class Cell extends React.Component<ICellProps> {
     }
 
     private renderNormalCell() {
-        const hasNoSource = this.props.cellVM.cell.file === Identifiers.EmptyFileName;
         const results: JSX.Element[] = this.renderResults();
         const allowsPlainInput = getSettings().showCellInputCode || this.props.cellVM.directInput || this.props.cellVM.editable;
         const shouldRender = allowsPlainInput || (results && results.length > 0);
@@ -184,17 +183,6 @@ export class Cell extends React.Component<ICellProps> {
         if (shouldRender) {
             return (
                 <div className={cellWrapperClass} role={this.props.role} onClick={this.onMouseClick}>
-                    <MenuBar baseTheme={this.props.baseTheme}>
-                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource}>
-                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
-                        </ImageButton>
-                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || this.props.cellVM.editable}>
-                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
-                        </ImageButton>
-                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.delete} tooltip={this.getDeleteString()} hidden={this.props.cellVM.editable}>
-                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
-                        </ImageButton>
-                    </MenuBar>
                     <div className={cellOuterClass}>
                         {this.renderControls()}
                         <div className='content-div'>
@@ -236,6 +224,7 @@ export class Cell extends React.Component<ICellProps> {
         const collapseVisible = (this.props.allowCollapse && this.props.cellVM.inputBlockCollapseNeeded && this.props.cellVM.inputBlockShow && !this.props.cellVM.editable);
         const executionCount = this.props.cellVM && this.props.cellVM.cell && this.props.cellVM.cell.data && this.props.cellVM.cell.data.execution_count ?
             this.props.cellVM.cell.data.execution_count.toString() : '-';
+        const hasNoSource = this.props.cellVM.cell.file === Identifiers.EmptyFileName;
 
         // Only code cells have controls. Markdown should be empty
         if (this.isCodeCell()) {
@@ -253,10 +242,35 @@ export class Cell extends React.Component<ICellProps> {
                             open={this.props.cellVM.inputBlockOpen}
                             onClick={this.toggleInputBlock}
                             tooltip={getLocString('DataScience.collapseInputTooltip', 'Collapse input block')} />
+                        <MenuBar baseTheme={this.props.baseTheme}>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || this.props.cellVM.editable}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.delete} tooltip={this.getDeleteString()} hidden={this.props.cellVM.editable}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
+                            </ImageButton>
+                        </MenuBar>
                     </div>
                 );
         } else {
-            return null;
+            return (
+                    <div className='controls-div'>
+                        <MenuBar baseTheme={this.props.baseTheme}>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || this.props.cellVM.editable}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.delete} tooltip={this.getDeleteString()} hidden={this.props.cellVM.editable}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
+                            </ImageButton>
+                        </MenuBar>
+                    </div>
+                );
         }
     }
 

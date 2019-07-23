@@ -200,7 +200,8 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             expandImage: this.stateController.showPlot,
             editable: false,
             newCellVM: undefined,
-            submitInput: this.stateController.submitInput
+            submitInput: this.stateController.submitInput,
+            editExecutionCount: this.getInputExecutionCount()
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {

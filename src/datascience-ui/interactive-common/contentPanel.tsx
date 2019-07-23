@@ -25,6 +25,7 @@ export interface IContentPanelProps {
     monacoTheme: string | undefined;
     editorOptions?: monacoEditor.editor.IEditorOptions;
     editable: boolean;
+    editExecutionCount: number;
     newCellVM?: ICellViewModel;
     gotoCellCode(index: number): void;
     copyCellCode(index: number): void;
@@ -139,7 +140,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                     codeTheme={this.props.codeTheme}
                     allowCollapse={false}
                     showWatermark={true}
-                    editExecutionCount={0}
+                    editExecutionCount={this.props.editExecutionCount}
                     gotoCode={noop}
                     copyCode={noop}
                     delete={noop}

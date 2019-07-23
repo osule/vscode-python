@@ -124,6 +124,10 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         return <ContentPanel {...contentProps} ref={this.contentPanelRef}/>;
     }
 
+    private getInputExecutionCount = () : number => {
+        return this.state.currentExecutionCount + 1;
+    }
+
     private getContentProps = (baseTheme: string): IContentPanelProps => {
         return {
             editorOptions: this.state.editorOptions,
@@ -144,7 +148,8 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             expandImage: this.stateController.showPlot,
             editable: true,
             newCellVM: this.state.editCellVM,
-            submitInput: this.stateController.submitInput
+            submitInput: this.stateController.submitInput,
+            editExecutionCount: this.getInputExecutionCount()
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 'use strict';
 import { InteractiveWindowMessages } from '../../client/datascience/interactive-common/interactiveWindowTypes';
+import { ICellViewModel } from '../interactive-common/cell';
 import { IMainStateControllerProps, MainStateController } from '../interactive-common/mainStateController';
 
 export class NativeEditorStateController extends MainStateController {
@@ -27,4 +28,8 @@ export class NativeEditorStateController extends MainStateController {
         return result;
     }
 
+    // Adjust the visibility or collapsed state of a cell
+    protected alterCellVM(cellVM: ICellViewModel, _visible: boolean, _expanded: boolean): ICellViewModel {
+        return cellVM;
+    }
 }
