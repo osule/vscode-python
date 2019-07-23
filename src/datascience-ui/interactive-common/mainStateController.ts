@@ -526,7 +526,8 @@ export class MainStateController implements IMessageHandler {
                     enabled: intellisenseOptions.parameterHintsEnabled
                 },
                 cursorStyle: extraSettings.editorCursor,
-                cursorBlinking: extraSettings.editorCursorBlink
+                cursorBlinking: extraSettings.editorCursorBlink,
+                overviewRulerLanes: 0
             };
         }
 

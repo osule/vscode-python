@@ -25,6 +25,7 @@ export interface IContentPanelProps {
     editorOptions?: monacoEditor.editor.IEditorOptions;
     editable: boolean;
     editExecutionCount: number;
+    editorMeasureClassName?: string;
     newCellVM?: ICellViewModel;
     gotoCellCode(index: number): void;
     copyCellCode(index: number): void;
@@ -113,6 +114,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                             monacoTheme={this.props.monacoTheme}
                             openLink={this.props.openLink}
                             expandImage={this.props.expandImage}
+                            editorMeasureClassName={this.props.editorMeasureClassName}
                         />
                     </ErrorBoundary>
                 </div>);
@@ -148,6 +150,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                     monacoTheme={this.props.monacoTheme}
                     openLink={this.props.openLink}
                     expandImage={this.props.expandImage}
+                    editorMeasureClassName={this.props.editorMeasureClassName}
                     />
             );
         } else {

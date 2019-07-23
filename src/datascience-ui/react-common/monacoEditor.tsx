@@ -22,6 +22,7 @@ export interface IMonacoEditorProps {
     options: monacoEditor.editor.IEditorConstructionOptions;
     testMode?: boolean;
     forceBackground?: string;
+    measureWidthClassName?: string;
     editorMounted(editor: monacoEditor.editor.IStandaloneCodeEditor): void;
     openLink(uri: monacoEditor.Uri): void;
 }
@@ -203,10 +204,11 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
     }
 
     public render() {
+        const measureWidthClassName = this.props.measureWidthClassName ? this.props.measureWidthClassName : 'measure-width-div';
         return (
             <div className='monaco-editor-outer-container' ref={this.containerRef}>
                 <div className='monaco-editor-container' />
-                <div className='measure-width-div' ref={this.measureWidthRef} />
+                <div className={measureWidthClassName} ref={this.measureWidthRef} />
             </div>
         );
     }

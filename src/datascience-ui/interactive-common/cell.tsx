@@ -39,6 +39,7 @@ interface ICellProps {
     monacoTheme: string | undefined;
     editorOptions?: monacoEditor.editor.IEditorOptions;
     editExecutionCount: number;
+    editorMeasureClassName?: string;
     allowCollapse: boolean;
     gotoCode(): void;
     copyCode(): void;
@@ -218,57 +219,32 @@ export class Cell extends React.Component<ICellProps> {
 
     private renderControls = () => {
         const busy = this.props.cellVM.cell.state === CellState.init || this.props.cellVM.cell.state === CellState.executing;
-        const collapseVisible = (this.props.allowCollapse && this.props.cellVM.inputBlockCollapseNeeded && this.props.cellVM.inputBlockShow && !this.props.cellVM.editable);
+        const collapseVisible = (this.props.allowCollapse && this.props.cellVM.inputBlockCollapseNeeded && this.props.cellVM.inputBlockShow && !this.props.cellVM.editable && this.isCodeCell());
         const executionCount = this.props.cellVM && this.props.cellVM.cell && this.props.cellVM.cell.data && this.props.cellVM.cell.data.execution_count ?
             this.props.cellVM.cell.data.execution_count.toString() : '-';
         const hasNoSource = this.props.cellVM.cell.file === Identifiers.EmptyFileName;
 
-        // Only code cells have controls. Markdown should be empty
-        if (this.isCodeCell()) {
-
-            return this.props.cellVM.editable ?
-                (
-                    <div className='controls-div'>
-                        <ExecutionCount isBusy={busy} count={this.props.editExecutionCount.toString()} visible={this.isCodeCell()} />
-                    </div>
-                ) : (
-                    <div className='controls-div'>
-                        <ExecutionCount isBusy={busy} count={executionCount} visible={this.isCodeCell()} />
-                        <CollapseButton theme={this.props.baseTheme}
-                            visible={collapseVisible}
-                            open={this.props.cellVM.inputBlockOpen}
-                            onClick={this.toggleInputBlock}
-                            tooltip={getLocString('DataScience.collapseInputTooltip', 'Collapse input block')} />
-                        <div className='cell-menu-bar-outer'>
-                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource}>
-                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
-                            </ImageButton>
-                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || this.props.cellVM.editable}>
-                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
-                            </ImageButton>
-                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.delete} tooltip={this.getDeleteString()} hidden={this.props.cellVM.editable}>
-                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
-                            </ImageButton>
-                        </div>
-                    </div>
-                );
-        } else {
-            return (
-                    <div className='controls-div'>
-                        <div className='cell-menu-bar-outer'>
-                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource}>
-                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
-                            </ImageButton>
-                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || this.props.cellVM.editable}>
-                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
-                            </ImageButton>
-                            <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.delete} tooltip={this.getDeleteString()} hidden={this.props.cellVM.editable}>
-                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
-                            </ImageButton>
-                        </div>
-                    </div>
-                );
-        }
+        return (
+            <div className='controls-div'>
+                <ExecutionCount isBusy={busy} count={executionCount} visible={this.isCodeCell()} />
+                <CollapseButton theme={this.props.baseTheme}
+                    visible={collapseVisible}
+                    open={this.props.cellVM.inputBlockOpen}
+                    onClick={this.toggleInputBlock}
+                    tooltip={getLocString('DataScience.collapseInputTooltip', 'Collapse input block')} />
+                <div className='cell-menu-bar-outer'>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource}>
+                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
+                    </ImageButton>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || this.props.cellVM.editable}>
+                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
+                    </ImageButton>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.delete} tooltip={this.getDeleteString()} hidden={this.props.cellVM.editable}>
+                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
+                    </ImageButton>
+                </div>
+            </div>
+        );
     }
 
     private updateCodeRef = (ref: Code) => {
@@ -298,6 +274,7 @@ export class Cell extends React.Component<ICellProps> {
                         monacoTheme={this.props.monacoTheme}
                         openLink={this.props.openLink}
                         forceBackgroundColor={backgroundColor}
+                        editorMeasureClassName={this.props.editorMeasureClassName}
                         />
                 </div>
             );

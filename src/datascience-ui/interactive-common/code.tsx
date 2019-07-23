@@ -22,6 +22,7 @@ export interface ICodeProps {
     outermostParentClass: string;
     editorOptions?: monacoEditor.editor.IEditorOptions;
     forceBackgroundColor?: string;
+    editorMeasureClassName?: string;
     onSubmit(code: string): void;
     onCreated(code: string, modelId: string): void;
     onChange(changes: monacoEditor.editor.IModelContentChange[], modelId: string): void;
@@ -89,6 +90,7 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
         return (
             <div className={classes}>
                 <MonacoEditor
+                    measureWidthClassName={this.props.editorMeasureClassName}
                     testMode={this.props.testMode}
                     value={this.props.code}
                     outermostParentClass={this.props.outermostParentClass}

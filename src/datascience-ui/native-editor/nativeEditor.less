@@ -1,2 +1,54 @@
 /* Import common styles and then override them below */
 @import "../interactive-common/common.css";
+
+.cell-wrapper {
+    margin: 1px 2px;
+    border-color: transparent;
+    border-style: solid;
+    border-width: 2px 2px 2px 20px;
+}
+
+.cell-wrapper:focus-within {
+    border-color: var(--vscode-peekView-border);
+    border-style: solid;
+    border-width: 2px 2px 2px 20px;
+}
+
+.cell-output {
+    margin-top: 5px;
+    background: transparent;
+}
+
+.cell-outer-editable {
+    margin-top: 0px;
+}
+
+.code-area {
+    position: relative;
+    width:100%;
+    top: -2px; /* Account for spacing removed from the monaco editor */
+    padding-right: 10px;
+    margin-bottom: 0px;
+}
+.cell-input {
+    margin: 0px 10px 0px 0px;
+    border-color:  var(--override-badge-background, var(--vscode-badge-background));;
+    border-style: solid;
+    border-width: 1px;
+    padding: 2px;
+    background: var(--override-widget-background, var(--vscode-notifications-background));
+}
+
+.controls-div {
+    grid-column: 1;
+    grid-template-columns: max-content min-content ;
+    justify-content: end;
+    display: grid;
+    min-width: 70px;
+}
+
+.measure-edit-div {
+    width: 95vw;
+	visibility: hidden;
+	position: absolute;
+}

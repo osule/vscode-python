@@ -149,7 +149,8 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             editable: true,
             newCellVM: this.state.editCellVM,
             submitInput: this.stateController.submitInput,
-            editExecutionCount: this.getInputExecutionCount()
+            editExecutionCount: this.getInputExecutionCount(),
+            editorMeasureClassName: 'measure-editor-div'
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {
