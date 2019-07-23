@@ -21,7 +21,7 @@ export interface ICodeProps {
     showWatermark: boolean;
     monacoTheme: string | undefined;
     outermostParentClass: string;
-    editorOptions: monacoEditor.editor.IEditorOptions;
+    editorOptions?: monacoEditor.editor.IEditorOptions;
     forceBackgroundColor?: string;
     onSubmit(code: string): void;
     onCreated(code: string, modelId: string): void;

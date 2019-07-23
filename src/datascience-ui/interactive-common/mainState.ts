@@ -14,7 +14,7 @@ import { noop } from '../../test/core';
 import { ICellViewModel } from './cell';
 import { InputHistory } from './inputHistory';
 
-export interface IMainPanelState {
+export interface IMainState {
     cellVMs: ICellViewModel[];
     editCellVM: ICellViewModel;
     busy: boolean;
@@ -24,11 +24,13 @@ export interface IMainPanelState {
     submittedText: boolean;
     history: InputHistory;
     rootStyle?: string;
+    rootCss?: string;
     theme?: string;
     forceDark?: boolean;
     monacoTheme?: string;
     tokenizerLoaded?: boolean;
-    editorOptions: monacoEditor.editor.IEditorOptions;
+    knownDark: boolean;
+    editorOptions?: monacoEditor.editor.IEditorOptions;
     currentExecutionCount: number;
     variables: IJupyterVariable[];
     pendingVariableCount: number;
@@ -49,7 +51,7 @@ const darkStyle = `
 `;
 
 // This function generates test state when running under a browser instead of inside of
-export function generateTestState(inputBlockToggled: (id: string) => void, filePath: string = ''): IMainPanelState {
+export function generateTestState(inputBlockToggled: (id: string) => void, filePath: string = ''): IMainState {
     return {
         cellVMs: generateVMs(inputBlockToggled, filePath),
         editCellVM: createEditableCellVM(1),
@@ -63,6 +65,7 @@ export function generateTestState(inputBlockToggled: (id: string) => void, fileP
         tokenizerLoaded: true,
         editorOptions: {},
         currentExecutionCount: 0,
+        knownDark: false,
         variables: [
             {
                 name: 'foo',

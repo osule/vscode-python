@@ -13,7 +13,7 @@ import { IDataScienceSettings } from '../../client/common/types';
 //import { InteractiveWindowMessages } from '../../client/datascience/interactive-window/interactiveWindowTypes';
 import { IInteractiveWindow, IJupyterExecution } from '../../client/datascience/types';
 import { InteractivePanel } from '../../datascience-ui/history-react/interactivePanel';
-import { MainPanelHOC } from '../../datascience-ui/interactive-common/mainPanelHOC';
+import { MainPanelHOC } from '../../datascience-ui/interactive-common/mainStateController';
 import { ImageButton } from '../../datascience-ui/react-common/imageButton';
 import { updateSettings } from '../../datascience-ui/react-common/settingsReactSide';
 import { DataScienceIocContainer } from './dataScienceIocContainer';

@@ -40,7 +40,7 @@ interface ICellProps {
     history: InputHistory | undefined;
     showWatermark: boolean;
     monacoTheme: string | undefined;
-    editorOptions: monacoEditor.editor.IEditorOptions;
+    editorOptions?: monacoEditor.editor.IEditorOptions;
     editExecutionCount: number;
     allowCollapse: boolean;
     gotoCode(): void;

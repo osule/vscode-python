@@ -1,33 +1,64 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 'use strict';
+import './interactivePanel.css';
+
 import * as React from 'react';
 
 import { noop } from '../../client/common/utils/misc';
 import { Cell } from '../interactive-common/cell';
 import { ContentPanel, IContentPanelProps } from '../interactive-common/contentPanel';
-import { IMainPanelProps } from '../interactive-common/mainPanelProps';
-import { createEditableCellVM } from '../interactive-common/mainPanelState';
+import { InputHistory } from '../interactive-common/inputHistory';
+import { createEditableCellVM, IMainState } from '../interactive-common/mainState';
 import { IToolbarPanelProps, ToolbarPanel } from '../interactive-common/toolbarPanel';
 import { IVariablePanelProps, VariablePanel } from '../interactive-common/variablePanel';
 import { ErrorBoundary } from '../react-common/errorBoundary';
 import { getLocString } from '../react-common/locReactSide';
 import { IMessageHandler } from '../react-common/postOffice';
 import { getSettings } from '../react-common/settingsReactSide';
+import { InteractivePanelStateController } from './interactivePanelStateController';
 
-import './interactivePanel.css';
 
-export class InteractivePanel extends React.Component<IMainPanelProps> implements IMessageHandler {
+interface IInteractivePanelProps {
+    skipDefault: boolean;
+    testMode?: boolean;
+    expectingDark: boolean;
+    codeTheme: string;
+    baseTheme: string;
+}
+
+export class InteractivePanel extends React.Component<IInteractivePanelProps, IMainState> implements IMessageHandler {
     private mainPanelRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     private editCellRef: React.RefObject<Cell> = React.createRef<Cell>();
+    private stateController: InteractivePanelStateController;
 
-    constructor(props: IMainPanelProps) {
+    constructor(props: IInteractivePanelProps) {
         super(props);
-        this.props.activated(this.activated);
 
         this.state = {
-            editCellVM: getSettings && getSettings().allowInput ? createEditableCellVM(1) : undefined
+            cellVMs: [],
+            busy: true,
+            undoStack: [],
+            redoStack : [],
+            submittedText: false,
+            history: new InputHistory(),
+            currentExecutionCount: 0,
+            variables: [],
+            pendingVariableCount: 0,
+            debugging: false,
+            knownDark: false,
+            editCellVM: createEditableCellVM(1)
         };
+
+        // Create our state controller. It manages updating our state.
+        this.stateController = new InteractivePanelStateController({
+            skipDefault: this.props.skipDefault,
+            testMode: this.props.testMode,
+            expectingDark: this.props.expectingDark,
+            initialState: this.state,
+            setState: this.setState.bind(this),
+            activate: this.activated.bind(this)
+        })
     }
 
     public render() {
@@ -84,7 +115,7 @@ export class InteractivePanel extends React.Component<IMainPanelProps> implement
     private renderContentPanel(baseTheme: string) {
         // Skip if the tokenizer isn't finished yet. It needs
         // to finish loading so our code editors work.
-        if (!this.props.value.tokenizerLoaded && !this.props.testMode) {
+        if (!this.state.tokenizerLoaded && !this.props.testMode) {
             return null;
         }
 
@@ -96,7 +127,7 @@ export class InteractivePanel extends React.Component<IMainPanelProps> implement
     private renderFooterPanel(baseTheme: string) {
         // Skip if the tokenizer isn't finished yet. It needs
         // to finish loading so our code editors work.
-        if (!this.props.value.tokenizerLoaded || !this.props.value.editCellVM) {
+        if (!this.state.tokenizerLoaded || !this.state.editCellVM) {
             return null;
         }
 
@@ -109,25 +140,25 @@ export class InteractivePanel extends React.Component<IMainPanelProps> implement
             <div className={editPanelClass}>
                 <ErrorBoundary>
                     <Cell
-                        editorOptions={this.props.value.editorOptions}
-                        history={this.props.value.history}
+                        editorOptions={this.state.editorOptions}
+                        history={this.state.history}
                         maxTextSize={maxTextSize}
                         autoFocus={document.hasFocus()}
                         testMode={this.props.testMode}
-                        cellVM={this.props.value.editCellVM}
-                        submitNewCode={this.props.submitInput}
+                        cellVM={this.state.editCellVM}
+                        submitNewCode={this.stateController.submitInput}
                         baseTheme={baseTheme}
                         allowCollapse={false}
                         codeTheme={this.props.codeTheme}
-                        showWatermark={!this.props.value.submittedText}
+                        showWatermark={!this.state.submittedText}
                         gotoCode={noop}
                         copyCode={noop}
                         delete={noop}
                         editExecutionCount={executionCount}
-                        onCodeCreated={this.props.editableCodeCreated}
-                        onCodeChange={this.props.codeChange}
-                        monacoTheme={this.props.value.monacoTheme}
-                        openLink={this.props.openLink}
+                        onCodeCreated={this.stateController.editableCodeCreated}
+                        onCodeChange={this.stateController.codeChange}
+                        monacoTheme={this.state.monacoTheme}
+                        openLink={this.stateController.openLink}
                         expandImage={noop}
                         ref={this.editCellRef}
                     />
@@ -137,63 +168,63 @@ export class InteractivePanel extends React.Component<IMainPanelProps> implement
     }
 
     private getInputExecutionCount = () : number => {
-        return this.props.value.currentExecutionCount + 1;
+        return this.state.currentExecutionCount + 1;
     }
 
     private getContentProps = (baseTheme: string): IContentPanelProps => {
         return {
-            editorOptions: this.props.value.editorOptions,
+            editorOptions: this.state.editorOptions,
             baseTheme: baseTheme,
-            cellVMs: this.props.value.cellVMs,
-            history: this.props.value.history,
+            cellVMs: this.state.cellVMs,
+            history: this.state.history,
             testMode: this.props.testMode,
             codeTheme: this.props.codeTheme,
-            submittedText: this.props.value.submittedText,
-            gotoCellCode: this.props.gotoCellCode,
-            copyCellCode: this.props.copyCellCode,
-            deleteCell: this.props.deleteCell,
-            skipNextScroll: this.props.value.skipNextScroll ? true : false,
-            monacoTheme: this.props.value.monacoTheme,
-            onCodeCreated: this.props.readOnlyCodeCreated,
-            onCodeChange: this.props.codeChange,
-            openLink: this.props.openLink,
-            expandImage: this.props.showPlot,
+            submittedText: this.state.submittedText,
+            gotoCellCode: this.stateController.gotoCellCode,
+            copyCellCode: this.stateController.copyCellCode,
+            deleteCell: this.stateController.deleteCell,
+            skipNextScroll: this.state.skipNextScroll ? true : false,
+            monacoTheme: this.state.monacoTheme,
+            onCodeCreated: this.stateController.readOnlyCodeCreated,
+            onCodeChange: this.stateController.codeChange,
+            openLink: this.stateController.openLink,
+            expandImage: this.stateController.showPlot,
             editable: false,
             newCellVM: undefined,
-            submitInput: this.props.submitInput
+            submitInput: this.stateController.submitInput
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {
        return {
-        collapseAll: this.props.collapseAll,
-        expandAll: this.props.expandAll,
-        export: this.props.export,
-        restartKernel: this.props.restartKernel,
-        interruptKernel: this.props.interruptKernel,
-        undo: this.props.undo,
-        redo: this.props.redo,
-        clearAll: this.props.clearAll,
+        collapseAll: this.stateController.collapseAll,
+        expandAll: this.stateController.expandAll,
+        export: this.stateController.export,
+        restartKernel: this.stateController.restartKernel,
+        interruptKernel: this.stateController.interruptKernel,
+        undo: this.stateController.undo,
+        redo: this.stateController.redo,
+        clearAll: this.stateController.clearAll,
         skipDefault: this.props.skipDefault,
-        canCollapseAll: this.props.canCollapseAll(),
-        canExpandAll: this.props.canExpandAll(),
-        canExport: this.props.canExport(),
-        canUndo: this.props.canUndo(),
-        canRedo: this.props.canRedo(),
+        canCollapseAll: this.stateController.canCollapseAll(),
+        canExpandAll: this.stateController.canExpandAll(),
+        canExport: this.stateController.canExport(),
+        canUndo: this.stateController.canUndo(),
+        canRedo: this.stateController.canRedo(),
         baseTheme: baseTheme
        };
     }
 
     private getVariableProps = (baseTheme: string): IVariablePanelProps => {
        return {
-        variables: this.props.value.variables,
-        pendingVariableCount: this.props.value.pendingVariableCount,
-        debugging: this.props.value.debugging,
-        busy: this.props.value.busy,
-        showDataExplorer: this.props.showDataViewer,
+        variables: this.state.variables,
+        pendingVariableCount: this.state.pendingVariableCount,
+        debugging: this.state.debugging,
+        busy: this.state.busy,
+        showDataExplorer: this.stateController.showDataViewer,
         skipDefault: this.props.skipDefault,
         testMode: this.props.testMode,
-        refreshVariables: this.props.refreshVariables,
-        variableExplorerToggled: this.props.variableExplorerToggled,
+        refreshVariables: this.stateController.refreshVariables,
+        variableExplorerToggled: this.stateController.variableExplorerToggled,
         baseTheme: baseTheme
        };
     }

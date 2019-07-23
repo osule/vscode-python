@@ -7,7 +7,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
 import { Identifiers } from '../../client/datascience/constants';
-import { MainPanelHOC } from '../interactive-common/mainPanelHOC';
+import { MainPanelHOC } from '../interactive-common/mainStateController';
 import { IVsCodeApi } from '../react-common/postOffice';
 import { detectBaseTheme } from '../react-common/themeDetector';
 import { NativeEditor } from './nativeEditor';

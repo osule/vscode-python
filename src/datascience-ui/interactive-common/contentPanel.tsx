@@ -23,7 +23,7 @@ export interface IContentPanelProps {
     submittedText: boolean;
     skipNextScroll: boolean;
     monacoTheme: string | undefined;
-    editorOptions: monacoEditor.editor.IEditorOptions;
+    editorOptions?: monacoEditor.editor.IEditorOptions;
     editable: boolean;
     newCellVM?: ICellViewModel;
     gotoCellCode(index: number): void;

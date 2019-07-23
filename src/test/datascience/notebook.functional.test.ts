@@ -41,7 +41,7 @@ import {
     PythonInterpreter
 } from '../../client/interpreter/contracts';
 import { ICellViewModel } from '../../datascience-ui/interactive-common/cell';
-import { generateTestState } from '../../datascience-ui/interactive-common/mainPanelState';
+import { generateTestState } from '../../datascience-ui/interactive-common/mainState';
 import { asyncDump } from '../common/asyncDump';
 import { sleep } from '../core';
 import { DataScienceIocContainer } from './dataScienceIocContainer';

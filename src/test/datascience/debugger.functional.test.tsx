@@ -27,7 +27,7 @@ import { MockDebuggerService } from './mockDebugService';
 import { MockDocumentManager } from './mockDocumentManager';
 
 //import { asyncDump } from '../common/asyncDump';
-import { MainPanelHOC } from '../../datascience-ui/interactive-common/mainPanelHOC';
+import { MainPanelHOC } from '../../datascience-ui/interactive-common/mainStateController';
 // tslint:disable-next-line:max-func-body-length no-any
 suite('DataScience Debugger tests', () => {
     const disposables: Disposable[] = [];

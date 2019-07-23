@@ -25,7 +25,7 @@ import {
     IJupyterExecution
 } from '../../client/datascience/types';
 import { InteractivePanel } from '../../datascience-ui/history-react/interactivePanel';
-import { MainPanelHOC } from '../../datascience-ui/interactive-common/mainPanelHOC';
+import { MainPanelHOC } from '../../datascience-ui/interactive-common/mainStateController';
 import { asyncDump } from '../common/asyncDump';
 import { DataScienceIocContainer } from './dataScienceIocContainer';
 import { createDocument } from './editor-integration/helpers';
