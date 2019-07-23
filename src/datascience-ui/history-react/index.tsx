@@ -14,10 +14,9 @@ import { InteractivePanel } from './interactivePanel';
 // This special function talks to vscode from a web panel
 export declare function acquireVsCodeApi(): IVsCodeApi;
 const baseTheme = detectBaseTheme();
-const expectingDark = baseTheme !== 'vscode-light';
 
 // tslint:disable:no-typeof-undefined
 ReactDOM.render(
-  <InteractivePanel baseTheme={baseTheme} expectingDark={expectingDark} codeTheme={Identifiers.GeneratedThemeName} skipDefault={typeof acquireVsCodeApi !== 'undefined'}/>,
+  <InteractivePanel baseTheme={baseTheme} codeTheme={Identifiers.GeneratedThemeName} skipDefault={typeof acquireVsCodeApi !== 'undefined'}/>,
   document.getElementById('root') as HTMLElement
 );

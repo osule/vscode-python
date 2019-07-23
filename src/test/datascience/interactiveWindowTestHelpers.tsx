@@ -13,7 +13,6 @@ import { IDataScienceSettings } from '../../client/common/types';
 //import { InteractiveWindowMessages } from '../../client/datascience/interactive-window/interactiveWindowTypes';
 import { IInteractiveWindow, IJupyterExecution } from '../../client/datascience/types';
 import { InteractivePanel } from '../../datascience-ui/history-react/interactivePanel';
-import { MainPanelHOC } from '../../datascience-ui/interactive-common/mainStateController';
 import { ImageButton } from '../../datascience-ui/react-common/imageButton';
 import { updateSettings } from '../../datascience-ui/react-common/settingsReactSide';
 import { DataScienceIocContainer } from './dataScienceIocContainer';
@@ -39,8 +38,7 @@ export function runMountedTest(name: string, testFunc: (wrapper: ReactWrapper<an
         const jupyterExecution = ioc.get<IJupyterExecution>(IJupyterExecution);
         if (await jupyterExecution.isNotebookSupported()) {
             addMockData(ioc, 'a=1\na', 1);
-            const HOC = MainPanelHOC(InteractivePanel);
-            const wrapper = mountWebView(ioc, <HOC baseTheme='vscode-light' codeTheme='light_vs'  hasCollapseableInputs={true} testMode={true} skipDefault={true} />);
+            const wrapper = mountWebView(ioc, <InteractivePanel baseTheme='vscode-light' codeTheme='light_vs' testMode={true} skipDefault={true} />);
             await testFunc(wrapper);
         } else {
             // tslint:disable-next-line:no-console

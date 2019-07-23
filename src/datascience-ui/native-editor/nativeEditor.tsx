@@ -5,23 +5,55 @@ import './nativeEditor.css';
 
 import * as React from 'react';
 
-import { InteractiveWindowMessages } from '../../client/datascience/interactive-common/interactiveWindowTypes';
 import { Cell } from '../interactive-common/cell';
 import { ContentPanel, IContentPanelProps } from '../interactive-common/contentPanel';
-import { IMainPanelProps } from '../interactive-common/mainPanelProps';
+import { InputHistory } from '../interactive-common/inputHistory';
+import { createEditableCellVM, IMainState } from '../interactive-common/mainState';
 import { IToolbarPanelProps, ToolbarPanel } from '../interactive-common/toolbarPanel';
 import { IVariablePanelProps, VariablePanel } from '../interactive-common/variablePanel';
 import { getLocString } from '../react-common/locReactSide';
-import { IMessageHandler } from '../react-common/postOffice';
 import { getSettings } from '../react-common/settingsReactSide';
+import { NativeEditorStateController } from './nativeEditorStateController';
 
-export class NativeEditor extends React.Component<IMainPanelProps> implements IMessageHandler {
+interface INativeEditorProps {
+    skipDefault: boolean;
+    testMode?: boolean;
+    codeTheme: string;
+    baseTheme: string;
+}
+
+export class NativeEditor extends React.Component<INativeEditorProps, IMainState> {
     private mainPanelRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     private editCellRef: React.RefObject<Cell> = React.createRef<Cell>();
+    private stateController: NativeEditorStateController;
 
-    constructor(props: IMainPanelProps) {
+    constructor(props: INativeEditorProps) {
         super(props);
-        this.props.activated(this.activated);
+
+        this.state = {
+            cellVMs: [],
+            busy: true,
+            undoStack: [],
+            redoStack : [],
+            submittedText: false,
+            history: new InputHistory(),
+            currentExecutionCount: 0,
+            variables: [],
+            pendingVariableCount: 0,
+            debugging: false,
+            knownDark: false,
+            editCellVM: createEditableCellVM(1)
+        };
+
+        // Create our state controller. It manages updating our state.
+        this.stateController = new NativeEditorStateController({
+            skipDefault: this.props.skipDefault,
+            testMode: this.props.testMode ? true : false,
+            expectingDark: this.props.baseTheme !== 'vscode-light',
+            initialState: this.state,
+            setState: this.setState.bind(this),
+            activate: this.activated.bind(this)
+        });
     }
 
     public render() {
@@ -38,20 +70,6 @@ export class NativeEditor extends React.Component<IMainPanelProps> implements IM
                 </main>
             </div>
         );
-    }
-
-    // tslint:disable-next-line: no-any
-    public handleMessage = (msg: string, _payload?: any) => {
-        switch (msg) {
-            case InteractiveWindowMessages.LoadAllCells:
-                // Stop being busy as we've loaded our first set of cells.
-                this.props.stopBusy();
-                break;
-
-            default:
-                break;
-        }
-        return false;
     }
 
     private activated = () => {
@@ -84,7 +102,7 @@ export class NativeEditor extends React.Component<IMainPanelProps> implements IM
     private renderContentPanel(baseTheme: string) {
         // Skip if the tokenizer isn't finished yet. It needs
         // to finish loading so our code editors work.
-        if (!this.props.value.tokenizerLoaded && !this.props.testMode) {
+        if (!this.state.tokenizerLoaded && !this.props.testMode) {
             return null;
         }
 
@@ -95,58 +113,58 @@ export class NativeEditor extends React.Component<IMainPanelProps> implements IM
 
     private getContentProps = (baseTheme: string): IContentPanelProps => {
         return {
-            editorOptions: this.props.value.editorOptions,
+            editorOptions: this.state.editorOptions,
             baseTheme: baseTheme,
-            cellVMs: this.props.value.cellVMs,
-            history: this.props.value.history,
+            cellVMs: this.state.cellVMs,
+            history: this.state.history,
             testMode: this.props.testMode,
             codeTheme: this.props.codeTheme,
-            submittedText: this.props.value.submittedText,
-            gotoCellCode: this.props.gotoCellCode,
-            copyCellCode: this.props.copyCellCode,
-            deleteCell: this.props.deleteCell,
-            skipNextScroll: this.props.value.skipNextScroll ? true : false,
-            monacoTheme: this.props.value.monacoTheme,
-            onCodeCreated: this.props.readOnlyCodeCreated,
-            onCodeChange: this.props.codeChange,
-            openLink: this.props.openLink,
-            expandImage: this.props.showPlot,
+            submittedText: this.state.submittedText,
+            gotoCellCode: this.stateController.gotoCellCode,
+            copyCellCode: this.stateController.copyCellCode,
+            deleteCell: this.stateController.deleteCell,
+            skipNextScroll: this.state.skipNextScroll ? true : false,
+            monacoTheme: this.state.monacoTheme,
+            onCodeCreated: this.stateController.readOnlyCodeCreated,
+            onCodeChange: this.stateController.codeChange,
+            openLink: this.stateController.openLink,
+            expandImage: this.stateController.showPlot,
             editable: true,
-            newCellVM: this.props.value.editCellVM,
-            submitInput: this.props.submitInput
+            newCellVM: this.state.editCellVM,
+            submitInput: this.stateController.submitInput
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {
        return {
         collapseAll: undefined,
         expandAll: undefined,
-        export: this.props.export,
-        restartKernel: this.props.restartKernel,
-        interruptKernel: this.props.interruptKernel,
-        undo: this.props.undo,
-        redo: this.props.redo,
-        clearAll: this.props.clearAll,
+        export: this.stateController.export,
+        restartKernel: this.stateController.restartKernel,
+        interruptKernel: this.stateController.interruptKernel,
+        undo: this.stateController.undo,
+        redo: this.stateController.redo,
+        clearAll: this.stateController.clearAll,
         skipDefault: this.props.skipDefault,
         canCollapseAll: false,
         canExpandAll: false,
-        canExport: this.props.canExport(),
-        canUndo: this.props.canUndo(),
-        canRedo: this.props.canRedo(),
+        canExport: this.stateController.canExport(),
+        canUndo: this.stateController.canUndo(),
+        canRedo: this.stateController.canRedo(),
         baseTheme: baseTheme
        };
     }
 
     private getVariableProps = (baseTheme: string): IVariablePanelProps => {
        return {
-        variables: this.props.value.variables,
-        pendingVariableCount: this.props.value.pendingVariableCount,
-        debugging: this.props.value.debugging,
-        busy: this.props.value.busy,
-        showDataExplorer: this.props.showDataViewer,
+        variables: this.state.variables,
+        pendingVariableCount: this.state.pendingVariableCount,
+        debugging: this.state.debugging,
+        busy: this.state.busy,
+        showDataExplorer: this.stateController.showDataViewer,
         skipDefault: this.props.skipDefault,
         testMode: this.props.testMode,
-        refreshVariables: this.props.refreshVariables,
-        variableExplorerToggled: this.props.variableExplorerToggled,
+        refreshVariables: this.stateController.refreshVariables,
+        variableExplorerToggled: this.stateController.variableExplorerToggled,
         baseTheme: baseTheme
        };
     }

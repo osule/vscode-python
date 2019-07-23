@@ -14,20 +14,17 @@ import { IToolbarPanelProps, ToolbarPanel } from '../interactive-common/toolbarP
 import { IVariablePanelProps, VariablePanel } from '../interactive-common/variablePanel';
 import { ErrorBoundary } from '../react-common/errorBoundary';
 import { getLocString } from '../react-common/locReactSide';
-import { IMessageHandler } from '../react-common/postOffice';
 import { getSettings } from '../react-common/settingsReactSide';
 import { InteractivePanelStateController } from './interactivePanelStateController';
-
 
 interface IInteractivePanelProps {
     skipDefault: boolean;
     testMode?: boolean;
-    expectingDark: boolean;
     codeTheme: string;
     baseTheme: string;
 }
 
-export class InteractivePanel extends React.Component<IInteractivePanelProps, IMainState> implements IMessageHandler {
+export class InteractivePanel extends React.Component<IInteractivePanelProps, IMainState> {
     private mainPanelRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     private editCellRef: React.RefObject<Cell> = React.createRef<Cell>();
     private stateController: InteractivePanelStateController;
@@ -53,12 +50,12 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
         // Create our state controller. It manages updating our state.
         this.stateController = new InteractivePanelStateController({
             skipDefault: this.props.skipDefault,
-            testMode: this.props.testMode,
-            expectingDark: this.props.expectingDark,
+            testMode: this.props.testMode ? true : false,
+            expectingDark: this.props.baseTheme !== 'vscode-light',
             initialState: this.state,
             setState: this.setState.bind(this),
             activate: this.activated.bind(this)
-        })
+        });
     }
 
     public render() {
@@ -78,11 +75,6 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                 </section>
             </div>
         );
-    }
-
-    // tslint:disable-next-line: no-any
-    public handleMessage(_msg: string, _payload?: any): boolean {
-        return false;
     }
 
     private activated = () => {

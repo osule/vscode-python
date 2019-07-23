@@ -27,7 +27,6 @@ import { MockDebuggerService } from './mockDebugService';
 import { MockDocumentManager } from './mockDocumentManager';
 
 //import { asyncDump } from '../common/asyncDump';
-import { MainPanelHOC } from '../../datascience-ui/interactive-common/mainStateController';
 // tslint:disable-next-line:max-func-body-length no-any
 suite('DataScience Debugger tests', () => {
     const disposables: Disposable[] = [];
@@ -104,8 +103,7 @@ suite('DataScience Debugger tests', () => {
         result.serviceManager.rebindInstance<IApplicationShell>(IApplicationShell, appShell.object);
 
         // Setup our webview panel
-        const HOC = MainPanelHOC(InteractivePanel);
-        result.createWebView(() => mount(<HOC baseTheme='vscode-light' codeTheme='light_vs' hasCollapseableInputs={true} testMode={true} skipDefault={true} />), vsls.Role.None);
+        result.createWebView(() => mount(<InteractivePanel baseTheme='vscode-light' codeTheme='light_vs' testMode={true} skipDefault={true} />), vsls.Role.None);
 
         // Make sure the history provider and execution factory in the container is created (the extension does this on startup in the extension)
         // This is necessary to get the appropriate live share services up and running.

@@ -25,7 +25,6 @@ import {
     IJupyterExecution
 } from '../../client/datascience/types';
 import { InteractivePanel } from '../../datascience-ui/history-react/interactivePanel';
-import { MainPanelHOC } from '../../datascience-ui/interactive-common/mainStateController';
 import { asyncDump } from '../common/asyncDump';
 import { DataScienceIocContainer } from './dataScienceIocContainer';
 import { createDocument } from './editor-integration/helpers';
@@ -84,8 +83,7 @@ suite('DataScience LiveShare tests', () => {
         result.serviceManager.rebindInstance<IApplicationShell>(IApplicationShell, appShell.object);
 
         // Setup our webview panel
-        const HOC = MainPanelHOC(InteractivePanel);
-        result.createWebView(() => mount(<HOC baseTheme='vscode-light' codeTheme='light_vs' testMode={true}  hasCollapseableInputs={true} skipDefault={true} />), role);
+        result.createWebView(() => mount(<InteractivePanel baseTheme='vscode-light' codeTheme='light_vs' testMode={true} skipDefault={true} />), role);
 
         // Make sure the history provider and execution factory in the container is created (the extension does this on startup in the extension)
         // This is necessary to get the appropriate live share services up and running.

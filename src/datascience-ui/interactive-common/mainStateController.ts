@@ -8,7 +8,7 @@ import * as uuid from 'uuid/v4';
 import { createDeferred, Deferred } from '../../client/common/utils/async';
 import { CellMatcher } from '../../client/datascience/cellMatcher';
 import { generateMarkdownFromCodeLines } from '../../client/datascience/common';
-import { Identifiers, editorLoadContents } from '../../client/datascience/constants';
+import { Identifiers } from '../../client/datascience/constants';
 import {
     IInteractiveWindowMapping,
     InteractiveWindowMessages
@@ -23,13 +23,12 @@ import {
     IJupyterVariable,
     IJupyterVariablesResponse
 } from '../../client/datascience/types';
-import { EventEmitter } from '../react-common/event';
 import { IMessageHandler, PostOffice } from '../react-common/postOffice';
 import { getSettings, updateSettings } from '../react-common/settingsReactSide';
 import { detectBaseTheme } from '../react-common/themeDetector';
 import { ICellViewModel } from './cell';
 import { IntellisenseProvider } from './intellisenseProvider';
-import { createCellVM, extractInputText, IMainState, generateTestState } from './mainState';
+import { createCellVM, extractInputText, generateTestState, IMainState } from './mainState';
 import { initializeTokenizer, registerMonacoLanguage } from './tokenizer';
 
 export interface IMainStateControllerProps {
@@ -100,7 +99,7 @@ export class MainStateController implements IMessageHandler {
     }
 
     // tslint:disable-next-line:no-any cyclomatic-complexity max-func-body-length
-    public handleMessage = (msg: string, payload?: any) => {
+    public handleMessage(msg: string, payload?: any) {
         switch (msg) {
             case InteractiveWindowMessages.StartCell:
                 this.startCell(payload);
@@ -895,4 +894,4 @@ export class MainStateController implements IMessageHandler {
         const baseTheme = ignore ? 'vscode-light' : detectBaseTheme();
         return baseTheme !== 'vscode-light';
     }
-};
+}
