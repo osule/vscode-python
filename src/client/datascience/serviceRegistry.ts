@@ -95,7 +95,7 @@ export function registerTypes(serviceManager: IServiceManager) {
     serviceManager.addSingleton<IDataScienceCodeLensProvider>(IDataScienceCodeLensProvider, wrapType(DataScienceCodeLensProvider));
     serviceManager.addSingleton<IDataScience>(IDataScience, wrapType(DataScience));
     serviceManager.addSingleton<IJupyterExecution>(IJupyterExecution, wrapType(JupyterExecutionFactory));
-    serviceManager.add<IDataScienceCommandListener>(IDataScienceCommandListener, wrapType(InteractiveWindowCommandListener));
+    serviceManager.addSingleton<IDataScienceCommandListener>(IDataScienceCommandListener, wrapType(InteractiveWindowCommandListener));
     serviceManager.addSingleton<IInteractiveWindowProvider>(IInteractiveWindowProvider, wrapType(InteractiveWindowProvider));
     serviceManager.add<IInteractiveWindow>(IInteractiveWindow, wrapType(InteractiveWindow));
     serviceManager.add<INotebookExporter>(INotebookExporter, wrapType(JupyterExporter));
@@ -128,6 +128,6 @@ export function registerTypes(serviceManager: IServiceManager) {
     serviceManager.addBinding(IJupyterDebugger, ICellHashListener);
     serviceManager.addSingleton<INotebookEditorProvider>(INotebookEditorProvider, wrapType(IpynbProvider));
     serviceManager.add<INotebookEditor>(INotebookEditor, wrapType(IpynbEditor));
-    serviceManager.add<IDataScienceCommandListener>(IDataScienceCommandListener, wrapType(IpynbCommandListener));
+    serviceManager.addSingleton<IDataScienceCommandListener>(IDataScienceCommandListener, wrapType(IpynbCommandListener));
     serviceManager.addBinding(ICodeLensFactory, IInteractiveWindowListener);
 }

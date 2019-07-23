@@ -16,18 +16,20 @@ import {
     IWebPanelProvider,
     IWorkspaceService
 } from '../../common/application/types';
+import { ContextKey } from '../../common/contextKey';
 import { IFileSystem } from '../../common/platform/types';
 import { IConfigurationService, IDisposableRegistry, ILogger } from '../../common/types';
 import * as localize from '../../common/utils/localize';
 import { EXTENSION_ROOT_DIR } from '../../constants';
 import { IInterpreterService } from '../../interpreter/contracts';
 import { captureTelemetry } from '../../telemetry';
-import { Identifiers, Settings, Telemetry } from '../constants';
+import { EditorContexts, Identifiers, Settings, Telemetry } from '../constants';
 import { InteractiveBase } from '../interactive-common/interactiveBase';
 import { InteractiveWindowMessages, ISubmitNewCell } from '../interactive-common/interactiveWindowTypes';
 import {
     ICodeCssGenerator,
     IDataViewerProvider,
+    IInteractiveWindowInfo,
     IInteractiveWindowListener,
     IJupyterDebugger,
     IJupyterExecution,
@@ -62,7 +64,7 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         @inject(IJupyterExecution) jupyterExecution: IJupyterExecution,
         @inject(IFileSystem) fileSystem: IFileSystem,
         @inject(IConfigurationService) configuration: IConfigurationService,
-        @inject(ICommandManager) commandManager: ICommandManager,
+        @inject(ICommandManager) private commandManager: ICommandManager,
         @inject(INotebookExporter) jupyterExporter: INotebookExporter,
         @inject(IWorkspaceService) workspaceService: IWorkspaceService,
         @inject(INotebookEditorProvider) private editorProvider: INotebookEditorProvider,
@@ -86,7 +88,6 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             jupyterExecution,
             fileSystem,
             configuration,
-            commandManager,
             jupyterExporter,
             workspaceService,
             dataExplorerProvider,
@@ -166,5 +167,30 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             useDefaultConfig,
             purpose: this._serverId  // Each one of these is unique per file.
         };
+    }
+
+    protected updateContexts(info: IInteractiveWindowInfo | undefined) {
+        // This should be called by the python interactive window every
+        // time state changes. We use this opportunity to update our
+        // extension contexts
+        const interactiveContext = new ContextKey(EditorContexts.HaveNative, this.commandManager);
+        interactiveContext.set(!this.isDisposed).catch();
+        const interactiveCellsContext = new ContextKey(EditorContexts.HaveNativeCells, this.commandManager);
+        const redoableContext = new ContextKey(EditorContexts.HaveNativeRedoableCells, this.commandManager);
+        if (info) {
+            interactiveCellsContext.set(info.cellCount > 0).catch();
+            redoableContext.set(info.redoCount > 0).catch();
+        } else {
+            interactiveCellsContext.set(false).catch();
+            redoableContext.set(false).catch();
+        }
+    }
+
+    protected async onViewStateChanged(visible: boolean, active: boolean) {
+        await super.onViewStateChanged(visible, active);
+
+        // Update our contexts
+        const interactiveContext = new ContextKey(EditorContexts.HaveNative, this.commandManager);
+        interactiveContext.set(visible && active).catch();
     }
 }

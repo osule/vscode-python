@@ -63,6 +63,11 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
     public render() {
         return (
             <div id='main-panel' ref={this.mainPanelRef}>
+                <div className='styleSetter'>
+                    <style>
+                        {this.state.rootCss}
+                    </style>
+                </div>
                 <header id='main-panel-toolbar'>
                     {this.renderToolbarPanel(this.props.baseTheme)}
                 </header>
@@ -150,7 +155,7 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                         baseTheme={baseTheme}
                         allowCollapse={false}
                         codeTheme={this.props.codeTheme}
-                        showWatermark={!this.state.submittedText}
+                        showWatermark={true}
                         gotoCode={noop}
                         copyCode={noop}
                         delete={noop}

@@ -30,11 +30,11 @@ export class IpynbCommandListener implements IDataScienceCommandListener {
     }
 
     public register(commandManager: ICommandManager): void {
-        this.disposableRegistry.push(commandManager.registerCommand(Commands.UndoCells, () => this.undoCells()));
-        this.disposableRegistry.push(commandManager.registerCommand(Commands.RedoCells, () => this.redoCells()));
-        this.disposableRegistry.push(commandManager.registerCommand(Commands.RemoveAllCells, () => this.removeAllCells()));
-        this.disposableRegistry.push(commandManager.registerCommand(Commands.InterruptKernel, () => this.interruptKernel()));
-        this.disposableRegistry.push(commandManager.registerCommand(Commands.RestartKernel, () => this.restartKernel()));
+        this.disposableRegistry.push(commandManager.registerCommand(Commands.NotebookEditorUndoCells, () => this.undoCells()));
+        this.disposableRegistry.push(commandManager.registerCommand(Commands.NotebookEditorRedoCells, () => this.redoCells()));
+        this.disposableRegistry.push(commandManager.registerCommand(Commands.NotebookEditorRemoveAllCells, () => this.removeAllCells()));
+        this.disposableRegistry.push(commandManager.registerCommand(Commands.NotebookEditorInterruptKernel, () => this.interruptKernel()));
+        this.disposableRegistry.push(commandManager.registerCommand(Commands.NotebookEditorRestartKernel, () => this.restartKernel()));
     }
 
     private undoCells() {

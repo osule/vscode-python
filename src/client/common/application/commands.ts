@@ -51,6 +51,11 @@ interface ICommandNameWithoutArgumentTypeMapping {
     [DSCommands.RemoveAllCells]: [];
     [DSCommands.InterruptKernel]: [];
     [DSCommands.RestartKernel]: [];
+    [DSCommands.NotebookEditorUndoCells]: [];
+    [DSCommands.NotebookEditorRedoCells]: [];
+    [DSCommands.NotebookEditorRemoveAllCells]: [];
+    [DSCommands.NotebookEditorInterruptKernel]: [];
+    [DSCommands.NotebookEditorRestartKernel]: [];
     [DSCommands.ExpandAllCells]: [];
     [DSCommands.CollapseAllCells]: [];
     [DSCommands.ExportOutputAsNotebook]: [];

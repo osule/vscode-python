@@ -24,8 +24,7 @@ import { DataViewerMessages, IDataViewerMapping, IGetRowsRequest } from './types
 
 @injectable()
 export class DataViewer extends WebViewHost<IDataViewerMapping> implements IDataViewer, IDisposable {
-    private disposed: boolean = false;
-    private variable : IJupyterVariable | undefined;
+    private variable: IJupyterVariable | undefined;
     private rowsTimer: StopWatch | undefined;
     private pendingRowsCount: number = 0;
 
@@ -37,7 +36,7 @@ export class DataViewer extends WebViewHost<IDataViewerMapping> implements IData
         @inject(IWorkspaceService) workspaceService: IWorkspaceService,
         @inject(IJupyterVariables) private variableManager: IJupyterVariables,
         @inject(IApplicationShell) private applicationShell: IApplicationShell
-        ) {
+    ) {
         super(
             configuration,
             provider,
@@ -51,7 +50,7 @@ export class DataViewer extends WebViewHost<IDataViewerMapping> implements IData
     }
 
     public async showVariable(variable: IJupyterVariable): Promise<void> {
-        if (!this.disposed) {
+        if (!this.isDisposed) {
             // Fill in our variable's beginning data
             this.variable = await this.prepVariable(variable);
 
@@ -90,13 +89,13 @@ export class DataViewer extends WebViewHost<IDataViewerMapping> implements IData
         super.onMessage(message, payload);
     }
 
-    private async prepVariable(variable: IJupyterVariable) : Promise<IJupyterVariable> {
+    private async prepVariable(variable: IJupyterVariable): Promise<IJupyterVariable> {
         this.rowsTimer = new StopWatch();
         const output = await this.variableManager.getDataFrameInfo(variable);
 
         // Log telemetry about number of rows
         try {
-            sendTelemetryEvent(Telemetry.ShowDataViewer, 0, {rows: output.rowCount ? output.rowCount : 0, columns: output.columns ? output.columns.length : 0 });
+            sendTelemetryEvent(Telemetry.ShowDataViewer, 0, { rows: output.rowCount ? output.rowCount : 0, columns: output.columns ? output.columns.length : 0 });
 
             // Count number of rows to fetch so can send telemetry on how long it took.
             this.pendingRowsCount = output.rowCount ? output.rowCount : 0;

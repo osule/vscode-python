@@ -61,6 +61,11 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
     public render() {
         return (
             <div id='main-panel' ref={this.mainPanelRef}>
+                <div className='styleSetter'>
+                    <style>
+                        {this.state.rootCss}
+                    </style>
+                </div>
                 <header id='main-panel-toolbar'>
                     {this.renderToolbarPanel(this.props.baseTheme)}
                 </header>

@@ -14,7 +14,6 @@ import * as vsls from 'vsls/vscode';
 
 import {
     IApplicationShell,
-    ICommandManager,
     IDocumentManager,
     ILiveShareApi,
     IWebPanelProvider,
@@ -22,7 +21,6 @@ import {
 } from '../../common/application/types';
 import { CancellationError } from '../../common/cancellation';
 import { EXTENSION_ROOT_DIR, PYTHON_LANGUAGE } from '../../common/constants';
-import { ContextKey } from '../../common/contextKey';
 import { traceInfo, traceWarning } from '../../common/logger';
 import { IFileSystem } from '../../common/platform/types';
 import { IConfigurationService, IDisposableRegistry, ILogger } from '../../common/types';
@@ -32,7 +30,7 @@ import { StopWatch } from '../../common/utils/stopWatch';
 import { IInterpreterService, PythonInterpreter } from '../../interpreter/contracts';
 import { captureTelemetry, sendTelemetryEvent } from '../../telemetry';
 import { generateCellRanges } from '../cellFactory';
-import { EditorContexts, Identifiers, Telemetry } from '../constants';
+import { Identifiers, Telemetry } from '../constants';
 import { ColumnWarningSize } from '../data-viewing/types';
 import {
     IAddedSysInfo,
@@ -76,7 +74,6 @@ import { InteractiveWindowMessageListener } from './interactiveWindowMessageList
 
 @injectable()
 export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapping> implements IInteractiveBase {
-    private disposed: boolean = false;
     private interpreterChangedDisposable: Disposable;
     private unfinishedCells: ICell[] = [];
     private restartingKernel: boolean = false;
@@ -105,7 +102,6 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         @unmanaged() private jupyterExecution: IJupyterExecution,
         @unmanaged() protected fileSystem: IFileSystem,
         @unmanaged() protected configuration: IConfigurationService,
-        @unmanaged() private commandManager: ICommandManager,
         @unmanaged() private jupyterExporter: INotebookExporter,
         @unmanaged() workspaceService: IWorkspaceService,
         @unmanaged() private dataExplorerProvider: IDataViewerProvider,
@@ -133,7 +129,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         this.interpreterChangedDisposable = this.interpreterService.onDidChangeInterpreter(this.onInterpreterChanged);
 
         // Listen for active text editor changes. This is the only way we can tell that we might be needing to gain focus
-        const handler = this.documentManager.onDidChangeActiveTextEditor(() => this.activating().ignoreErrors());
+        const handler = this.documentManager.onDidChangeActiveTextEditor(() => this.onViewStateChanged(this.viewState.visible, this.viewState.active).ignoreErrors());
         this.disposables.push(handler);
 
         // If our execution changes its liveshare session, we need to close our server
@@ -148,7 +144,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     }
 
     public async show(): Promise<void> {
-        if (!this.disposed) {
+        if (!this.isDisposed) {
             // Make sure we're loaded first
             await this.loadPromise;
 
@@ -284,14 +280,11 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
     public dispose() {
         super.dispose();
-        if (!this.disposed) {
-            this.disposed = true;
-            this.listeners.forEach(l => l.dispose());
-            if (this.interpreterChangedDisposable) {
-                this.interpreterChangedDisposable.dispose();
-            }
-            this.updateContexts(undefined);
+        this.listeners.forEach(l => l.dispose());
+        if (this.interpreterChangedDisposable) {
+            this.interpreterChangedDisposable.dispose();
         }
+        this.updateContexts(undefined);
     }
 
     public startProgress() {
@@ -390,7 +383,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         });
     }
 
-    protected async activating() {
+    protected async onViewStateChanged(visible: boolean, active: boolean) {
         // Only activate if the active editor is empty. This means that
         // vscode thinks we are actually supposed to have focus. It would be
         // nice if they would more accurrately tell us this, but this works for now.
@@ -399,7 +392,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         // it's been activated. However if there's no active text editor and we're active, we
         // can safely attempt to give ourselves focus. This won't actually give us focus if we aren't
         // allowed to have it.
-        if (this.viewState.active && !this.documentManager.activeTextEditor) {
+        if (visible && active && !this.documentManager.activeTextEditor) {
             // Force the webpanel to reveal and take focus.
             await super.show(false);
 
@@ -413,6 +406,8 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
     // Starts a server for this window
     protected abstract getNotebookOptions(): Promise<INotebookServerOptions>;
+
+    protected abstract updateContexts(info: IInteractiveWindowInfo | undefined): void;
 
     protected async submitCode(code: string, file: string, line: number, id?: string, _editor?: TextEditor, debug?: boolean): Promise<boolean> {
         this.logger.logInformation(`Submitting code for ${this.id}`);
@@ -776,23 +771,6 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         // See what we're waiting for.
         if (this.waitingForExportCells) {
             this.export(cells);
-        }
-    }
-
-    private updateContexts(info: IInteractiveWindowInfo | undefined) {
-        // This should be called by the python interactive window every
-        // time state changes. We use this opportunity to update our
-        // extension contexts
-        const interactiveContext = new ContextKey(EditorContexts.HaveInteractive, this.commandManager);
-        interactiveContext.set(!this.disposed).catch();
-        const interactiveCellsContext = new ContextKey(EditorContexts.HaveInteractiveCells, this.commandManager);
-        const redoableContext = new ContextKey(EditorContexts.HaveRedoableCells, this.commandManager);
-        if (info) {
-            interactiveCellsContext.set(info.cellCount > 0).catch();
-            redoableContext.set(info.redoCount > 0).catch();
-        } else {
-            interactiveCellsContext.set(false).catch();
-            redoableContext.set(false).catch();
         }
     }
 

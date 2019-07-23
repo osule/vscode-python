@@ -15,19 +15,21 @@ import {
     IWebPanelProvider,
     IWorkspaceService
 } from '../../common/application/types';
+import { ContextKey } from '../../common/contextKey';
 import { IFileSystem } from '../../common/platform/types';
 import { IConfigurationService, IDisposableRegistry, ILogger } from '../../common/types';
 import * as localize from '../../common/utils/localize';
 import { EXTENSION_ROOT_DIR } from '../../constants';
 import { IInterpreterService } from '../../interpreter/contracts';
 import { captureTelemetry } from '../../telemetry';
-import { Identifiers, Telemetry } from '../constants';
+import { EditorContexts, Identifiers, Telemetry } from '../constants';
 import { InteractiveBase } from '../interactive-common/interactiveBase';
 import { InteractiveWindowMessages, ISubmitNewCell } from '../interactive-common/interactiveWindowTypes';
 import {
     ICodeCssGenerator,
     IDataViewerProvider,
     IInteractiveWindow,
+    IInteractiveWindowInfo,
     IInteractiveWindowListener,
     IInteractiveWindowProvider,
     IJupyterDebugger,
@@ -58,7 +60,7 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
         @inject(IJupyterExecution) jupyterExecution: IJupyterExecution,
         @inject(IFileSystem) fileSystem: IFileSystem,
         @inject(IConfigurationService) configuration: IConfigurationService,
-        @inject(ICommandManager) commandManager: ICommandManager,
+        @inject(ICommandManager) private commandManager: ICommandManager,
         @inject(INotebookExporter) jupyterExporter: INotebookExporter,
         @inject(IWorkspaceService) workspaceService: IWorkspaceService,
         @inject(IInteractiveWindowProvider) private interactiveWindowProvider: IInteractiveWindowProvider,
@@ -81,7 +83,6 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
             jupyterExecution,
             fileSystem,
             configuration,
-            commandManager,
             jupyterExporter,
             workspaceService,
             dataExplorerProvider,
@@ -157,5 +158,22 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
 
     protected getNotebookOptions(): Promise<INotebookServerOptions> {
         return this.interactiveWindowProvider.getNotebookOptions();
+    }
+
+    protected updateContexts(info: IInteractiveWindowInfo | undefined) {
+        // This should be called by the python interactive window every
+        // time state changes. We use this opportunity to update our
+        // extension contexts
+        const interactiveContext = new ContextKey(EditorContexts.HaveInteractive, this.commandManager);
+        interactiveContext.set(!this.isDisposed).catch();
+        const interactiveCellsContext = new ContextKey(EditorContexts.HaveInteractiveCells, this.commandManager);
+        const redoableContext = new ContextKey(EditorContexts.HaveRedoableCells, this.commandManager);
+        if (info) {
+            interactiveCellsContext.set(info.cellCount > 0).catch();
+            redoableContext.set(info.redoCount > 0).catch();
+        } else {
+            interactiveCellsContext.set(false).catch();
+            redoableContext.set(false).catch();
+        }
     }
 }

@@ -440,6 +440,16 @@
                 "category": "Python"
             },
             {
+                "command": "python.datascience.notebookeditor.undocells",
+                "title": "%python.command.python.datascience.undocells.title%",
+                "category": "Python"
+            },
+            {
+                "command": "python.datascience.notebookeditor.redocells",
+                "title": "%python.command.python.datascience.redocells.title%",
+                "category": "Python"
+            },
+            {
                 "command": "python.datascience.removeallcells",
                 "title": "%python.command.python.datascience.removeallcells.title%",
                 "category": "Python"
@@ -451,6 +461,21 @@
             },
             {
                 "command": "python.datascience.restartkernel",
+                "title": "%python.command.python.datascience.restartkernel.title%",
+                "category": "Python"
+            },
+            {
+                "command": "python.datascience.notebookeditor.removeallcells",
+                "title": "%python.command.python.datascience.removeallcells.title%",
+                "category": "Python"
+            },
+            {
+                "command": "python.datascience.notebookeditor.interruptkernel",
+                "title": "%python.command.python.datascience.interruptkernel.title%",
+                "category": "Python"
+            },
+            {
+                "command": "python.datascience.notebookeditor.restartkernel",
                 "title": "%python.command.python.datascience.restartkernel.title%",
                 "category": "Python"
             },
@@ -745,6 +770,36 @@
                     "title": "%python.command.python.datascience.restartkernel.title%",
                     "category": "Python",
                     "when": "python.datascience.haveinteractive && python.datascience.featureenabled"
+                },
+                {
+                    "command": "python.datascience.notebookeditor.undocells",
+                    "title": "%python.command.python.datascience.undocells.title%",
+                    "category": "Python",
+                    "when": "python.datascience.haveinteractivecells && python.datascience.featureenabled"
+                },
+                {
+                    "command": "python.datascience.notebookeditor.redocells",
+                    "title": "%python.command.python.datascience.redocells.title%",
+                    "category": "Python",
+                    "when": "python.datascience.havenativeredoablecells && python.datascience.featureenabled"
+                },
+                {
+                    "command": "python.datascience.notebookeditor.removeallcells",
+                    "title": "%python.command.python.datascience.removeallcells.title%",
+                    "category": "Python",
+                    "when": "python.datascience.havenativecells && python.datascience.featureenabled"
+                },
+                {
+                    "command": "python.datascience.notebookeditor.interruptkernel",
+                    "title": "%python.command.python.datascience.interruptkernel.title%",
+                    "category": "Python",
+                    "when": "python.datascience.havenative && python.datascience.featureenabled"
+                },
+                {
+                    "command": "python.datascience.notebookeditor.restartkernel",
+                    "title": "%python.command.python.datascience.restartkernel.title%",
+                    "category": "Python",
+                    "when": "python.datascience.havenative && python.datascience.featureenabled"
                 },
                 {
                     "command": "python.datascience.expandallcells",

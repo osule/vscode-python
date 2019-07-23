@@ -4,7 +4,7 @@
 import '../common/extensions';
 
 import { JSONObject } from '@phosphor/coreutils';
-import { inject, injectable } from 'inversify';
+import { inject, injectable, optional, multiInject } from 'inversify';
 import { URL } from 'url';
 import * as vscode from 'vscode';
 
@@ -31,7 +31,6 @@ import { ICodeWatcher, IDataScience, IDataScienceCodeLensProvider, IDataScienceC
 @injectable()
 export class DataScience implements IDataScience {
     public isDisposed: boolean = false;
-    private readonly commandListeners: IDataScienceCommandListener[];
     private readonly dataScienceSurveyBanner: IPythonExtensionBanner;
     private changeHandler: IDisposable | undefined;
     private startTime: number = Date.now();
@@ -43,9 +42,9 @@ export class DataScience implements IDataScience {
         @inject(IConfigurationService) private configuration: IConfigurationService,
         @inject(IDocumentManager) private documentManager: IDocumentManager,
         @inject(IApplicationShell) private appShell: IApplicationShell,
-        @inject(IWorkspaceService) private workspace: IWorkspaceService
+        @inject(IWorkspaceService) private workspace: IWorkspaceService,
+        @multiInject(IDataScienceCommandListener) @optional() private commandListeners: IDataScienceCommandListener[] | undefined
     ) {
-        this.commandListeners = this.serviceContainer.getAll<IDataScienceCommandListener>(IDataScienceCommandListener);
         this.dataScienceSurveyBanner = this.serviceContainer.get<IPythonExtensionBanner>(IPythonExtensionBanner, BANNER_NAME_DS_SURVEY);
     }
 
@@ -403,9 +402,11 @@ export class DataScience implements IDataScience {
         this.disposableRegistry.push(disposable);
         disposable = this.commandManager.registerCommand(Commands.DebugCurrentCellPalette, this.debugCurrentCellFromCursor, this);
         this.disposableRegistry.push(disposable);
-        this.commandListeners.forEach((listener: IDataScienceCommandListener) => {
-            listener.register(this.commandManager);
-        });
+        if (this.commandListeners) {
+            this.commandListeners.forEach((listener: IDataScienceCommandListener) => {
+                listener.register(this.commandManager);
+            });
+        }
     }
 
     private onChangedActiveTextEditor() {
