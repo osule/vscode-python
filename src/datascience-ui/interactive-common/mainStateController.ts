@@ -39,6 +39,7 @@ export interface IMainStateControllerProps {
     skipDefault: boolean;
     testMode: boolean;
     expectingDark: boolean;
+    defaultEditable: boolean;
     setState(state: {}, callback: () => void): void;
     activate(): void;
     scrollToCell(id: string): void;
@@ -61,7 +62,7 @@ export class MainStateController implements IMessageHandler {
 
         // Add test state if necessary
         if (!this.props.skipDefault) {
-            newState = generateTestState(this.inputBlockToggled);
+            newState = generateTestState(this.inputBlockToggled, '', this.props.defaultEditable);
         }
 
         // Setup the completion provider for monaco. We only need one
@@ -422,12 +423,14 @@ export class MainStateController implements IMessageHandler {
             }
 
             // Update input controls (always show expanded since we just edited it.)
-            newCell = createCellVM(newCell.cell, getSettings(), this.inputBlockToggled);
+            newCell = createCellVM(newCell.cell, getSettings(), this.inputBlockToggled, this.props.defaultEditable);
             const collapseInputs = getSettings().collapseCellInputCodeByDefault;
             newCell = this.alterCellVM(newCell, true, !collapseInputs);
 
-            // Generate a new id (as the edit cell always has the same one)
-            newCell.cell.id = uuid();
+            // Generate a new id if necessary (as the edit cell always has the same one)
+            if (newCell.cell.id === Identifiers.EditCellId) {
+                newCell.cell.id = uuid();
+            }
 
             // Indicate this is direct input so that we don't hide it if the user has
             // hide all inputs turned on.
@@ -633,7 +636,7 @@ export class MainStateController implements IMessageHandler {
 
         if (payload) {
             const cell = payload as ICell;
-            let cellVM: ICellViewModel = createCellVM(cell, getSettings(), this.inputBlockToggled);
+            let cellVM: ICellViewModel = createCellVM(cell, getSettings(), this.inputBlockToggled, this.props.defaultEditable);
 
             // Set initial cell visibility and collapse
             cellVM = this.alterCellVM(cellVM, showInputs, !collapseInputs);

@@ -30,6 +30,8 @@ export class NativeEditorStateController extends MainStateController {
 
     // Adjust the visibility or collapsed state of a cell
     protected alterCellVM(cellVM: ICellViewModel, _visible: boolean, _expanded: boolean): ICellViewModel {
+        // cells are always editable
+        cellVM.editable = true;
         return cellVM;
     }
 }

@@ -56,7 +56,8 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             initialState: this.state,
             setState: this.setState.bind(this),
             activate: this.activated.bind(this),
-            scrollToCell: this.scrollToCell.bind(this)
+            scrollToCell: this.scrollToCell.bind(this),
+            defaultEditable: false
         });
     }
 

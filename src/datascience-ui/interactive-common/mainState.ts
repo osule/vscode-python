@@ -51,9 +51,9 @@ const darkStyle = `
 `;
 
 // This function generates test state when running under a browser instead of inside of
-export function generateTestState(inputBlockToggled: (id: string) => void, filePath: string = ''): IMainState {
+export function generateTestState(inputBlockToggled: (id: string) => void, filePath: string = '', editable: boolean = false): IMainState {
     return {
-        cellVMs: generateVMs(inputBlockToggled, filePath),
+        cellVMs: generateVMs(inputBlockToggled, filePath, editable),
         editCellVM: createEditableCellVM(1),
         busy: true,
         skipNextScroll: false,
@@ -130,7 +130,7 @@ export function extractInputText(inputCell: ICell, settings: IDataScienceSetting
     return concatMultilineString(source);
 }
 
-export function createCellVM(inputCell: ICell, settings: IDataScienceSettings | undefined, inputBlockToggled: (id: string) => void): ICellViewModel {
+export function createCellVM(inputCell: ICell, settings: IDataScienceSettings | undefined, inputBlockToggled: (id: string) => void, editable: boolean): ICellViewModel {
     let inputLinesCount = 0;
     const inputText = inputCell.data.cell_type === 'code' ? extractInputText(inputCell, settings) : '';
     if (inputText) {
@@ -139,7 +139,7 @@ export function createCellVM(inputCell: ICell, settings: IDataScienceSettings | 
 
     return {
         cell: inputCell,
-        editable: false,
+        editable,
         inputBlockOpen: true,
         inputBlockShow: true,
         inputBlockText: inputText,
@@ -148,10 +148,10 @@ export function createCellVM(inputCell: ICell, settings: IDataScienceSettings | 
     };
 }
 
-function generateVMs(inputBlockToggled: (id: string) => void, filePath: string): ICellViewModel[] {
+function generateVMs(inputBlockToggled: (id: string) => void, filePath: string, editable: boolean): ICellViewModel[] {
     const cells = generateCells(filePath);
     return cells.map((cell: ICell) => {
-        return createCellVM(cell, undefined, inputBlockToggled);
+        return createCellVM(cell, undefined, inputBlockToggled, editable);
     });
 }
 

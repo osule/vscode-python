@@ -54,7 +54,8 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             initialState: this.state,
             setState: this.setState.bind(this),
             activate: this.activated.bind(this),
-            scrollToCell: this.scrollToCell.bind(this)
+            scrollToCell: this.scrollToCell.bind(this),
+            defaultEditable: true
         });
     }
 

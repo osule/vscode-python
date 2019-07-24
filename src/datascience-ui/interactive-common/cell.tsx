@@ -210,10 +210,6 @@ export class Cell extends React.Component<ICellProps> {
     }
 
     private getRenderableInputCode = () : string => {
-        if (this.props.cellVM.editable) {
-            return '';
-        }
-
         return this.props.cellVM.inputBlockText;
     }
 
@@ -223,6 +219,7 @@ export class Cell extends React.Component<ICellProps> {
         const executionCount = this.props.cellVM && this.props.cellVM.cell && this.props.cellVM.cell.data && this.props.cellVM.cell.data.execution_count ?
             this.props.cellVM.cell.data.execution_count.toString() : '-';
         const hasNoSource = this.props.cellVM.cell.file === Identifiers.EmptyFileName;
+        const isEditOnlyCell = this.props.cellVM.cell.id === Identifiers.EditCellId;
 
         return (
             <div className='controls-div'>
@@ -236,10 +233,10 @@ export class Cell extends React.Component<ICellProps> {
                     <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource}>
                         <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
                     </ImageButton>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || this.props.cellVM.editable}>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || isEditOnlyCell}>
                         <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
                     </ImageButton>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.delete} tooltip={this.getDeleteString()} hidden={this.props.cellVM.editable}>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.delete} tooltip={this.getDeleteString()} hidden={isEditOnlyCell}>
                         <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
                     </ImageButton>
                 </div>
@@ -297,8 +294,8 @@ export class Cell extends React.Component<ICellProps> {
 
     private renderResultsDiv = (results: JSX.Element[]) => {
 
-        // Only render results if the user can't edit. For now. Might allow editing of code later?
-        if (!this.props.cellVM.editable) {
+        // Only render results if not an edit cell
+        if (this.props.cellVM.cell.id !== Identifiers.EditCellId) {
             const outputClassNames = this.isCodeCell() ?
                 `cell-output cell-output-${this.props.baseTheme}` :
                 '';

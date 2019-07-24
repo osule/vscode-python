@@ -9,7 +9,6 @@ import { InputHistory } from '../interactive-common/inputHistory';
 import { getLocString } from '../react-common/locReactSide';
 import { MonacoEditor } from '../react-common/monacoEditor';
 
-
 export interface ICodeProps {
     autoFocus: boolean;
     code : string;

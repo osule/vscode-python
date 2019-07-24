@@ -178,7 +178,7 @@ export class VariableExplorer extends React.Component<IVariableExplorerProps, IV
             gridRows: this.internalSortRows(this.state.gridRows, sortColumn, sortDirection)
         });
     }
-    
+
     private renderGrid() {
         if (this.state.open) {
             if (this.props.debugging) {
@@ -207,7 +207,6 @@ export class VariableExplorer extends React.Component<IVariableExplorerProps, IV
             return null;
         }
     }
-
 
     private variablesSame(a: IJupyterVariable[], b: IJupyterVariable[]) {
         if (a === b) { return true; }
