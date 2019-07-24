@@ -264,21 +264,19 @@ export class MainStateController implements IMessageHandler {
         this.sendInfo();
     }
 
-    public deleteCell = (index: number) => {
-        this.sendMessage(InteractiveWindowMessages.DeleteCell);
-        const cellVM = this.state.cellVMs[index];
+    public deleteCell = (cellId: string) => {
+        const cellVM = this.state.cellVMs.find(c => c.cell.id === cellId);
         if (cellVM) {
+            this.sendMessage(InteractiveWindowMessages.DeleteCell);
             this.sendMessage(InteractiveWindowMessages.RemoveCell, { id: cellVM.cell.id });
-        }
 
-        // Update our state
-        this.setState({
-            cellVMs: this.state.cellVMs.filter((_c: ICellViewModel, i: number) => {
-                return i !== index;
-            }),
-            undoStack: this.pushStack(this.state.undoStack, this.state.cellVMs),
-            skipNextScroll: true
-        });
+            // Update our state
+            this.setState({
+                cellVMs: this.state.cellVMs.filter(c => c.cell.id !== cellId),
+                undoStack: this.pushStack(this.state.undoStack, this.state.cellVMs),
+                skipNextScroll: true
+            });
+        }
     }
 
     public collapseAll = () => {
@@ -328,20 +326,27 @@ export class MainStateController implements IMessageHandler {
         return this.state.undoStack.length > 0;
     }
 
-    public gotoCellCode = (index: number) => {
+    public gotoCellCode = (cellId: string) => {
         // Find our cell
-        const cellVM = this.state.cellVMs[index];
+        const cellVM = this.state.cellVMs.find(c => c.cell.id === cellId);
 
         // Send a message to the other side to jump to a particular cell
-        this.sendMessage(InteractiveWindowMessages.GotoCodeCell, { file: cellVM.cell.file, line: cellVM.cell.line });
+        if (cellVM) {
+            this.sendMessage(InteractiveWindowMessages.GotoCodeCell, { file: cellVM.cell.file, line: cellVM.cell.line });
+        }
     }
 
-    public copyCellCode = (index: number) => {
-        // Find our cell
-        const cellVM = this.state.cellVMs[index];
+    public copyCellCode = (cellId: string) => {
+        // Find our cell. This is also supported on the edit cell
+        let cellVM = this.state.cellVMs.find(c => c.cell.id === cellId);
+        if (!cellVM && this.state.editCellVM && cellId === this.state.editCellVM.cell.id) {
+            cellVM = this.state.editCellVM;
+        }
 
         // Send a message to the other side to jump to a particular cell
-        this.sendMessage(InteractiveWindowMessages.CopyCodeCell, { source: extractInputText(cellVM.cell, getSettings()) });
+        if (cellVM) {
+            this.sendMessage(InteractiveWindowMessages.CopyCodeCell, { source: extractInputText(cellVM.cell, getSettings()) });
+        }
     }
 
     public restartKernel = () => {
@@ -405,7 +410,7 @@ export class MainStateController implements IMessageHandler {
 
     public submitInput = (code: string, inputCell: ICellViewModel) => {
         // This should be from our last entry. Switch this entry to read only, and add a new item to our list
-        if (inputCell) {
+        if (inputCell && inputCell.cell.id === Identifiers.EditCellId) {
             let newCell = cloneDeep(inputCell);
 
             // Change this editable cell to not editable.
@@ -450,6 +455,20 @@ export class MainStateController implements IMessageHandler {
             if (newCell.cell.state !== CellState.finished) {
                 this.sendMessage(InteractiveWindowMessages.SubmitNewCell, { code, id: newCell.cell.id });
             }
+        } else {
+            // Update our input cell to be in progress again
+            inputCell.cell.state = CellState.executing;
+
+            // Clear our outputs
+            inputCell.cell.data.outputs = [];
+
+            // Update our state to display the new status
+            this.setState({
+                cellVMs: [...this.state.cellVMs]
+            });
+
+            // Send a message to rexecute this code
+            this.sendMessage(InteractiveWindowMessages.ReExecuteCell, { code, id: inputCell.cell.id });
         }
     }
 
@@ -500,7 +519,7 @@ export class MainStateController implements IMessageHandler {
         return cellVM;
     }
 
-    private setState(newState: {}) {
+    protected setState(newState: {}) {
         this.props.setState(newState, () => {
             this.state = { ...this.state, ...newState };
         });
@@ -529,8 +548,7 @@ export class MainStateController implements IMessageHandler {
                     enabled: intellisenseOptions.parameterHintsEnabled
                 },
                 cursorStyle: extraSettings.editorCursor,
-                cursorBlinking: extraSettings.editorCursorBlink,
-                overviewRulerLanes: 0
+                cursorBlinking: extraSettings.editorCursorBlink
             };
         }
 

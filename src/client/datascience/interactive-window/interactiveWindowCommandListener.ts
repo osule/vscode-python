@@ -22,6 +22,7 @@ import { JupyterInstallError } from '../jupyter/jupyterInstallError';
 import {
     IDataScienceCommandListener,
     IDataScienceErrorHandler,
+    IInteractiveBase,
     IInteractiveWindowProvider,
     IJupyterExecution,
     INotebookExporter,
@@ -206,7 +207,7 @@ export class InteractiveWindowCommandListener implements IDataScienceCommandList
                             return Promise.resolve();
                         }, localize.DataScience.exportingFormat(), file, () => {
                             cancelSource.cancel();
-                        }, true);
+                        });
 
                         // When all done, show a notice that it completed.
                         const openQuestion = (await this.jupyterExecution.isSpawnSupported()) ? localize.DataScience.exportOpenQuestion() : undefined;
@@ -335,9 +336,9 @@ export class InteractiveWindowCommandListener implements IDataScienceCommandList
         return active.show();
     }
 
-    private waitForStatus<T>(promise: () => Promise<T>, format: string, file?: string, canceled?: () => void, skipHistory?: boolean): Promise<T> {
+    private waitForStatus<T>(promise: () => Promise<T>, format: string, file?: string, canceled?: () => void, interactiveWindow?: IInteractiveBase): Promise<T> {
         const message = file ? format.format(file) : format;
-        return this.statusProvider.waitWithStatus(promise, message, undefined, canceled, skipHistory);
+        return this.statusProvider.waitWithStatus(promise, message, undefined, canceled, interactiveWindow);
     }
 
     @captureTelemetry(Telemetry.ImportNotebook, { scope: 'command' }, false)

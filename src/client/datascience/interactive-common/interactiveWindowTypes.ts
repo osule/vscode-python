@@ -60,6 +60,8 @@ export namespace InteractiveWindowMessages {
     export const StopDebugging = 'stop_debugging';
     export const LoadAllCells = 'load_all_cells';
     export const ScrollToCell = 'scroll_to_cell';
+    export const ReExecuteCell = 'rexecute_cell';
+
 }
 
 // These are the messages that will mirror'd to guest/hosts in
@@ -238,4 +240,5 @@ export class IInteractiveWindowMapping {
     public [InteractiveWindowMessages.StopDebugging]: never | undefined;
     public [InteractiveWindowMessages.LoadAllCells]: ILoadAllCells;
     public [InteractiveWindowMessages.ScrollToCell]: IScrollToCell;
+    public [InteractiveWindowMessages.ReExecuteCell]: ISubmitNewCell;
 }

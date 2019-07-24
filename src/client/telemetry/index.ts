@@ -376,6 +376,7 @@ export interface IEventNamePropertyMapping {
     [Telemetry.ExecuteCell]: never | undefined;
     [Telemetry.ExecuteCellPerceivedCold]: never | undefined;
     [Telemetry.ExecuteCellPerceivedWarm]: never | undefined;
+    [Telemetry.ExecuteNativeCell]: never | undefined;
     [Telemetry.ExpandAll]: never | undefined;
     [Telemetry.ExportNotebook]: never | undefined;
     [Telemetry.ExportPythonFile]: never | undefined;

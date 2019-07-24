@@ -164,13 +164,14 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                         gotoCode={noop}
                         copyCode={noop}
                         delete={noop}
-                        editExecutionCount={executionCount}
+                        editExecutionCount={executionCount.toString()}
                         onCodeCreated={this.stateController.editableCodeCreated}
                         onCodeChange={this.stateController.codeChange}
                         monacoTheme={this.state.monacoTheme}
                         openLink={this.stateController.openLink}
                         expandImage={noop}
                         ref={this.editCellRef}
+                        clearOnSubmit={true}
                     />
                 </ErrorBoundary>
             </div>
@@ -202,7 +203,7 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             editable: false,
             newCellVM: undefined,
             submitInput: this.stateController.submitInput,
-            editExecutionCount: this.getInputExecutionCount()
+            editExecutionCount: this.getInputExecutionCount().toString()
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {

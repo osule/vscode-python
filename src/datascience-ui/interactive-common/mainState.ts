@@ -398,10 +398,15 @@ function generateCellData(): (nbformat.ICodeCell | nbformat.IMarkdownCell | nbfo
                 }
             ],
             source: [
-                '# comment',
-
-                'df',
-                'df.head(5)'
+                'myvar = \"\"\" # Lorem Ipsum\n',
+                '\n',
+                'Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n',
+                'Nullam eget varius ligula, eget fermentum mauris.\n',
+                'Cras ultrices, enim sit amet iaculis ornare, nisl nibh aliquet elit, sed ultrices velit ipsum dignissim nisl.\n',
+                'Nunc quis orci ante. Vivamus vel blandit velit.\n","Sed mattis dui diam, et blandit augue mattis vestibulum.\n',
+                'Suspendisse ornare interdum velit. Suspendisse potenti.\n',
+                'Morbi molestie lacinia sapien nec porttitor. Nam at vestibulum nisi.\n',
+                '\"\"\" '
             ]
         },
         {

@@ -158,7 +158,8 @@ export enum Telemetry {
     PtvsdPromptToInstall = 'DATASCIENCE.PTVSD_PROMPT_TO_INSTALL',
     PtvsdSuccessfullyInstalled = 'DATASCIENCE.PTVSD_SUCCESSFULLY_INSTALLED',
     PtvsdInstallFailed = 'DATASCIENCE.PTVSD_INSTALL_FAILED',
-    ScrolledToCell = 'DATASCIENCE.SCROLLED_TO_CELL'
+    ScrolledToCell = 'DATASCIENCE.SCROLLED_TO_CELL',
+    ExecuteNativeCell = 'DATASCIENCE.EXECUTE_NATIVE_CELL'
 }
 
 export namespace HelpLinks {

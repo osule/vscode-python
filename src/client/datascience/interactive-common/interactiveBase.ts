@@ -195,6 +195,10 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
                 this.dispatchMessage(message, payload, this.submitNewCell);
                 break;
 
+            case InteractiveWindowMessages.ReExecuteCell:
+                this.dispatchMessage(message, payload, this.reexecuteCell);
+                break;
+
             case InteractiveWindowMessages.DeleteAllCells:
                 this.logTelemetry(Telemetry.DeleteAllCells);
                 break;
@@ -346,7 +350,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     @captureTelemetry(Telemetry.Interrupt)
     public async interruptKernel(): Promise<void> {
         if (this.jupyterServer && !this.restartingKernel) {
-            const status = this.statusProvider.set(localize.DataScience.interruptKernelStatus());
+            const status = this.statusProvider.set(localize.DataScience.interruptKernelStatus(), undefined, undefined, this);
 
             const settings = this.configuration.getSettings();
             const interruptTimeout = settings.datascience.jupyterInterruptTimeout;
@@ -404,6 +408,11 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     // Submits a new cell to the window
     protected abstract submitNewCell(info: ISubmitNewCell): void;
 
+    // Re-executes a cell already in the window
+    protected reexecuteCell(_info: ISubmitNewCell): void {
+        // Default is not to do anything. This only works in the native editor
+    }
+
     // Starts a server for this window
     protected abstract getNotebookOptions(): Promise<INotebookServerOptions>;
 
@@ -435,7 +444,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
             // Make sure we're loaded first.
             try {
                 this.logger.logInformation('Waiting for jupyter server and web panel ...');
-                await this.loadPromise;
+                await this.startServer();
             } catch (exc) {
                 // We should dispose ourselves if the load fails. Othewise the user
                 // updates their install and we just fail again because the load promise is the same.
@@ -738,7 +747,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         this.finishOutstandingCells();
 
         // Set our status
-        const status = this.statusProvider.set(localize.DataScience.restartingKernelStatus());
+        const status = this.statusProvider.set(localize.DataScience.restartingKernelStatus(), undefined, undefined, this);
 
         try {
             if (this.jupyterServer) {
@@ -777,7 +786,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     }
 
     private setStatus = (message: string): Disposable => {
-        const result = this.statusProvider.set(message);
+        const result = this.statusProvider.set(message, undefined, undefined, this);
         this.potentiallyUnfinishedStatus.push(result);
         return result;
     }

@@ -125,10 +125,6 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         return <ContentPanel {...contentProps} ref={this.contentPanelRef}/>;
     }
 
-    private getInputExecutionCount = () : number => {
-        return this.state.currentExecutionCount + 1;
-    }
-
     private getContentProps = (baseTheme: string): IContentPanelProps => {
         return {
             editorOptions: this.state.editorOptions,
@@ -150,8 +146,10 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             editable: true,
             newCellVM: this.state.editCellVM,
             submitInput: this.stateController.submitInput,
-            editExecutionCount: this.getInputExecutionCount(),
-            editorMeasureClassName: 'measure-editor-div'
+            editExecutionCount: ' ', // Always a space for native. It's what Jupyter does.
+            editorMeasureClassName: 'measure-editor-div',
+            arrowUp: this.arrowUpFromCell,
+            arrowDown: this.arrowDownFromCell
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {
@@ -187,6 +185,37 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         variableExplorerToggled: this.stateController.variableExplorerToggled,
         baseTheme: baseTheme
        };
+    }
+
+    private arrowUpFromCell = (cellId: string) => {
+        // Find the previous cell index
+        let index = this.state.cellVMs.findIndex(cvm => cvm.cell.id === cellId) - 1;
+
+        // Might also be the edit cell
+        if (this.state.editCellVM && cellId === this.state.editCellVM.cell.id) {
+            index = this.state.cellVMs.length - 1;
+        }
+
+        if (index >= 0 && this.contentPanelRef.current) {
+            this.contentPanelRef.current.focusCell(this.state.cellVMs[index].cell.id);
+        }
+    }
+
+    private arrowDownFromCell = (cellId: string) => {
+        // Find the next cell to move to
+        const index = this.state.cellVMs.findIndex(cvm => cvm.cell.id === cellId);
+        let nextCellId: string | undefined;
+        if (index >= 0) {
+            if (index < this.state.cellVMs.length - 1) {
+                nextCellId = this.state.cellVMs[index + 1].cell.id;
+            } else if (this.state.editCellVM) {
+                nextCellId = this.state.editCellVM.cell.id;
+            }
+        }
+
+        if (nextCellId && this.contentPanelRef.current) {
+            this.contentPanelRef.current.focusCell(nextCellId);
+        }
     }
 
 }

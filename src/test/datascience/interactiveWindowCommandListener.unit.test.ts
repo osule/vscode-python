@@ -19,12 +19,14 @@ import { IConfigurationService, IDisposable, ILogger } from '../../client/common
 import { generateCells } from '../../client/datascience/cellFactory';
 import { Commands } from '../../client/datascience/constants';
 import { DataScienceErrorHandler } from '../../client/datascience/errorHandler/errorHandler';
-import { InteractiveWindowCommandListener } from '../../client/datascience/interactive-window/interactiveWindowCommandListener';
+import {
+    InteractiveWindowCommandListener
+} from '../../client/datascience/interactive-window/interactiveWindowCommandListener';
 import { InteractiveWindowProvider } from '../../client/datascience/interactive-window/interactiveWindowProvider';
 import { JupyterExecutionFactory } from '../../client/datascience/jupyter/jupyterExecutionFactory';
 import { JupyterExporter } from '../../client/datascience/jupyter/jupyterExporter';
 import { JupyterImporter } from '../../client/datascience/jupyter/jupyterImporter';
-import { IInteractiveWindow, INotebookServer, IStatusProvider } from '../../client/datascience/types';
+import { IInteractiveBase, IInteractiveWindow, INotebookServer, IStatusProvider } from '../../client/datascience/types';
 import { InterpreterService } from '../../client/interpreter/interpreterService';
 import { KnownSearchPathsForInterpreters } from '../../client/interpreter/locators/services/KnownPathsService';
 import { ServiceContainer } from '../../client/ioc/container';
@@ -46,13 +48,13 @@ function createTypeMoq<T>(tag: string): TypeMoq.IMock<T> {
 }
 
 class MockStatusProvider implements IStatusProvider {
-    public set(_message: string, _timeout?: number): Disposable {
+    public set(_message: string, _timeout?: number, _cancel?: () => void, _panel?: IInteractiveBase): Disposable {
         return {
             dispose: noop
         };
     }
 
-    public waitWithStatus<T>(promise: () => Promise<T>, _message: string, _timeout?: number, _canceled?: () => void): Promise<T> {
+    public waitWithStatus<T>(promise: () => Promise<T>, _message: string, _timeout?: number, _canceled?: () => void, _panel?: IInteractiveBase): Promise<T> {
         return promise();
     }
 

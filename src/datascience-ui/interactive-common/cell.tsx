@@ -38,9 +38,10 @@ interface ICellProps {
     showWatermark: boolean;
     monacoTheme: string | undefined;
     editorOptions?: monacoEditor.editor.IEditorOptions;
-    editExecutionCount: number;
+    editExecutionCount: string;
     editorMeasureClassName?: string;
     allowCollapse: boolean;
+    clearOnSubmit: boolean;
     gotoCode(): void;
     copyCode(): void;
     delete(): void;
@@ -49,6 +50,8 @@ interface ICellProps {
     onCodeCreated(code: string, file: string, cellId: string, modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
     expandImage(imageHtml: string): void;
+    arrowUp?(): void;
+    arrowDown?(): void;
 }
 
 export interface ICellViewModel {
@@ -223,14 +226,14 @@ export class Cell extends React.Component<ICellProps> {
 
         return (
             <div className='controls-div'>
-                <ExecutionCount isBusy={busy} count={executionCount} visible={this.isCodeCell()} />
+                <ExecutionCount isBusy={busy} count={isEditOnlyCell ? this.props.editExecutionCount : executionCount} visible={this.isCodeCell()} />
                 <CollapseButton theme={this.props.baseTheme}
                     visible={collapseVisible}
                     open={this.props.cellVM.inputBlockOpen}
                     onClick={this.toggleInputBlock}
                     tooltip={getLocString('DataScience.collapseInputTooltip', 'Collapse input block')} />
                 <div className='cell-menu-bar-outer'>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource}>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource || this.props.cellVM.editable}>
                         <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
                     </ImageButton>
                     <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || isEditOnlyCell}>
@@ -272,6 +275,9 @@ export class Cell extends React.Component<ICellProps> {
                         openLink={this.props.openLink}
                         forceBackgroundColor={backgroundColor}
                         editorMeasureClassName={this.props.editorMeasureClassName}
+                        clearOnSubmit={this.props.clearOnSubmit}
+                        arrowUp={this.props.arrowUp}
+                        arrowDown={this.props.arrowDown}
                         />
                 </div>
             );

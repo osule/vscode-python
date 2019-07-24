@@ -10,6 +10,8 @@ import { ErrorBoundary } from '../react-common/errorBoundary';
 import { getSettings } from '../react-common/settingsReactSide';
 import { Cell, ICellViewModel } from './cell';
 import { InputHistory } from './inputHistory';
+// See the discussion here: https://github.com/Microsoft/tslint-microsoft-contrib/issues/676
+// tslint:disable: react-this-binding-issue
 // tslint:disable-next-line:no-require-imports no-var-requires
 const throttle = require('lodash/throttle') as typeof import('lodash/throttle');
 
@@ -24,23 +26,26 @@ export interface IContentPanelProps {
     monacoTheme: string | undefined;
     editorOptions?: monacoEditor.editor.IEditorOptions;
     editable: boolean;
-    editExecutionCount: number;
+    editExecutionCount: string;
     editorMeasureClassName?: string;
     newCellVM?: ICellViewModel;
-    gotoCellCode(index: number): void;
-    copyCellCode(index: number): void;
-    deleteCell(index: number): void;
+    gotoCellCode(cellId: string): void;
+    copyCellCode(cellId: string): void;
+    deleteCell(cellId: string): void;
     onCodeChange(changes: monacoEditor.editor.IModelContentChange[], cellId: string, modelId: string): void;
     onCodeCreated(code: string, file: string, cellId: string, modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
     expandImage(imageHtml: string): void;
     submitInput(code: string, cellVM: ICellViewModel): void;
+    arrowUp?(cellId: string): void;
+    arrowDown?(cellId: string): void;
 }
 
 export class ContentPanel extends React.Component<IContentPanelProps> {
     private bottomRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     private containerRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
-    private cellRefs: Map<string, React.RefObject<HTMLDivElement>> = new Map<string, React.RefObject<HTMLDivElement>>();
+    private cellRefs: Map<string, React.RefObject<Cell>> = new Map<string, React.RefObject<Cell>>();
+    private cellContainerRefs: Map<string, React.RefObject<HTMLDivElement>> = new Map<string, React.RefObject<HTMLDivElement>>();
     private throttledScrollIntoView = throttle(this.scrollIntoView.bind(this), 100);
     constructor(prop: IContentPanelProps) {
         super(prop);
@@ -69,7 +74,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
     }
 
     public scrollToCell(cellId: string) {
-        const ref = this.cellRefs.get(cellId);
+        const ref = this.cellContainerRefs.get(cellId);
         if (ref && ref.current) {
             ref.current.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' });
             ref.current.classList.add('flash');
@@ -81,44 +86,24 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
         }
     }
 
+    public focusCell(cellId: string) {
+        const ref = this.cellContainerRefs.get(cellId);
+        if (ref && ref.current) {
+            ref.current.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' });
+            const cellRef = this.cellRefs.get(cellId);
+            if (cellRef && cellRef.current) {
+                cellRef.current.giveFocus();
+            }
+        }
+    }
+
     private renderCells = () => {
         const maxOutputSize = getSettings().maxOutputSize;
         const maxTextSize = maxOutputSize && maxOutputSize < 10000 && maxOutputSize > 0 ? maxOutputSize : undefined;
         const baseTheme = getSettings().ignoreVscodeTheme ? 'vscode-light' : this.props.baseTheme;
 
-        return this.props.cellVMs.map((cellVM: ICellViewModel, index: number) => {
-            const ref = React.createRef<HTMLDivElement>();
-            this.cellRefs.set(cellVM.cell.id, ref);
-            return (
-                <div key={index} id={cellVM.cell.id} ref={ref}>
-                    <ErrorBoundary key={index}>
-                        <Cell
-                            role='listitem'
-                            editorOptions={this.props.editorOptions}
-                            history={this.props.editable ? this.props.history : undefined}
-                            maxTextSize={maxTextSize}
-                            autoFocus={false}
-                            testMode={this.props.testMode}
-                            cellVM={cellVM}
-                            submitNewCode={noop}
-                            baseTheme={baseTheme}
-                            codeTheme={this.props.codeTheme}
-                            allowCollapse={!this.props.editable}
-                            showWatermark={false}
-                            editExecutionCount={0}
-                            gotoCode={() => this.props.gotoCellCode(index)}
-                            copyCode={() => this.props.copyCellCode(index)}
-                            delete={() => this.props.deleteCell(index)}
-                            onCodeChange={this.props.onCodeChange}
-                            onCodeCreated={this.props.onCodeCreated}
-                            monacoTheme={this.props.monacoTheme}
-                            openLink={this.props.openLink}
-                            expandImage={this.props.expandImage}
-                            editorMeasureClassName={this.props.editorMeasureClassName}
-                        />
-                    </ErrorBoundary>
-                </div>);
-        });
+        return this.props.cellVMs.map((cellVM: ICellViewModel, index: number) =>
+            this.renderCell(cellVM, index, baseTheme, maxTextSize, false, false));
     }
 
     private renderEdit = () => {
@@ -126,36 +111,55 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
             const maxOutputSize = getSettings().maxOutputSize;
             const maxTextSize = maxOutputSize && maxOutputSize < 10000 && maxOutputSize > 0 ? maxOutputSize : undefined;
             const baseTheme = getSettings().ignoreVscodeTheme ? 'vscode-light' : this.props.baseTheme;
-
-            return (
-                <Cell
-                    role='listitem'
-                    editorOptions={this.props.editorOptions}
-                    history={undefined}
-                    maxTextSize={maxTextSize}
-                    autoFocus={false}
-                    testMode={this.props.testMode}
-                    cellVM={this.props.newCellVM}
-                    submitNewCode={noop}
-                    baseTheme={baseTheme}
-                    codeTheme={this.props.codeTheme}
-                    allowCollapse={false}
-                    showWatermark={true}
-                    editExecutionCount={this.props.editExecutionCount}
-                    gotoCode={noop}
-                    copyCode={noop}
-                    delete={noop}
-                    onCodeChange={this.props.onCodeChange}
-                    onCodeCreated={this.props.onCodeCreated}
-                    monacoTheme={this.props.monacoTheme}
-                    openLink={this.props.openLink}
-                    expandImage={this.props.expandImage}
-                    editorMeasureClassName={this.props.editorMeasureClassName}
-                    />
-            );
+            return this.renderCell(this.props.newCellVM, 0, baseTheme, maxTextSize, true, true);
         } else {
             return null;
         }
+    }
+
+    private renderCell(cellVM: ICellViewModel, index: number, baseTheme: string, maxTextSize: number | undefined, showWatermark: boolean, clearOnSubmit: boolean): JSX.Element {
+        const cellRef = React.createRef<Cell>();
+        const ref = React.createRef<HTMLDivElement>();
+        this.cellRefs.set(cellVM.cell.id, cellRef);
+        this.cellContainerRefs.set(cellVM.cell.id, ref);
+        const arrowUp = this.props.arrowUp ? () => this.props.arrowUp!(cellVM.cell.id) : undefined;
+        const arrowDown = this.props.arrowDown ? () => this.props.arrowDown!(cellVM.cell.id) : undefined;
+        const gotoCode = () => this.props.gotoCellCode(cellVM.cell.id);
+        const copyCode = () => this.props.copyCellCode(cellVM.cell.id);
+        const deleteCell = () => this.props.deleteCell(cellVM.cell.id);
+        return (
+            <div key={index} id={cellVM.cell.id} ref={ref}>
+                <ErrorBoundary key={index}>
+                    <Cell
+                        ref={cellRef}
+                        role='listitem'
+                        editorOptions={this.props.editorOptions}
+                        history={undefined}
+                        maxTextSize={maxTextSize}
+                        autoFocus={false}
+                        testMode={this.props.testMode}
+                        cellVM={cellVM}
+                        submitNewCode={this.props.editable ? this.props.submitInput : noop}
+                        baseTheme={baseTheme}
+                        codeTheme={this.props.codeTheme}
+                        allowCollapse={!this.props.editable}
+                        showWatermark={showWatermark}
+                        editExecutionCount={this.props.editExecutionCount}
+                        gotoCode={gotoCode}
+                        copyCode={copyCode}
+                        delete={deleteCell}
+                        onCodeChange={this.props.onCodeChange}
+                        onCodeCreated={this.props.onCodeCreated}
+                        monacoTheme={this.props.monacoTheme}
+                        openLink={this.props.openLink}
+                        expandImage={this.props.expandImage}
+                        clearOnSubmit={clearOnSubmit}
+                        editorMeasureClassName={this.props.editorMeasureClassName}
+                        arrowUp={arrowUp}
+                        arrowDown={arrowDown}
+                    />
+                </ErrorBoundary>
+            </div>);
     }
 
     private scrollIntoView() {

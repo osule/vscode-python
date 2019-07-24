@@ -22,10 +22,13 @@ export interface ICodeProps {
     editorOptions?: monacoEditor.editor.IEditorOptions;
     forceBackgroundColor?: string;
     editorMeasureClassName?: string;
+    clearOnSubmit: boolean;
     onSubmit(code: string): void;
     onCreated(code: string, modelId: string): void;
     onChange(changes: monacoEditor.editor.IModelContentChange[], modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
+    arrowUp?(): void;
+    arrowDown?(): void;
 }
 
 interface ICodeState {
@@ -80,6 +83,8 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
             hideCursorInOverviewRuler: true,
             folding: false,
             readOnly: readOnly,
+            occurrencesHighlight: false,
+            selectionHighlight: false,
             lineDecorationsWidth: 0,
             contextmenu: false,
             matchBrackets: false,
@@ -189,7 +194,9 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
             }
 
             // Clear our current contents since we submitted
-            this.state.model!.setValue('');
+            if (this.props.clearOnSubmit) {
+                this.state.model!.setValue('');
+            }
 
             // Send to jupyter
             this.props.onSubmit(content);
@@ -222,6 +229,8 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
                     this.state.editor.setPosition({lineNumber: 1, column: 1});
                     e.stopPropagation();
                 }
+            } else if (this.props.arrowUp && cursor && cursor.lineNumber === 1) {
+                this.props.arrowUp();
             }
         }
     }
@@ -239,6 +248,8 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
                     this.state.editor.setPosition({lineNumber: lastLine, column: this.state.model.getLineLength(lastLine) + 1});
                     e.stopPropagation();
                 }
+            } else if (this.props.arrowDown && cursor && cursor.lineNumber === this.state.model.getLineCount()) {
+                this.props.arrowDown();
             }
         }
     }

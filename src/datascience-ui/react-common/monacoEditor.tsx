@@ -216,10 +216,11 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
     public isSuggesting() : boolean {
         // This should mean our widgetParent has some height
         if (this.widgetParent && this.widgetParent.firstChild && this.widgetParent.firstChild.childNodes.length >= 2) {
-            const suggestWidget = this.widgetParent.firstChild.childNodes.item(1) as HTMLDivElement;
-            const signatureHelpWidget = this.widgetParent.firstChild.childNodes.length > 2 ? this.widgetParent.firstChild.childNodes.item(2) as HTMLDivElement : undefined;
-            const suggestVisible = suggestWidget ? suggestWidget.className.includes('visible') : false;
-            const signatureVisible = signatureHelpWidget ? signatureHelpWidget.className.includes('visible') : false;
+            const htmlFirstChild = this.widgetParent.firstChild as HTMLElement;
+            const suggestWidget = htmlFirstChild.getElementsByClassName('suggest-widget')[0] as HTMLDivElement;
+            const signatureHelpWidget = htmlFirstChild.getElementsByClassName('parameter-hints-widget')[0] as HTMLDivElement;
+            const suggestVisible = suggestWidget ? suggestWidget.clientHeight > 0 : false;
+            const signatureVisible = signatureHelpWidget ? signatureHelpWidget.clientHeight > 0 : false;
             return suggestVisible || signatureVisible;
         }
         return false;

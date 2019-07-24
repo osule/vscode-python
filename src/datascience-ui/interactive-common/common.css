@@ -325,7 +325,6 @@ body, html {
     margin-bottom: 2px;
     display: flex;
     flex-direction: column;
-    justify-self: right;
 }
 
 .cell-menu-bar-child-container {

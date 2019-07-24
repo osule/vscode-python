@@ -111,7 +111,7 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         return this._file;
     }
 
-    public dispose() {
+    public dispose(): void {
         super.dispose();
         if (this.closedEvent) {
             this.closedEvent.fire(this);
@@ -142,7 +142,22 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         // If there's any payload, it has the code and the id
         if (info && info.code && info.id) {
             // Send to ourselves.
-            this.submitCode(info.code, Identifiers.EmptyFileName, 0, info.id, undefined).ignoreErrors();
+            this.submitCode(info.code, Identifiers.EmptyFileName, 0, info.id).ignoreErrors();
+
+            // Activate the other side, and send as if came from a file
+            this.editorProvider.show(this.file).then(_v => {
+                this.shareMessage(InteractiveWindowMessages.RemoteAddCode, { code: info.code, file: Identifiers.EmptyFileName, line: 0, id: info.id, originator: this.id, debug: false });
+            }).ignoreErrors();
+        }
+    }
+
+    @captureTelemetry(Telemetry.ExecuteNativeCell, undefined, false)
+    // tslint:disable-next-line:no-any
+    protected reexecuteCell(info: ISubmitNewCell) {
+        // If there's any payload, it has the code and the id
+        if (info && info.code && info.id) {
+            // Send to ourselves.
+            this.submitCode(info.code, Identifiers.EmptyFileName, 0, info.id).ignoreErrors();
 
             // Activate the other side, and send as if came from a file
             this.editorProvider.show(this.file).then(_v => {
@@ -165,7 +180,7 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             enableDebugging: true,
             uri: serverURI,
             useDefaultConfig,
-            purpose: this._serverId  // Each one of these is unique per file.
+            purpose: Identifiers.HistoryPurpose  // Share the same one as the interactive window. Just need a new session
         };
     }
 
