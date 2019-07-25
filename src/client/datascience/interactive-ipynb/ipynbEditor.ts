@@ -26,7 +26,6 @@ import { captureTelemetry } from '../../telemetry';
 import { EditorContexts, Identifiers, Settings, Telemetry } from '../constants';
 import { InteractiveBase } from '../interactive-common/interactiveBase';
 import { InteractiveWindowMessages, ISubmitNewCell } from '../interactive-common/interactiveWindowTypes';
-import { dirtyNotebookDialogTitle } from '../../common/utils/localize';
 import {
     ICell,
     ICodeCssGenerator,
