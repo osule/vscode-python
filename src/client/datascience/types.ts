@@ -66,17 +66,24 @@ export interface INotebookCompletion {
 export const INotebookServer = Symbol('INotebookServer');
 export interface INotebookServer extends IAsyncDisposable {
     readonly id: string;
+    createNotebook(resource: Uri, cancelToken?: CancellationToken): Promise<INotebook>;
+    getNotebook(resource: Uri): Promise<INotebook | undefined>;
     connect(launchInfo: INotebookServerLaunchInfo, cancelToken?: CancellationToken): Promise<void>;
+    getConnectionInfo(): IConnection | undefined;
+    waitForConnect(): Promise<INotebookServerLaunchInfo | undefined>;
+    shutdown(): Promise<void>;
+}
+
+export interface INotebook extends IAsyncDisposable {
+    readonly resource: Uri;
+    readonly server: INotebookServer;
     executeObservable(code: string, file: string, line: number, id: string, silent: boolean): Observable<ICell[]>;
     execute(code: string, file: string, line: number, id: string, cancelToken?: CancellationToken, silent?: boolean): Promise<ICell[]>;
     getCompletion(cellCode: string, offsetInCode: number, cancelToken?: CancellationToken): Promise<INotebookCompletion>;
     restartKernel(timeoutInMs: number): Promise<void>;
     waitForIdle(timeoutInMs: number): Promise<void>;
-    shutdown(): Promise<void>;
     interruptKernel(timeoutInMs: number): Promise<InterruptResult>;
     setInitialDirectory(directory: string): Promise<void>;
-    waitForConnect(): Promise<INotebookServerLaunchInfo | undefined>;
-    getConnectionInfo(): IConnection | undefined;
     getSysInfo(): Promise<ICell | undefined>;
     setMatplotLibStyle(useDark: boolean): Promise<void>;
 }
@@ -113,9 +120,9 @@ export interface IJupyterExecution extends IAsyncDisposable {
 
 export const IJupyterDebugger = Symbol('IJupyterDebugger');
 export interface IJupyterDebugger {
-    startDebugging(server: INotebookServer): Promise<void>;
-    stopDebugging(server: INotebookServer): Promise<void>;
-    onRestart(server: INotebookServer): void;
+    startDebugging(notebook: INotebook): Promise<void>;
+    stopDebugging(notebook: INotebook): Promise<void>;
+    onRestart(notebook: INotebook): void;
 }
 
 export interface IJupyterPasswordConnectInfo {

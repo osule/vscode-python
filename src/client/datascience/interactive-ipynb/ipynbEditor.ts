@@ -47,7 +47,6 @@ import {
 export class IpynbEditor extends InteractiveBase implements INotebookEditor {
     private closedEvent: EventEmitter<INotebookEditor> = new EventEmitter<INotebookEditor>();
     private _file: Uri = Uri.file('');
-    private _serverId = uuid();
 
     constructor(
         @multiInject(IInteractiveWindowListener) listeners: IInteractiveWindowListener[],
@@ -127,6 +126,9 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
 
         // Load the contents of this notebook into our cells.
         const cells = await this.importer.importCells(content);
+
+        // Send out a message indicating our uri (our listeners will get this)
+        this.postMessage(InteractiveWindowMessages.NotebookIdentity, { resource: file.toString() });
 
         // If that works, send the cells to the web view
         return this.postMessage(InteractiveWindowMessages.LoadAllCells, { cells });

@@ -61,6 +61,7 @@ export namespace InteractiveWindowMessages {
     export const LoadAllCells = 'load_all_cells';
     export const ScrollToCell = 'scroll_to_cell';
     export const ReExecuteCell = 'rexecute_cell';
+    export const NotebookIdentity = 'identity';
 
 }
 
@@ -183,6 +184,10 @@ export interface IScrollToCell {
     id: string;
 }
 
+export interface INotebookIdentity {
+    resource: string;
+}
+
 // Map all messages to specific payloads
 export class IInteractiveWindowMapping {
     public [InteractiveWindowMessages.StartCell]: ICell;
@@ -241,4 +246,5 @@ export class IInteractiveWindowMapping {
     public [InteractiveWindowMessages.LoadAllCells]: ILoadAllCells;
     public [InteractiveWindowMessages.ScrollToCell]: IScrollToCell;
     public [InteractiveWindowMessages.ReExecuteCell]: ISubmitNewCell;
+    public [InteractiveWindowMessages.NotebookIdentity]: INotebookIdentity;
 }

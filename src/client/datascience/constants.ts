@@ -181,6 +181,7 @@ export namespace Identifiers {
     export const MatplotLibDefaultParams = '_VSCode_defaultMatplotlib_Params';
     export const EditCellId = '3D3AB152-ADC1-4501-B813-4B83B49B0C10';
     export const SvgSizeTag = 'sizeTag={{0}, {1}}';
+    export const InteractiveWindowIdentity = 'EC155B3B-DC18-49DC-9E99-9A948AA2F27B';
 }
 
 export namespace CodeSnippits {
@@ -202,6 +203,7 @@ export namespace JupyterCommands {
 export namespace LiveShare {
     export const JupyterExecutionService = 'jupyterExecutionService';
     export const JupyterServerSharedService = 'jupyterServerSharedService';
+    export const JupyterNotebookSharedService = 'jupyterNotebookSharedService';
     export const CommandBrokerService = 'commmandBrokerService';
     export const WebPanelMessageService = 'webPanelMessageService';
     export const InteractiveWindowProviderService = 'interactiveWindowProviderService';
@@ -230,4 +232,5 @@ export namespace LiveShareCommands {
     export const interactiveWindowCreateSync = 'interactiveWindowCreateSync';
     export const disposeServer = 'disposeServer';
     export const guestCheck = 'guestCheck';
+    export const createNotebook = 'createNotebook';
 }
