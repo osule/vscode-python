@@ -425,6 +425,12 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
     protected abstract getNotebookIdentity(): Promise<Uri>;
 
+    protected clearResult(id: string): void {
+        if (this.notebook) {
+            this.notebook.clear(id);
+        }
+    }
+
     protected async submitCode(code: string, file: string, line: number, id?: string, _editor?: TextEditor, debug?: boolean): Promise<boolean> {
         this.logger.logInformation(`Submitting code for ${this.id}`);
         let result = true;

@@ -202,6 +202,11 @@ export class JupyterNotebookBase implements INotebook {
         }
     }
 
+    public clear(_id: string): void {
+        // We don't do anything as we don't cache results in this class.
+        noop();
+    }
+
     public execute(code: string, file: string, line: number, id: string, cancelToken?: CancellationToken, silent?: boolean): Promise<ICell[]> {
         // Create a deferred that we'll fire when we're done
         const deferred = createDeferred<ICell[]>();

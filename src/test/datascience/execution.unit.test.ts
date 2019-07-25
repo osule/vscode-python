@@ -72,8 +72,8 @@ class MockJupyterNotebook implements INotebook {
         return Uri.parse(Identifiers.InteractiveWindowIdentity);
     }
 
-    public getCurrentState(): Promise<ICell[]> {
-        throw new Error('Method not implemented');
+    public clear(_id: string): void {
+        noop();
     }
     public executeObservable(_code: string, _f: string, _line: number): Observable<ICell[]> {
         throw new Error('Method not implemented');

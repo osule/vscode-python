@@ -12,6 +12,7 @@ import { traceInfo } from '../../../common/logger';
 import { IConfigurationService, IDisposableRegistry } from '../../../common/types';
 import { createDeferred } from '../../../common/utils/async';
 import * as localize from '../../../common/utils/localize';
+import { noop } from '../../../common/utils/misc';
 import { LiveShare, LiveShareCommands } from '../../constants';
 import { ICell, INotebook, INotebookCompletion, INotebookServer, InterruptResult } from '../../types';
 import { LiveShareParticipantDefault, LiveShareParticipantGuest } from './liveShareParticipantMixin';
@@ -52,6 +53,11 @@ export class GuestJupyterNotebook
 
     public waitForIdle(): Promise<void> {
         return Promise.resolve();
+    }
+
+    public clear(_id: string): void {
+        // We don't do anything as we don't cache results in this class.
+        noop();
     }
 
     public async execute(code: string, file: string, line: number, id: string, cancelToken?: CancellationToken): Promise<ICell[]> {

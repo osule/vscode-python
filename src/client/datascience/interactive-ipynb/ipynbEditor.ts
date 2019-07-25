@@ -159,6 +159,9 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
     protected reexecuteCell(info: ISubmitNewCell) {
         // If there's any payload, it has the code and the id
         if (info && info.code && info.id) {
+            // Clear the result if we've run before
+            this.clearResult(info.id);
+
             // Send to ourselves.
             this.submitCode(info.code, Identifiers.EmptyFileName, 0, info.id).ignoreErrors();
 

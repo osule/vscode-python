@@ -100,6 +100,10 @@ export class HostJupyterNotebook
             ev.removed.filter(e => e.role === vsls.Role.Guest).length;
     }
 
+    public clear(id: string): void {
+        this.requestLog.delete(id);
+    }
+
     public executeObservable(code: string, file: string, line: number, id: string, silent?: boolean): Observable<ICell[]> {
         // See if this has already been asked for not
         if (this.requestLog.has(id)) {

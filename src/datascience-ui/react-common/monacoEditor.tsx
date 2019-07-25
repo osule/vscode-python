@@ -219,9 +219,16 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
             const htmlFirstChild = this.widgetParent.firstChild as HTMLElement;
             const suggestWidget = htmlFirstChild.getElementsByClassName('suggest-widget')[0] as HTMLDivElement;
             const signatureHelpWidget = htmlFirstChild.getElementsByClassName('parameter-hints-widget')[0] as HTMLDivElement;
-            const suggestVisible = suggestWidget ? suggestWidget.clientHeight > 0 : false;
-            const signatureVisible = signatureHelpWidget ? signatureHelpWidget.clientHeight > 0 : false;
-            return suggestVisible || signatureVisible;
+            return this.isElementVisible(suggestWidget) || this.isElementVisible(signatureHelpWidget);
+        }
+        return false;
+    }
+
+    private isElementVisible(element: HTMLElement | undefined): boolean {
+        if (element && element.clientHeight > 0) {
+            // See if it has the visibility set on the style
+            const visibility = element.style.visibility;
+            return visibility ? visibility !== 'hidden' : true;
         }
         return false;
     }
