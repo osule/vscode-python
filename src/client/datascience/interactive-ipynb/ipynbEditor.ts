@@ -5,7 +5,6 @@ import '../../common/extensions';
 
 import { inject, injectable, multiInject } from 'inversify';
 import * as path from 'path';
-import * as uuid from 'uuid/v4';
 import { Event, EventEmitter, Uri, ViewColumn } from 'vscode';
 
 import {
@@ -19,6 +18,7 @@ import {
 import { ContextKey } from '../../common/contextKey';
 import { IFileSystem } from '../../common/platform/types';
 import { IConfigurationService, IDisposableRegistry, ILogger } from '../../common/types';
+import { createDeferred, Deferred } from '../../common/utils/async';
 import * as localize from '../../common/utils/localize';
 import { EXTENSION_ROOT_DIR } from '../../constants';
 import { IInterpreterService } from '../../interpreter/contracts';
@@ -46,6 +46,7 @@ import {
 @injectable()
 export class IpynbEditor extends InteractiveBase implements INotebookEditor {
     private closedEvent: EventEmitter<INotebookEditor> = new EventEmitter<INotebookEditor>();
+    private loadedPromise: Deferred<void> = createDeferred<void>();
     private _file: Uri = Uri.file('');
 
     constructor(
@@ -121,14 +122,14 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         // Save our uri
         this._file = file;
 
+        // Indicate we have our identity
+        this.loadedPromise.resolve();
+
         // Update our title to match
         this.setTitle(path.basename(file.fsPath));
 
         // Load the contents of this notebook into our cells.
         const cells = await this.importer.importCells(content);
-
-        // Send out a message indicating our uri (our listeners will get this)
-        this.postMessage(InteractiveWindowMessages.NotebookIdentity, { resource: file.toString() });
 
         // If that works, send the cells to the web view
         return this.postMessage(InteractiveWindowMessages.LoadAllCells, { cells });
@@ -184,6 +185,13 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             useDefaultConfig,
             purpose: Identifiers.HistoryPurpose  // Share the same one as the interactive window. Just need a new session
         };
+    }
+
+    protected async getNotebookIdentity(): Promise<Uri> {
+        await this.loadedPromise.promise;
+
+        // File should be set now
+        return this._file;
     }
 
     protected updateContexts(info: IInteractiveWindowInfo | undefined) {

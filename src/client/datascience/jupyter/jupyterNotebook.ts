@@ -172,6 +172,36 @@ export class JupyterNotebookBase implements INotebook {
         return this.session ? this.session.waitForIdle(timeoutMs) : Promise.resolve();
     }
 
+    // Set up our initial plotting and imports
+    public async initialize(cancelToken?: CancellationToken): Promise<void> {
+        if (this.ranInitialSetup) {
+            return;
+        }
+        this.ranInitialSetup = true;
+
+        try {
+            // When we start our notebook initial, change to our workspace or user specified root directory
+            if (this.launchInfo && this.launchInfo.workingDir && this.launchInfo.connectionInfo.localLaunch) {
+                traceInfo(`Changing directory for ${this.resource.toString()}`);
+                await this.changeDirectoryIfPossible(this.launchInfo.workingDir);
+            }
+
+            const settings = this.configService.getSettings().datascience;
+            const matplobInit = !settings || settings.enablePlotViewer ? CodeSnippits.MatplotLibInitSvg : CodeSnippits.MatplotLibInitPng;
+
+            traceInfo(`Initialize matplotlib for ${this.resource.toString()}`);
+            // Force matplotlib to inline and save the default style. We'll use this later if we
+            // get a request to update style
+            await this.executeSilently(
+                matplobInit,
+                cancelToken
+            );
+            traceInfo(`Initial setup complete for ${this.resource.toString()}`);
+        } catch (e) {
+            traceWarning(e);
+        }
+    }
+
     public execute(code: string, file: string, line: number, id: string, cancelToken?: CancellationToken, silent?: boolean): Promise<ICell[]> {
         // Create a deferred that we'll fire when we're done
         const deferred = createDeferred<ICell[]>();
@@ -275,7 +305,7 @@ export class JupyterNotebookBase implements INotebook {
             // Rerun our initial setup for the notebook
             this.ranInitialSetup = false;
             traceInfo('restartKernel - initialSetup');
-            await this.initialNotebookSetup();
+            await this.initialize();
             traceInfo('restartKernel - initialSetup completed');
 
             return;
@@ -496,36 +526,6 @@ export class JupyterNotebookBase implements INotebook {
         }
 
         return undefined;
-    }
-
-    // Set up our initial plotting and imports
-    private async initialNotebookSetup(cancelToken?: CancellationToken): Promise<void> {
-        if (this.ranInitialSetup) {
-            return;
-        }
-        this.ranInitialSetup = true;
-
-        try {
-            // When we start our notebook initial, change to our workspace or user specified root directory
-            if (this.launchInfo && this.launchInfo.workingDir && this.launchInfo.connectionInfo.localLaunch) {
-                traceInfo(`Changing directory for ${this.resource.toString()}`);
-                await this.changeDirectoryIfPossible(this.launchInfo.workingDir);
-            }
-
-            const settings = this.configService.getSettings().datascience;
-            const matplobInit = !settings || settings.enablePlotViewer ? CodeSnippits.MatplotLibInitSvg : CodeSnippits.MatplotLibInitPng;
-
-            traceInfo(`Initialize matplotlib for ${this.resource.toString()}`);
-            // Force matplotlib to inline and save the default style. We'll use this later if we
-            // get a request to update style
-            await this.executeSilently(
-                matplobInit,
-                cancelToken
-            );
-            traceInfo(`Initial setup complete for ${this.resource.toString()}`);
-        } catch (e) {
-            traceWarning(e);
-        }
     }
 
     private combineObservables = (...args: Observable<ICell>[]): Observable<ICell[]> => {

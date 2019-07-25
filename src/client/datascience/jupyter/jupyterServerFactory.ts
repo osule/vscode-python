@@ -5,6 +5,7 @@ import '../../common/extensions';
 
 import { inject, injectable, multiInject, optional } from 'inversify';
 import * as uuid from 'uuid/v4';
+import { Uri } from 'vscode';
 import { CancellationToken } from 'vscode-jsonrpc';
 import * as vsls from 'vsls/vscode';
 
@@ -12,6 +13,7 @@ import { ILiveShareApi } from '../../common/application/types';
 import { IAsyncDisposableRegistry, IConfigurationService, IDisposableRegistry } from '../../common/types';
 import {
     IConnection,
+    IDataScience,
     IJupyterSessionManager,
     INotebook,
     INotebookExecutionLogger,
@@ -22,7 +24,6 @@ import { GuestJupyterServer } from './liveshare/guestJupyterServer';
 import { HostJupyterServer } from './liveshare/hostJupyterServer';
 import { IRoleBasedObject, RoleBasedFactory } from './liveshare/roleBasedFactory';
 import { ILiveShareHasRole } from './liveshare/types';
-import { Uri } from 'vscode';
 
 interface IJupyterServerInterface extends IRoleBasedObject, INotebookServer {
 
@@ -31,6 +32,7 @@ interface IJupyterServerInterface extends IRoleBasedObject, INotebookServer {
 // tslint:disable:callable-types
 type JupyterServerClassType = {
     new(liveShare: ILiveShareApi,
+        dataScience: IDataScience,
         asyncRegistry: IAsyncDisposableRegistry,
         disposableRegistry: IDisposableRegistry,
         configService: IConfigurationService,
@@ -49,6 +51,7 @@ export class JupyterServerFactory implements INotebookServer, ILiveShareHasRole 
 
     constructor(
         @inject(ILiveShareApi) liveShare: ILiveShareApi,
+        @inject(IDataScience) dataScience: IDataScience,
         @inject(IDisposableRegistry) disposableRegistry: IDisposableRegistry,
         @inject(IAsyncDisposableRegistry) asyncRegistry: IAsyncDisposableRegistry,
         @inject(IConfigurationService) configService: IConfigurationService,
@@ -59,6 +62,7 @@ export class JupyterServerFactory implements INotebookServer, ILiveShareHasRole 
             HostJupyterServer,
             GuestJupyterServer,
             liveShare,
+            dataScience,
             asyncRegistry,
             disposableRegistry,
             configService,

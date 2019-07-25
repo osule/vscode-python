@@ -17,7 +17,7 @@ import * as localize from '../../common/utils/localize';
 import { captureTelemetry } from '../../telemetry';
 import { CommandSource } from '../../testing/common/constants';
 import { generateCellRanges, generateCellsFromDocument } from '../cellFactory';
-import { Commands, Telemetry } from '../constants';
+import { Commands, Identifiers, Telemetry } from '../constants';
 import { JupyterInstallError } from '../jupyter/jupyterInstallError';
 import {
     IDataScienceCommandListener,
@@ -237,11 +237,12 @@ export class InteractiveWindowCommandListener implements IDataScienceCommandList
             // Try starting a server. Purpose should be unique so we
             // create a brand new one.
             server = await this.jupyterExecution.connectToNotebookServer({ useDefaultConfig, purpose: uuid() }, cancelToken);
+            const notebook = server ? await server.createNotebook(Uri.parse(Identifiers.InteractiveWindowIdentity)) : undefined;
 
             // If that works, then execute all of the cells.
             const cells = Array.prototype.concat(... await Promise.all(ranges.map(r => {
                 const code = document.getText(r.range);
-                return server ? server.execute(code, document.fileName, r.range.start.line, uuid(), cancelToken) : [];
+                return notebook ? notebook.execute(code, document.fileName, r.range.start.line, uuid(), cancelToken) : [];
             })));
 
             // Then save them to the file
@@ -250,8 +251,8 @@ export class InteractiveWindowCommandListener implements IDataScienceCommandList
                 directoryChange = file;
             }
 
-            const notebook = await this.jupyterExporter.translateToNotebook(cells, directoryChange);
-            await this.fileSystem.writeFile(file, JSON.stringify(notebook));
+            const notebookJson = await this.jupyterExporter.translateToNotebook(cells, directoryChange);
+            await this.fileSystem.writeFile(file, JSON.stringify(notebookJson));
 
         } finally {
             if (server) {

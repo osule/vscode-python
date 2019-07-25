@@ -181,7 +181,7 @@ export namespace Identifiers {
     export const MatplotLibDefaultParams = '_VSCode_defaultMatplotlib_Params';
     export const EditCellId = '3D3AB152-ADC1-4501-B813-4B83B49B0C10';
     export const SvgSizeTag = 'sizeTag={{0}, {1}}';
-    export const InteractiveWindowIdentity = 'EC155B3B-DC18-49DC-9E99-9A948AA2F27B';
+    export const InteractiveWindowIdentity = 'history://EC155B3B-DC18-49DC-9E99-9A948AA2F27B';
 }
 
 export namespace CodeSnippits {

@@ -26,7 +26,13 @@ import { InteractiveWindowProvider } from '../../client/datascience/interactive-
 import { JupyterExecutionFactory } from '../../client/datascience/jupyter/jupyterExecutionFactory';
 import { JupyterExporter } from '../../client/datascience/jupyter/jupyterExporter';
 import { JupyterImporter } from '../../client/datascience/jupyter/jupyterImporter';
-import { IInteractiveBase, IInteractiveWindow, INotebookServer, IStatusProvider } from '../../client/datascience/types';
+import {
+    IInteractiveBase,
+    IInteractiveWindow,
+    INotebook,
+    INotebookServer,
+    IStatusProvider
+} from '../../client/datascience/types';
 import { InterpreterService } from '../../client/interpreter/interpreterService';
 import { KnownSearchPathsForInterpreters } from '../../client/interpreter/locators/services/KnownPathsService';
 import { ServiceContainer } from '../../client/ioc/container';
@@ -248,7 +254,9 @@ suite('Interactive window command listener', async () => {
         const doc = await documentManager.openTextDocument('bar.ipynb');
         await documentManager.showTextDocument(doc);
         when(jupyterExecution.connectToNotebookServer(anything(), anything())).thenResolve(server.object);
-        server.setup(s => s.execute(TypeMoq.It.isAny(), TypeMoq.It.isAny(), TypeMoq.It.isAnyNumber(), TypeMoq.It.isAny(), TypeMoq.It.isAny())).returns(() => {
+        const notebook = createTypeMoq<INotebook>('jupyter notebook');
+        server.setup(s => s.createNotebook(TypeMoq.It.isAny())).returns(() => Promise.resolve(notebook.object));
+        notebook.setup(n => n.execute(TypeMoq.It.isAny(), TypeMoq.It.isAny(), TypeMoq.It.isAnyNumber(), TypeMoq.It.isAny(), TypeMoq.It.isAny())).returns(() => {
             return Promise.resolve(generateCells(undefined, 'a=1', 'bar.py', 0, false, uuid()));
         });
 

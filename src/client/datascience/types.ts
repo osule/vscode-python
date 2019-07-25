@@ -401,10 +401,10 @@ export interface IJupyterVariable {
 
 export const IJupyterVariables = Symbol('IJupyterVariables');
 export interface IJupyterVariables {
-    getVariables(): Promise<IJupyterVariable[]>;
-    getValue(targetVariable: IJupyterVariable): Promise<IJupyterVariable>;
-    getDataFrameInfo(targetVariable: IJupyterVariable): Promise<IJupyterVariable>;
-    getDataFrameRows(targetVariable: IJupyterVariable, start: number, end: number): Promise<JSONObject>;
+    getVariables(notebook: INotebook): Promise<IJupyterVariable[]>;
+    getValue(targetVariable: IJupyterVariable, notebook: INotebook): Promise<IJupyterVariable>;
+    getDataFrameInfo(targetVariable: IJupyterVariable, notebook: INotebook): Promise<IJupyterVariable>;
+    getDataFrameRows(targetVariable: IJupyterVariable, notebook: INotebook, start: number, end: number): Promise<JSONObject>;
 }
 
 // Wrapper to hold an execution count for our variable requests
@@ -415,13 +415,13 @@ export interface IJupyterVariablesResponse {
 
 export const IDataViewerProvider = Symbol('IDataViewerProvider');
 export interface IDataViewerProvider {
-    create(variable: string): Promise<IDataViewer>;
-    getPandasVersion(): Promise<{ major: number; minor: number; build: number } | undefined>;
+    create(variable: string, notebook: INotebook): Promise<IDataViewer>;
+    getPandasVersion(notebook: INotebook): Promise<{ major: number; minor: number; build: number } | undefined>;
 }
 export const IDataViewer = Symbol('IDataViewer');
 
 export interface IDataViewer extends IDisposable {
-    showVariable(variable: IJupyterVariable): Promise<void>;
+    showVariable(variable: IJupyterVariable, notebook: INotebook): Promise<void>;
 }
 
 export const IPlotViewerProvider = Symbol('IPlotViewerProvider');

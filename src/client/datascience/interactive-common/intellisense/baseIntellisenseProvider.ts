@@ -22,18 +22,19 @@ import { traceWarning } from '../../../common/logger';
 import { IFileSystem, TemporaryFile } from '../../../common/platform/types';
 import { createDeferred, Deferred, waitForPromise } from '../../../common/utils/async';
 import { Identifiers, Settings } from '../../constants';
+import { IInteractiveWindowListener, IInteractiveWindowProvider, IJupyterExecution, INotebook } from '../../types';
 import {
     IAddCell,
     ICancelIntellisenseRequest,
     IEditCell,
     IInteractiveWindowMapping,
+    INotebookIdentity,
     InteractiveWindowMessages,
     IProvideCompletionItemsRequest,
     IProvideHoverRequest,
     IProvideSignatureHelpRequest,
     IRemoveCell
 } from '../interactiveWindowTypes';
-import { IInteractiveWindowListener, IInteractiveWindowProvider, IJupyterExecution } from '../../types';
 import { convertStringsToSuggestions } from './conversion';
 import { IntellisenseDocument } from './intellisenseDocument';
 
@@ -45,6 +46,7 @@ export abstract class BaseIntellisenseProvider implements IInteractiveWindowList
     private temporaryFile: TemporaryFile | undefined;
     private postEmitter: EventEmitter<{ message: string; payload: any }> = new EventEmitter<{ message: string; payload: any }>();
     private cancellationSources: Map<string, CancellationTokenSource> = new Map<string, CancellationTokenSource>();
+    private notebookIdentity: Uri | undefined;
 
     constructor(
         @unmanaged() private workspaceService: IWorkspaceService,
@@ -109,6 +111,10 @@ export abstract class BaseIntellisenseProvider implements IInteractiveWindowList
 
             case InteractiveWindowMessages.RestartKernel:
                 this.dispatchMessage(message, payload, this.restartKernel);
+                break;
+
+            case InteractiveWindowMessages.NotebookIdentity:
+                this.dispatchMessage(message, payload, this.setIdentity);
                 break;
 
             default:
@@ -207,9 +213,9 @@ export abstract class BaseIntellisenseProvider implements IInteractiveWindowList
 
     private async provideJupyterCompletionItems(position: monacoEditor.Position, _context: monacoEditor.languages.CompletionContext, cancelToken: CancellationToken): Promise<monacoEditor.languages.CompletionList> {
         try {
-            const activeServer = await this.jupyterExecution.getServer(await this.interactiveWindowProvider.getNotebookOptions());
+            const activeNotebook = await this.getNotebook();
             const document = await this.getDocument();
-            if (activeServer && document) {
+            if (activeNotebook && document) {
                 const code = document.getEditCellContent();
                 const lines = code.splitLines({ trim: false, removeEmptyEntries: false });
                 const offsetInCode = lines.reduce((a: number, c: string, i: number) => {
@@ -221,7 +227,7 @@ export abstract class BaseIntellisenseProvider implements IInteractiveWindowList
                         return a;
                     }
                 }, 0);
-                const jupyterResults = await activeServer.getCompletion(code, offsetInCode, cancelToken);
+                const jupyterResults = await activeNotebook.getCompletion(code, offsetInCode, cancelToken);
                 if (jupyterResults && jupyterResults.matches) {
                     const baseOffset = document.getEditCellOffset();
                     const basePosition = document.positionAt(baseOffset);
@@ -338,5 +344,21 @@ export abstract class BaseIntellisenseProvider implements IInteractiveWindowList
             const changes = document.removeAllCells();
             return this.handleChanges(undefined, document, changes);
         }
+    }
+
+    private setIdentity(identity: INotebookIdentity) {
+        this.notebookIdentity = Uri.parse(identity.resource);
+    }
+
+    private async getNotebook(): Promise<INotebook | undefined> {
+        // First get the active server
+        const activeServer = await this.jupyterExecution.getServer(await this.interactiveWindowProvider.getNotebookOptions());
+
+        // If that works, see if there's a matching notebook running
+        if (activeServer && this.notebookIdentity) {
+            return activeServer.getNotebook(this.notebookIdentity);
+        }
+
+        return undefined;
     }
 }

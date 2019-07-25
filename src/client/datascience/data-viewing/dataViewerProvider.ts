@@ -11,11 +11,10 @@ import * as localize from '../../common/utils/localize';
 import { noop } from '../../common/utils/misc';
 import { IInterpreterService } from '../../interpreter/contracts';
 import { IServiceContainer } from '../../ioc/types';
-import { IDataViewer, IDataViewerProvider, IJupyterVariables } from '../types';
+import { IDataViewer, IDataViewerProvider, IJupyterVariables, INotebook } from '../types';
 
 @injectable()
 export class DataViewerProvider implements IDataViewerProvider, IAsyncDisposable {
-
     private activeExplorers: IDataViewer[] = [];
     constructor(
         @inject(IServiceContainer) private serviceContainer: IServiceContainer,
@@ -31,14 +30,14 @@ export class DataViewerProvider implements IDataViewerProvider, IAsyncDisposable
         await Promise.all(this.activeExplorers.map(d => d.dispose()));
     }
 
-    public async create(variable: string): Promise<IDataViewer> {
+    public async create(variable: string, notebook: INotebook): Promise<IDataViewer> {
         // Make sure this is a valid variable
-        const variables = await this.variables.getVariables();
+        const variables = await this.variables.getVariables(notebook);
         const index = variables.findIndex(v => v && v.name === variable);
         if (index >= 0) {
             const dataExplorer = this.serviceContainer.get<IDataViewer>(IDataViewer);
             this.activeExplorers.push(dataExplorer);
-            await dataExplorer.showVariable(variables[index]);
+            await dataExplorer.showVariable(variables[index], notebook);
             return dataExplorer;
         }
 

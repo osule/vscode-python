@@ -15,14 +15,12 @@ import * as localize from '../../common/utils/localize';
 import { noop } from '../../common/utils/misc';
 import {
     IConnection,
-    IDataScience,
     IJupyterSessionManager,
     INotebook,
     INotebookExecutionLogger,
     INotebookServer,
     INotebookServerLaunchInfo
 } from '../types';
-import { string } from 'prop-types';
 
 // This code is based on the examples here:
 // https://www.npmjs.com/package/@jupyterlab/services

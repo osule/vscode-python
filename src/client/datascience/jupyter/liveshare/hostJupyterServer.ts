@@ -16,6 +16,7 @@ import { StopWatch } from '../../../common/utils/stopWatch';
 import { sendTelemetryEvent } from '../../../telemetry';
 import { LiveShare, LiveShareCommands, RegExpValues, Telemetry } from '../../constants';
 import {
+    IDataScience,
     IJupyterSessionManager,
     INotebook,
     INotebookExecutionLogger,
@@ -26,7 +27,6 @@ import { JupyterServerBase } from '../jupyterServer';
 import { HostJupyterNotebook } from './hostJupyterNotebook';
 import { LiveShareParticipantHost } from './liveShareParticipantMixin';
 import { IRoleBasedObject } from './roleBasedFactory';
-import { Uri } from 'vscode';
 
 // tslint:disable-next-line: no-require-imports
 // tslint:disable:no-any
@@ -39,6 +39,7 @@ export class HostJupyterServer
     private sharedPort: vscode.Disposable | undefined;
     constructor(
         private liveShare: ILiveShareApi,
+        _dataScience: IDataScience,
         asyncRegistry: IAsyncDisposableRegistry,
         disposableRegistry: IDisposableRegistry,
         configService: IConfigurationService,
@@ -79,8 +80,10 @@ export class HostJupyterServer
                 service.onRequest(LiveShareCommands.syncRequest, (_args: any[], _cancellation: CancellationToken) => this.onSync());
                 service.onRequest(LiveShareCommands.disposeServer, (_args: any[], _cancellation: CancellationToken) => this.dispose());
                 service.onRequest(LiveShareCommands.createNotebook, async (args: any[], cancellation: CancellationToken) => {
-                    await this.createNotebook(args[0], cancellation);
-                    // Don't return the notebook. We don't want it to be serialized. We just want its server to be started.
+                    // Translate the uri into local
+                    const resource = this.finishedApi!.convertSharedUriToLocal(args[0]);
+                    // Don't return the notebook. We don't want it to be serialized. We just want its live share server to be started.
+                    await this.createNotebook(resource, cancellation);
                 });
 
                 // See if we need to forward the port
@@ -113,7 +116,7 @@ export class HostJupyterServer
     }
 
     protected async createNotebookInstance(
-        resource: Uri,
+        resource: vscode.Uri,
         sessionManager: IJupyterSessionManager,
         disposableRegistry: IDisposableRegistry,
         configService: IConfigurationService,
@@ -126,7 +129,9 @@ export class HostJupyterServer
             return existing;
         }
 
-        // Otherwise create a new one
+        // Otherwise create a new notebook.
+
+        // First we need our launch information so we can start a new session (that's what our notebook is really)
         const launchInfo = await this.waitForConnect();
         if (!launchInfo) {
             throw this.getDisposedError();
@@ -155,6 +160,10 @@ export class HostJupyterServer
             const idleTimeout = configService.getSettings().datascience.jupyterLaunchTimeout;
             await notebook.waitForIdle(idleTimeout);
             sendTelemetryEvent(Telemetry.WaitForIdleJupyter, stopWatch.elapsedTime);
+
+            // Run initial setup
+            await notebook.initialize(cancelToken);
+
             traceInfo(`Finished connecting ${this.id}`);
 
             return notebook;
@@ -162,7 +171,6 @@ export class HostJupyterServer
 
         throw this.getDisposedError();
     }
-
 
     private async attemptToForwardPort(api: vsls.LiveShare | null | undefined, port: number): Promise<void> {
         if (port !== 0 && api && api.session && api.session.role === vsls.Role.Host) {

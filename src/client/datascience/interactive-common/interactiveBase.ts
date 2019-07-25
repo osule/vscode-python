@@ -62,8 +62,8 @@ import {
     IJupyterVariables,
     IJupyterVariablesResponse,
     IMessageCell,
+    INotebook,
     INotebookExporter,
-    INotebookServer,
     INotebookServerOptions,
     InterruptResult,
     IStatusProvider,
@@ -80,7 +80,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     private potentiallyUnfinishedStatus: Disposable[] = [];
     private addSysInfoPromise: Deferred<boolean> | undefined;
     private waitingForExportCells: boolean = false;
-    private jupyterServer: INotebookServer | undefined;
+    private notebook: INotebook | undefined;
     private _id: string;
     private executeEvent: EventEmitter<string> = new EventEmitter<string>();
     private variableRequestStopWatch: StopWatch | undefined;
@@ -137,6 +137,11 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
         // For each listener sign up for their post events
         this.listeners.forEach(l => l.postMessage((e) => this.postMessageInternal(e.message, e.payload)));
+
+        // Tell each listener our identity. Can't do it here though as were in the constructor for the base class
+        setTimeout(() => {
+            this.getNotebookIdentity().then(uri => this.listeners.forEach(l => l.onMessage(InteractiveWindowMessages.NotebookIdentity, { resource: uri.toString() }))).ignoreErrors();
+        }, 0);
     }
 
     public get id(): string {
@@ -270,9 +275,9 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         // After our base class handles some stuff, handle it ourselves too.
         switch (message) {
             case CssMessages.GetCssRequest:
-                // Update the jupyter server if we have one:
-                if (this.jupyterServer) {
-                    this.isDark().then(d => this.jupyterServer ? this.jupyterServer.setMatplotLibStyle(d) : Promise.resolve()).ignoreErrors();
+                // Update the notebook if we have one:
+                if (this.notebook) {
+                    this.isDark().then(d => this.notebook ? this.notebook.setMatplotLibStyle(d) : Promise.resolve()).ignoreErrors();
                 }
                 break;
 
@@ -324,7 +329,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
     @captureTelemetry(Telemetry.RestartKernel)
     public async restartKernel(): Promise<void> {
-        if (this.jupyterServer && !this.restartingKernel) {
+        if (this.notebook && !this.restartingKernel) {
             if (this.shouldAskForRestart()) {
                 // Ask the user if they want us to restart or not.
                 const message = localize.DataScience.restartKernelMessage();
@@ -349,14 +354,14 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
     @captureTelemetry(Telemetry.Interrupt)
     public async interruptKernel(): Promise<void> {
-        if (this.jupyterServer && !this.restartingKernel) {
+        if (this.notebook && !this.restartingKernel) {
             const status = this.statusProvider.set(localize.DataScience.interruptKernelStatus(), undefined, undefined, this);
 
             const settings = this.configuration.getSettings();
             const interruptTimeout = settings.datascience.jupyterInterruptTimeout;
 
             try {
-                const result = await this.jupyterServer.interruptKernel(interruptTimeout);
+                const result = await this.notebook.interruptKernel(interruptTimeout);
                 status.dispose();
 
                 // We timed out, ask the user if they want to restart instead.
@@ -418,6 +423,8 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
     protected abstract updateContexts(info: IInteractiveWindowInfo | undefined): void;
 
+    protected abstract getNotebookIdentity(): Promise<Uri>;
+
     protected async submitCode(code: string, file: string, line: number, id?: string, _editor?: TextEditor, debug?: boolean): Promise<boolean> {
         this.logger.logInformation(`Submitting code for ${this.id}`);
         let result = true;
@@ -461,20 +468,20 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
                 await this.addSysInfo(SysInfoReason.Start);
             }
 
-            if (this.jupyterServer) {
+            if (this.notebook) {
                 // Before we try to execute code make sure that we have an initial directory set
                 // Normally set via the workspace, but we might not have one here if loading a single loose file
                 if (file !== Identifiers.EmptyFileName) {
-                    await this.jupyterServer.setInitialDirectory(path.dirname(file));
+                    await this.notebook.setInitialDirectory(path.dirname(file));
                 }
 
                 if (debug) {
                     // Attach our debugger
-                    await this.jupyterDebugger.startDebugging(this.jupyterServer);
+                    await this.jupyterDebugger.startDebugging(this.notebook);
                 }
 
                 // Attempt to evaluate this cell in the jupyter notebook
-                const observable = this.jupyterServer.executeObservable(code, file, line, id, false);
+                const observable = this.notebook.executeObservable(code, file, line, id, false);
 
                 // Indicate we executed some code
                 this.executeEvent.fire(code);
@@ -511,8 +518,8 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
             status.dispose();
 
             if (debug) {
-                if (this.jupyterServer) {
-                    await this.jupyterDebugger.stopDebugging(this.jupyterServer);
+                if (this.notebook) {
+                    await this.jupyterDebugger.stopDebugging(this.notebook);
                 }
             }
         }
@@ -605,7 +612,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
                 throw new JupyterInstallError(localize.DataScience.jupyterNotSupported(), localize.DataScience.pythonInteractiveHelpLink());
             }
             // Then load the jupyter server
-            await this.loadJupyterServer();
+            await this.createNotebook();
         } catch (e) {
             if (e instanceof JupyterSelfCertsError) {
                 // On a self cert error, warn the user and ask if they want to change the setting
@@ -644,7 +651,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     }
 
     private async checkPandas(): Promise<boolean> {
-        const pandasVersion = await this.dataExplorerProvider.getPandasVersion();
+        const pandasVersion = this.notebook ? await this.dataExplorerProvider.getPandasVersion(this.notebook) : undefined;
         if (!pandasVersion) {
             sendTelemetryEvent(Telemetry.PandasNotInstalled);
             // Warn user that there is no pandas.
@@ -692,7 +699,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     private async showDataViewer(request: IShowDataViewer): Promise<void> {
         try {
             if (await this.checkPandas() && await this.checkColumnSize(request.columnSize)) {
-                await this.dataExplorerProvider.create(request.variableName);
+                await this.dataExplorerProvider.create(request.variableName, this.notebook!);
             }
         } catch (e) {
             this.applicationShell.showErrorMessage(e.toString());
@@ -750,21 +757,21 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         const status = this.statusProvider.set(localize.DataScience.restartingKernelStatus(), undefined, undefined, this);
 
         try {
-            if (this.jupyterServer) {
-                await this.jupyterServer.restartKernel(this.generateDataScienceExtraSettings().jupyterInterruptTimeout);
+            if (this.notebook) {
+                await this.notebook.restartKernel(this.generateDataScienceExtraSettings().jupyterInterruptTimeout);
                 await this.addSysInfo(SysInfoReason.Restart);
 
                 // Compute if dark or not.
                 const knownDark = await this.isDark();
 
                 // Before we run any cells, update the dark setting
-                await this.jupyterServer.setMatplotLibStyle(knownDark);
+                await this.notebook.setMatplotLibStyle(knownDark);
             }
         } catch (exc) {
             // If we get a kernel promise failure, then restarting timed out. Just shutdown and restart the entire server
-            if (exc instanceof JupyterKernelPromiseFailedError && this.jupyterServer) {
-                await this.jupyterServer.dispose();
-                await this.loadJupyterServer(true);
+            if (exc instanceof JupyterKernelPromiseFailedError && this.notebook) {
+                await this.notebook.dispose();
+                await this.createNotebook();
                 await this.addSysInfo(SysInfoReason.Restart);
             } else {
                 // Show the error message
@@ -806,9 +813,9 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
             // Not the same as reload, we need to actually dispose the server.
             if (this.loadPromise) {
                 await this.loadPromise;
-                if (this.jupyterServer) {
-                    const server = this.jupyterServer;
-                    this.jupyterServer = undefined;
+                if (this.notebook) {
+                    const server = this.notebook;
+                    this.notebook = undefined;
                     await server.dispose();
                 }
             }
@@ -823,16 +830,16 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         try {
             if (this.loadPromise) {
                 await this.loadPromise;
-                if (this.jupyterServer) {
-                    const server = this.jupyterServer;
-                    this.jupyterServer = undefined;
-                    server.shutdown().ignoreErrors(); // Don't care what happens as we're disconnected.
+                if (this.notebook) {
+                    const server = this.notebook;
+                    this.notebook = undefined;
+                    server.dispose().ignoreErrors(); // Don't care what happens as we're disconnected.
                 }
             }
         } catch {
             // We just switched from host to guest mode. Don't really care
             // if closing the host server kills it.
-            this.jupyterServer = undefined;
+            this.notebook = undefined;
         }
         return this.startServer();
     }
@@ -942,7 +949,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
     private exportToFile = async (cells: ICell[], file: string) => {
         // Take the list of cells, convert them to a notebook json format and write to disk
-        if (this.jupyterServer) {
+        if (this.notebook) {
             let directoryChange;
             const settings = this.configuration.getSettings();
             if (settings.datascience.changeDirOnImportExport) {
@@ -956,7 +963,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
                 await this.fileSystem.writeFile(file, JSON.stringify(notebook), { encoding: 'utf8', flag: 'w' });
                 const openQuestion = (await this.jupyterExecution.isSpawnSupported()) ? localize.DataScience.exportOpenQuestion() : undefined;
                 this.showInformationMessage(localize.DataScience.exportDialogComplete().format(file), openQuestion).then((str: string | undefined) => {
-                    if (str && this.jupyterServer) {
+                    if (str && this.notebook) {
                         // If the user wants to, open the notebook they just generated.
                         this.jupyterExecution.spawnNotebook(file).ignoreErrors();
                     }
@@ -968,7 +975,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         }
     }
 
-    private async loadJupyterServer(_restart?: boolean): Promise<void> {
+    private async createNotebook(): Promise<void> {
         this.logger.logInformation('Getting jupyter server options ...');
 
         // Wait for the webpanel to pass back our current theme darkness
@@ -980,11 +987,16 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         this.logger.logInformation('Connecting to jupyter server ...');
 
         // Now try to create a notebook server
-        this.jupyterServer = await this.jupyterExecution.connectToNotebookServer(options);
+        const server = await this.jupyterExecution.connectToNotebookServer(options);
+
+        // Then create a new notebook
+        if (server) {
+            this.notebook = await server.createNotebook(await this.getNotebookIdentity());
+        }
 
         // Before we run any cells, update the dark setting
-        if (this.jupyterServer) {
-            await this.jupyterServer.setMatplotLibStyle(knownDark);
+        if (this.notebook) {
+            await this.notebook.setMatplotLibStyle(knownDark);
         }
 
         this.logger.logInformation('Connected to jupyter server.');
@@ -993,16 +1005,16 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     private generateSysInfoCell = async (reason: SysInfoReason): Promise<ICell | undefined> => {
         // Execute the code 'import sys\r\nsys.version' and 'import sys\r\nsys.executable' to get our
         // version and executable
-        if (this.jupyterServer) {
+        if (this.notebook) {
             const message = await this.generateSysInfoMessage(reason);
 
             // The server handles getting this data.
-            const sysInfo = await this.jupyterServer.getSysInfo();
+            const sysInfo = await this.notebook.getSysInfo();
             if (sysInfo) {
                 // Connection string only for our initial start, not restart or interrupt
                 let connectionString: string = '';
                 if (reason === SysInfoReason.Start) {
-                    connectionString = this.generateConnectionInfoString(this.jupyterServer.getConnectionInfo());
+                    connectionString = this.generateConnectionInfoString(this.notebook.server.getConnectionInfo());
                 }
 
                 // Update our sys info with our locally applied data.
@@ -1075,8 +1087,8 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
             // For a restart, tell our window to reset
             if (reason === SysInfoReason.Restart || reason === SysInfoReason.New) {
                 this.postMessage(InteractiveWindowMessages.RestartKernel).ignoreErrors();
-                if (this.jupyterServer) {
-                    this.jupyterDebugger.onRestart(this.jupyterServer);
+                if (this.notebook) {
+                    this.jupyterDebugger.onRestart(this.notebook);
                 }
             }
 
@@ -1126,7 +1138,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         this.variableRequestStopWatch = new StopWatch();
 
         // Request our new list of variables
-        const vars: IJupyterVariable[] = await this.jupyterVariables.getVariables();
+        const vars: IJupyterVariable[] = this.notebook ? await this.jupyterVariables.getVariables(this.notebook) : [];
         const variablesResponse: IJupyterVariablesResponse = { executionCount: requestExecutionCount, variables: vars };
 
         // Tag all of our jupyter variables with the execution count of the request
@@ -1150,10 +1162,10 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
     // tslint:disable-next-line: no-any
     private async requestVariableValue(payload?: any): Promise<void> {
-        if (payload) {
+        if (payload && this.notebook) {
             const targetVar = payload as IJupyterVariable;
             // Request our variable value
-            const varValue: IJupyterVariable = await this.jupyterVariables.getValue(targetVar);
+            const varValue: IJupyterVariable = await this.jupyterVariables.getValue(targetVar, this.notebook);
             this.postMessage(InteractiveWindowMessages.GetVariableValueResponse, varValue).ignoreErrors();
 
             // Send our fetch time if appropriate.

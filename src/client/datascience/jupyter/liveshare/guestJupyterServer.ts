@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 'use strict';
 import * as uuid from 'uuid/v4';
+import { Uri } from 'vscode';
 import { CancellationToken } from 'vscode-jsonrpc';
 import * as vsls from 'vsls/vscode';
 
@@ -12,17 +13,16 @@ import * as localize from '../../../common/utils/localize';
 import { LiveShare, LiveShareCommands } from '../../constants';
 import {
     IConnection,
+    IDataScience,
     IJupyterSessionManager,
+    INotebook,
     INotebookExecutionLogger,
     INotebookServer,
     INotebookServerLaunchInfo
 } from '../../types';
+import { GuestJupyterNotebook } from './guestJupyterNotebook';
 import { LiveShareParticipantDefault, LiveShareParticipantGuest } from './liveShareParticipantMixin';
 import { ILiveShareParticipant } from './types';
-import { INotebook, IDataScience } from '../../types';
-import { Uri } from 'vscode';
-import { GuestJupyterNotebook } from './guestJupyterNotebook';
-import { string } from 'prop-types';
 
 export class GuestJupyterServer
     extends LiveShareParticipantGuest(LiveShareParticipantDefault, LiveShare.JupyterServerSharedService)

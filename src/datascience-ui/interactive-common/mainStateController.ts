@@ -775,6 +775,9 @@ export class MainStateController implements IMessageHandler {
             if (cell && this.isCellSupported(cell)) {
                 this.updateOrAdd(cell, true);
             }
+
+            // Update info when finishing (execution count should be different)
+            this.sendInfo();
         }
     }
 

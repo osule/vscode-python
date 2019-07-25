@@ -5,7 +5,7 @@ import '../../common/extensions';
 
 import { inject, injectable, multiInject } from 'inversify';
 import * as path from 'path';
-import { Event, EventEmitter, TextEditor, ViewColumn } from 'vscode';
+import { Event, EventEmitter, TextEditor, Uri, ViewColumn } from 'vscode';
 
 import {
     IApplicationShell,
@@ -158,6 +158,11 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
 
     protected getNotebookOptions(): Promise<INotebookServerOptions> {
         return this.interactiveWindowProvider.getNotebookOptions();
+    }
+
+    protected async getNotebookIdentity(): Promise<Uri> {
+        // Always the same identity (for now)
+        return Uri.parse(Identifiers.InteractiveWindowIdentity);
     }
 
     protected updateContexts(info: IInteractiveWindowInfo | undefined) {
