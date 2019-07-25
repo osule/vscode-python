@@ -91,7 +91,7 @@ export class JupyterImporter implements INotebookImporter {
         // a) JSON parse should validate that it's JSON
         // b) cells check should validate it's at least close to a notebook
         // tslint:disable-next-line: no-any
-        const contents = JSON.parse(json) as any;
+        const contents = json ? JSON.parse(json) as any : undefined;
         if (contents && contents.cells && contents.cells.length) {
             // Convert the cells into actual cell objects
             const cells = contents.cells as (nbformat.ICodeCell | nbformat.IRawCell | nbformat.IMarkdownCell)[];

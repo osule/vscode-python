@@ -364,6 +364,7 @@ export interface IEventNamePropertyMapping {
     [Telemetry.ConnectRemoteFailedJupyter]: never | undefined;
     [Telemetry.ConnectRemoteSelfCertFailedJupyter]: never | undefined;
     [Telemetry.CopySourceCode]: never | undefined;
+    [Telemetry.CreateNewNotebook]: never | undefined;
     [Telemetry.DataScienceSettings]: JSONObject;
     [Telemetry.DataViewerFetchTime]: never | undefined;
     [Telemetry.DebugCurrentCell]: never | undefined;

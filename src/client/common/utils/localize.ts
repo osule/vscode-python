@@ -245,6 +245,14 @@ export namespace DataScience {
     export const invalidNotebookFileError = localize('DataScience.invalidNotebookFileError', 'Notebook is not in the correct format. Check the file for correct json.');
     export const invalidNotebookFileErrorFormat = localize('DataScience.invalidNotebookFileError', '{0} is not a valid notebook file. Check the file for correct json.');
     export const nativeEditorTitle = localize('DataScience.nativeEditorTitle', 'Notebook Editor');
+    export const untitledNotebookFileName = localize('DataScience.untitledNotebookFileName', 'Untitled');
+    export const dirtyNotebookMessage1 = localize('DataScience.untitledNotebookMessage', 'Do you want to save the changes you made to {0}?');
+    export const dirtyNotebookMessage2 = localize('DataScience.untitledNotebookMessage', 'Your changes will be lost if you don\'t save them.');
+    export const dirtyNotebookYes = localize('DataScience.untitledNotebookYes', 'Save');
+    export const dirtyNotebookNo = localize('DataScience.untitledNotebookNo', 'Don\'t Save');
+    export const dirtyNotebookCancel = localize('DataScience.untitledNotebookNo', 'Cancel');
+    export const dirtyNotebookDialogTitle = localize('DataScience.dirtyNotebookDialogTitle', 'Save');
+    export const dirtyNotebookDialogFilter = localize('DataScience.dirtyNotebookDialogFilter', 'Jupyter Notebooks');
 }
 
 export namespace DebugConfigStrings {

@@ -35,6 +35,7 @@ export interface IMainState {
     variables: IJupyterVariable[];
     pendingVariableCount: number;
     debugging: boolean;
+    dirty?: boolean;
 }
 
 // tslint:disable-next-line: no-multiline-string

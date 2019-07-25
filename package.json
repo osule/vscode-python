@@ -495,6 +495,11 @@
                 "category": "Python"
             },
             {
+                "command": "python.datascience.createnewnotebook",
+                "title": "%python.command.python.datascience.createnewnotebook.title%",
+                "category": "Python"
+            },
+            {
                 "command": "python.datascience.scrolltocell",
                 "title": "%python.command.python.datascience.scrolltocell.title%",
                 "category": "Python"
@@ -832,6 +837,12 @@
                 {
                     "command": "python.datascience.addcellbelow",
                     "title": "%python.command.python.datascience.addcellbelow.title%",
+                    "category": "Python",
+                    "when": "python.datascience.featureenabled"
+                },
+                {
+                    "command": "python.datascience.createnewnotebook",
+                    "title": "%python.command.python.datascience.createnewnotebook.title%",
                     "category": "Python",
                     "when": "python.datascience.featureenabled"
                 }

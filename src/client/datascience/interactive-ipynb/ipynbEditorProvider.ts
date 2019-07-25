@@ -2,8 +2,11 @@
 // Licensed under the MIT License.
 'use strict';
 import { inject, injectable } from 'inversify';
+import * as path from 'path';
 import { Uri } from 'vscode';
 
+import { IWorkspaceService } from '../../common/application/types';
+import { IFileSystem } from '../../common/platform/types';
 import { IAsyncDisposable, IAsyncDisposableRegistry, IDisposableRegistry } from '../../common/types';
 import * as localize from '../../common/utils/localize';
 import { IServiceContainer } from '../../ioc/types';
@@ -15,11 +18,13 @@ export class IpynbProvider implements INotebookEditorProvider, IAsyncDisposable 
     constructor(
         @inject(IServiceContainer) private serviceContainer: IServiceContainer,
         @inject(IAsyncDisposableRegistry) asyncRegistry: IAsyncDisposableRegistry,
-        @inject(IDisposableRegistry) private disposables: IDisposableRegistry
+        @inject(IDisposableRegistry) private disposables: IDisposableRegistry,
+        @inject(IWorkspaceService) private workspace: IWorkspaceService,
+        @inject(IFileSystem) private fileSystem: IFileSystem
     ) {
         asyncRegistry.push(this);
 
-        // No sync required as open document from vscode will give us our contents.
+        // No live share sync required as open document from vscode will give us our contents.
     }
 
     public dispose(): Promise<void> {
@@ -52,20 +57,44 @@ export class IpynbProvider implements INotebookEditorProvider, IAsyncDisposable 
         return editor;
     }
 
-    private async create(file: Uri, contents: string): Promise<INotebookEditor> {
-        if (contents) {
-            const editor = this.serviceContainer.get<INotebookEditor>(INotebookEditor);
-            await editor.load(contents, file);
-            this.disposables.push(editor.closed(this.onClosedEditor.bind(this)));
-            await editor.show();
-            return editor;
-        }
+    public async createNew(): Promise<INotebookEditor> {
+        // Create a new URI for the dummy file using our root workspace path
+        const uri = await this.getNextNewNotebookUri();
+        return this.open(uri, '');
+    }
 
-        throw new Error(localize.DataScience.liveShareConnectFailure());
+    private async create(file: Uri, contents: string): Promise<INotebookEditor> {
+        const editor = this.serviceContainer.get<INotebookEditor>(INotebookEditor);
+        await editor.load(contents, file);
+        this.disposables.push(editor.closed(this.onClosedEditor.bind(this)));
+        await editor.show();
+        return editor;
     }
 
     private onClosedEditor(e: INotebookEditor) {
         this.activeEditors.delete(e.file.fsPath);
     }
 
+    private async getNextNewNotebookUri(): Promise<Uri> {
+        // Start in the root and look for files starting with untitled
+        let number = 1;
+        const dir = this.workspace.rootPath;
+        if (dir) {
+            const existing = await this.fileSystem.search(`${dir}/${localize.DataScience.untitledNotebookFileName()}-*.ipynb`);
+
+            // Sort by number
+            const sorted = existing.sort();
+
+            // Add one onto the end of the last one
+            if (sorted.length > 0) {
+                const match = /(\w+)-(\d+)\.ipynb/.exec(path.basename(sorted[sorted.length - 1]));
+                if (match && match.length > 1) {
+                    number = parseInt(match[2], 10);
+                }
+            }
+            return Uri.file(path.join(dir, `${localize.DataScience.untitledNotebookFileName()}-${number}`));
+        }
+
+        return Uri.file(`${localize.DataScience.untitledNotebookFileName()}-${number}`);
+    }
 }

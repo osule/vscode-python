@@ -60,6 +60,7 @@ interface ICommandNameWithoutArgumentTypeMapping {
     [DSCommands.CollapseAllCells]: [];
     [DSCommands.ExportOutputAsNotebook]: [];
     [DSCommands.AddCellBelow]: [];
+    [DSCommands.CreateNewNotebook]: [];
 }
 
 /**

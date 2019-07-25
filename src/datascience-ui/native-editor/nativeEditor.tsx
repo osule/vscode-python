@@ -59,6 +59,10 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         });
     }
 
+    public componentDidMount() {
+        window.addEventListener('onbeforeunload', this.onBeforeUnload);
+    }
+
     public render() {
         return (
             <div id='main-panel' ref={this.mainPanelRef}>
@@ -215,6 +219,13 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
 
         if (nextCellId && this.contentPanelRef.current) {
             this.contentPanelRef.current.focusCell(nextCellId);
+        }
+    }
+
+    private onBeforeUnload = () => {
+        if (this.state.dirty) {
+            // Need to ask the user if it's okay to close.
+            return 'test';
         }
     }
 

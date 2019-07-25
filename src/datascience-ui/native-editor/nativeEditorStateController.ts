@@ -21,6 +21,11 @@ export class NativeEditorStateController extends MainStateController {
                 this.stopBusy();
                 break;
 
+            case InteractiveWindowMessages.NotebookDirty:
+                // Indicate dirty
+                this.setState({ dirty: true });
+                break;
+
             default:
                 break;
         }

@@ -4,7 +4,7 @@
 import '../common/extensions';
 
 import { JSONObject } from '@phosphor/coreutils';
-import { inject, injectable, optional, multiInject } from 'inversify';
+import { inject, injectable, multiInject, optional } from 'inversify';
 import { URL } from 'url';
 import * as vscode from 'vscode';
 
@@ -26,7 +26,7 @@ import { IServiceContainer } from '../ioc/types';
 import { captureTelemetry, sendTelemetryEvent } from '../telemetry';
 import { hasCells } from './cellFactory';
 import { Commands, EditorContexts, Settings, Telemetry } from './constants';
-import { ICodeWatcher, IDataScience, IDataScienceCodeLensProvider, IDataScienceCommandListener } from './types';
+import { ICodeWatcher, IDataScience, IDataScienceCodeLensProvider, IDataScienceCommandListener, INotebookEditorProvider } from './types';
 
 @injectable()
 export class DataScience implements IDataScience {
@@ -43,7 +43,8 @@ export class DataScience implements IDataScience {
         @inject(IDocumentManager) private documentManager: IDocumentManager,
         @inject(IApplicationShell) private appShell: IApplicationShell,
         @inject(IWorkspaceService) private workspace: IWorkspaceService,
-        @multiInject(IDataScienceCommandListener) @optional() private commandListeners: IDataScienceCommandListener[] | undefined
+        @multiInject(IDataScienceCommandListener) @optional() private commandListeners: IDataScienceCommandListener[] | undefined,
+        @inject(INotebookEditorProvider) private notebookProvider: INotebookEditorProvider
     ) {
         this.dataScienceSurveyBanner = this.serviceContainer.get<IPythonExtensionBanner>(IPythonExtensionBanner, BANNER_NAME_DS_SURVEY);
     }
@@ -402,6 +403,8 @@ export class DataScience implements IDataScience {
         this.disposableRegistry.push(disposable);
         disposable = this.commandManager.registerCommand(Commands.DebugCurrentCellPalette, this.debugCurrentCellFromCursor, this);
         this.disposableRegistry.push(disposable);
+        disposable = this.commandManager.registerCommand(Commands.CreateNewNotebook, this.createNewNotebook, this);
+        this.disposableRegistry.push(disposable);
         if (this.commandListeners) {
             this.commandListeners.forEach((listener: IDataScienceCommandListener) => {
                 listener.register(this.commandManager);
@@ -453,5 +456,9 @@ export class DataScience implements IDataScience {
         } catch (err) {
             traceError(err);
         }
+    }
+
+    private async createNewNotebook(): Promise<void> {
+        await this.notebookProvider.createNew();
     }
 }

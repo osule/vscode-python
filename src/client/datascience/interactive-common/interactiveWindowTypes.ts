@@ -62,6 +62,7 @@ export namespace InteractiveWindowMessages {
     export const ScrollToCell = 'scroll_to_cell';
     export const ReExecuteCell = 'rexecute_cell';
     export const NotebookIdentity = 'identity';
+    export const NotebookDirty = 'dirty';
 
 }
 
@@ -247,4 +248,5 @@ export class IInteractiveWindowMapping {
     public [InteractiveWindowMessages.ScrollToCell]: IScrollToCell;
     public [InteractiveWindowMessages.ReExecuteCell]: ISubmitNewCell;
     public [InteractiveWindowMessages.NotebookIdentity]: INotebookIdentity;
+    public [InteractiveWindowMessages.NotebookDirty]: never | undefined;
 }

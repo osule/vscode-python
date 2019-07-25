@@ -102,7 +102,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         @unmanaged() private jupyterExecution: IJupyterExecution,
         @unmanaged() protected fileSystem: IFileSystem,
         @unmanaged() protected configuration: IConfigurationService,
-        @unmanaged() private jupyterExporter: INotebookExporter,
+        @unmanaged() protected jupyterExporter: INotebookExporter,
         @unmanaged() workspaceService: IWorkspaceService,
         @unmanaged() private dataExplorerProvider: IDataViewerProvider,
         @unmanaged() private jupyterVariables: IJupyterVariables,

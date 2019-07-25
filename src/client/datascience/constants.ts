@@ -42,6 +42,7 @@ export namespace Commands {
     export const DebugCell = 'python.datascience.debugcell';
     export const RunCurrentCellAndAddBelow = 'python.datascience.runcurrentcellandaddbelow';
     export const ScrollToCell = 'python.datascience.scrolltocell';
+    export const CreateNewNotebook = 'python.datascience.createnewnotebook';
 }
 
 export namespace EditorContexts {
@@ -159,7 +160,9 @@ export enum Telemetry {
     PtvsdSuccessfullyInstalled = 'DATASCIENCE.PTVSD_SUCCESSFULLY_INSTALLED',
     PtvsdInstallFailed = 'DATASCIENCE.PTVSD_INSTALL_FAILED',
     ScrolledToCell = 'DATASCIENCE.SCROLLED_TO_CELL',
-    ExecuteNativeCell = 'DATASCIENCE.EXECUTE_NATIVE_CELL'
+    ExecuteNativeCell = 'DATASCIENCE.EXECUTE_NATIVE_CELL',
+    CreateNewNotebook = 'DATASCIENCE.CREATE_NEW_NOTEBOOK'
+
 }
 
 export namespace HelpLinks {
