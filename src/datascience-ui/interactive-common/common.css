@@ -79,6 +79,10 @@ body, html {
     display: block;
 }
 
+.cell-wrapper:focus {
+    outline: none;
+}
+
 .cell-wrapper-preview {
     background-color: var(--override-peek-background, var(--vscode-peekViewEditor-background));
 }

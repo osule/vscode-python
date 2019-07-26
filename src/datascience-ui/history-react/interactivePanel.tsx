@@ -252,7 +252,10 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
     private editCellEscape = () => {
         const focusedElement = document.activeElement;
         if (focusedElement) {
-            this.findTabStop(1, focusedElement);
+            const nextTabStop = this.findTabStop(1, focusedElement);
+            if (nextTabStop) {
+                nextTabStop.focus();
+            }
         }
     }
 

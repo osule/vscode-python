@@ -540,12 +540,14 @@ export class Cell extends React.Component<ICellProps> {
             case 'ArrowDown':
                 if (this.props.arrowDown && !this.props.focusedCell) {
                     event.stopPropagation();
+                    event.preventDefault();
                     this.props.arrowDown(this.props.cellVM.cell.id);
                 }
                 break;
             case 'ArrowUp':
                 if (this.props.arrowUp && !this.props.focusedCell) {
                     event.stopPropagation();
+                    event.preventDefault();
                     this.props.arrowUp(this.props.cellVM.cell.id);
                 }
                 break;

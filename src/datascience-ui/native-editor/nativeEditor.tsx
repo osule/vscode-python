@@ -5,7 +5,8 @@ import './nativeEditor.less';
 
 import * as React from 'react';
 
-import { Cell } from '../interactive-common/cell';
+import { ICell } from '../../client/datascience/types';
+import { Cell, ICellViewModel } from '../interactive-common/cell';
 import { ContentPanel, IContentPanelProps } from '../interactive-common/contentPanel';
 import { InputHistory } from '../interactive-common/inputHistory';
 import { createEditableCellVM, IMainState } from '../interactive-common/mainState';
@@ -138,6 +139,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             copyCellCode: this.stateController.copyCellCode,
             deleteCell: this.stateController.deleteCell,
             skipNextScroll: this.state.skipNextScroll ? true : false,
+            skipAutoScroll: true,
             monacoTheme: this.state.monacoTheme,
             onCodeCreated: this.stateController.readOnlyCodeCreated,
             onCodeChange: this.stateController.codeChange,
@@ -145,7 +147,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             expandImage: this.stateController.showPlot,
             editable: true,
             newCellVM: this.state.editCellVM,
-            submitInput: this.stateController.submitInput,
+            submitInput: this.submitInput,
             editExecutionCount: ' ', // Always a space for native. It's what Jupyter does.
             editorMeasureClassName: 'measure-editor-div',
             arrowUp: this.arrowUpFromCell,
@@ -193,17 +195,23 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
        };
     }
 
+    private getNonMessageCells(): ICell[] {
+        return this.state.cellVMs.map(cvm => cvm.cell).filter(c => c.data.cell_type !== 'messages');
+    }
+
     private arrowUpFromCell = (cellId: string) => {
+        const cells = this.getNonMessageCells();
+
         // Find the previous cell index
-        let index = this.state.cellVMs.findIndex(cvm => cvm.cell.id === cellId) - 1;
+        let index = cells.findIndex(c => c.id === cellId) - 1;
 
         // Might also be the edit cell
         if (this.state.editCellVM && cellId === this.state.editCellVM.cell.id) {
-            index = this.state.cellVMs.length - 1;
+            index = cells.length - 1;
         }
 
-        if (index > 0 && this.contentPanelRef.current) {
-            const prevCellId = this.state.cellVMs[index].cell.id;
+        if (index >= 0 && this.contentPanelRef.current) {
+            const prevCellId = cells[index].id;
             const wasFocused = this.state.focusedCell;
             this.stateController.selectCell(prevCellId, wasFocused ? prevCellId : undefined);
             this.contentPanelRef.current.focusCell(prevCellId, wasFocused ? true : false);
@@ -211,12 +219,14 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
     }
 
     private arrowDownFromCell = (cellId: string) => {
+        const cells = this.getNonMessageCells();
+
         // Find the next cell to move to
-        const index = this.state.cellVMs.findIndex(cvm => cvm.cell.id === cellId);
+        const index = cells.findIndex(c => c.id === cellId);
         let nextCellId: string | undefined;
         if (index >= 0) {
-            if (index < this.state.cellVMs.length - 1) {
-                nextCellId = this.state.cellVMs[index + 1].cell.id;
+            if (index < cells.length - 1) {
+                nextCellId = cells[index + 1].id;
             } else if (this.state.editCellVM) {
                 nextCellId = this.state.editCellVM.cell.id;
             }
@@ -239,6 +249,18 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         if (this.contentPanelRef && this.contentPanelRef.current) {
             this.contentPanelRef.current.focusCell(cellId, false);
         }
+    }
+
+    private submitInput = (code: string, inputCell: ICellViewModel) => {
+        // Send to the state controller
+        this.stateController.submitInput(code, inputCell);
+
+        // After that's done, make sure the cell is scrolled to
+        setTimeout(() => {
+            if (this.contentPanelRef && this.contentPanelRef.current) {
+                this.contentPanelRef.current.focusCell(inputCell.cell.id, true);
+            }
+        }, 10);
     }
 
 }

@@ -31,6 +31,7 @@ export interface IContentPanelProps {
     newCellVM?: ICellViewModel;
     selectedCell?: string;
     focusedCell?: string;
+    skipAutoScroll?: boolean;
     gotoCellCode(cellId: string): void;
     copyCellCode(cellId: string): void;
     deleteCell(cellId: string): void;
@@ -83,7 +84,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
     public scrollToCell(cellId: string) {
         const ref = this.cellContainerRefs.get(cellId);
         if (ref && ref.current) {
-            ref.current.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' });
+            ref.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' });
             ref.current.classList.add('flash');
             setTimeout(() => {
                 if (ref.current) {
@@ -96,7 +97,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
     public focusCell(cellId: string, focusCode: boolean) {
         const ref = this.cellContainerRefs.get(cellId);
         if (ref && ref.current) {
-            ref.current.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' });
+            ref.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' });
             const cellRef = this.cellRefs.get(cellId);
             if (cellRef && cellRef.current) {
                 cellRef.current.giveFocus(focusCode);
@@ -179,7 +180,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
     }
 
     private scrollToBottom() {
-        if (this.bottomRef.current && !this.props.skipNextScroll && !this.props.testMode && this.containerRef.current) {
+        if (this.bottomRef.current && !this.props.skipNextScroll && !this.props.testMode && !this.props.skipAutoScroll && this.containerRef.current) {
             // Make sure to debounce this so it doesn't take up too much time.
             this.throttledScrollIntoView();
         }
