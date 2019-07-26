@@ -31,6 +31,7 @@ export interface ICodeProps {
     arrowDown?(): void;
     focused?(): void;
     unfocused?(): void;
+    escapeKeyHit?(): void;
 }
 
 interface ICodeState {
@@ -170,6 +171,11 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
             this.arrowUp(e);
         } else if (e.keyCode === monacoEditor.KeyCode.DownArrow) {
             this.arrowDown(e);
+        } else if (e.keyCode === monacoEditor.KeyCode.Escape && this.editorRef && this.editorRef.current && !this.editorRef.current.isSuggesting()) {
+            if (this.props.escapeKeyHit) {
+                this.props.escapeKeyHit();
+                e.stopPropagation();
+            }
         }
     }
 

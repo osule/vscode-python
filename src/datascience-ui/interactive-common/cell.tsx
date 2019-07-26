@@ -42,21 +42,22 @@ interface ICellProps {
     editorMeasureClassName?: string;
     allowCollapse: boolean;
     clearOnSubmit: boolean;
-    selectedCell: boolean;
-    focusedCell: boolean;
-    gotoCode(): void;
-    copyCode(): void;
-    delete(): void;
+    selectedCell?: string;
+    focusedCell?: string;
+    gotoCode(cellId: string): void;
+    copyCode(cellId: string): void;
+    delete(cellId: string): void;
     submitNewCode(code: string, cellVM: ICellViewModel): void;
     onCodeChange(changes: monacoEditor.editor.IModelContentChange[], cellId: string, modelId: string): void;
     onCodeCreated(code: string, file: string, cellId: string, modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
     expandImage(imageHtml: string): void;
-    arrowUp?(): void;
-    arrowDown?(): void;
-    onClick(): void;
-    focused?(): void;
-    unfocused?(): void;
+    arrowUp?(cellId: string): void;
+    arrowDown?(cellId: string): void;
+    onClick?(cellId: string): void;
+    focused?(cellId: string): void;
+    unfocused?(cellId: string): void;
+    escapeKeyHit?(cellId: string): void;
 }
 
 export interface ICellViewModel {
@@ -187,10 +188,10 @@ export class Cell extends React.Component<ICellProps> {
         const shouldRender = allowsPlainInput || (results && results.length > 0);
         const cellOuterClass = this.props.cellVM.editable ? 'cell-outer-editable' : 'cell-outer';
         let cellWrapperClass = this.props.cellVM.editable ? 'cell-wrapper' : 'cell-wrapper cell-wrapper-noneditable';
-        if (this.props.selectedCell && !this.props.focusedCell) {
+        if (this.props.selectedCell === this.props.cellVM.cell.id && this.props.focusedCell !== this.props.cellVM.cell.id) {
             cellWrapperClass += ' cell-wrapper-selected';
         }
-        if (this.props.focusedCell) {
+        if (this.props.focusedCell === this.props.cellVM.cell.id) {
             cellWrapperClass += ' cell-wrapper-focused';
         }
 
@@ -219,7 +220,7 @@ export class Cell extends React.Component<ICellProps> {
         // When we receive a click, propage upwards. Might change our state
         if (this.props.onClick) {
             ev.stopPropagation();
-            this.props.onClick();
+            this.props.onClick(this.props.cellVM.cell.id);
         }
     }
 
@@ -248,18 +249,36 @@ export class Cell extends React.Component<ICellProps> {
                     onClick={this.toggleInputBlock}
                     tooltip={getLocString('DataScience.collapseInputTooltip', 'Collapse input block')} />
                 <div className='cell-menu-bar-outer'>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource || this.props.cellVM.editable}>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource || this.props.cellVM.editable}>
                         <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
                     </ImageButton>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || isEditOnlyCell}>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || isEditOnlyCell}>
                         <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
                     </ImageButton>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.props.delete} tooltip={this.getDeleteString()} hidden={isEditOnlyCell}>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.deleteCode} tooltip={this.getDeleteString()} hidden={isEditOnlyCell}>
                         <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
                     </ImageButton>
                 </div>
             </div>
         );
+    }
+
+    private gotoCode = () => {
+        if (this.props.gotoCode) {
+            this.props.gotoCode(this.props.cellVM.cell.id);
+        }
+    }
+
+    private copyCode = () => {
+        if (this.props.copyCode) {
+            this.props.copyCode(this.props.cellVM.cell.id);
+        }
+    }
+
+    private deleteCode = () => {
+        if (this.props.delete) {
+            this.props.delete(this.props.cellVM.cell.id);
+        }
     }
 
     private updateCodeRef = (ref: Code) => {
@@ -291,15 +310,46 @@ export class Cell extends React.Component<ICellProps> {
                         forceBackgroundColor={backgroundColor}
                         editorMeasureClassName={this.props.editorMeasureClassName}
                         clearOnSubmit={this.props.clearOnSubmit}
-                        arrowUp={this.props.arrowUp}
-                        arrowDown={this.props.arrowDown}
-                        focused={this.props.focused}
-                        unfocused={this.props.unfocused}
+                        arrowUp={this.onCodeArrowUp}
+                        arrowDown={this.onCodeArrowDown}
+                        focused={this.onCodeFocused}
+                        unfocused={this.onCodeUnfocused}
+                        escapeKeyHit={this.props.escapeKeyHit ? this.onCodeEscapeKey : undefined}
                         />
                 </div>
             );
         } else {
             return null;
+        }
+    }
+
+    private onCodeEscapeKey = () => {
+        if (this.props.escapeKeyHit) {
+            this.props.escapeKeyHit(this.props.cellVM.cell.id);
+        }
+    }
+
+    private onCodeArrowUp = () => {
+        if (this.props.arrowUp) {
+            this.props.arrowUp(this.props.cellVM.cell.id);
+        }
+    }
+
+    private onCodeArrowDown = () => {
+        if (this.props.arrowDown) {
+            this.props.arrowDown(this.props.cellVM.cell.id);
+        }
+    }
+
+    private onCodeFocused = () => {
+        if (this.props.focused) {
+            this.props.focused(this.props.cellVM.cell.id);
+        }
+    }
+
+    private onCodeUnfocused = () => {
+        if (this.props.unfocused) {
+            this.props.unfocused(this.props.cellVM.cell.id);
         }
     }
 
@@ -488,17 +538,27 @@ export class Cell extends React.Component<ICellProps> {
         // Handle keydown events for the entire window
         switch (event.key) {
             case 'ArrowDown':
-                if (this.props.arrowDown) {
+                if (this.props.arrowDown && !this.props.focusedCell) {
                     event.stopPropagation();
-                    this.props.arrowDown();
+                    this.props.arrowDown(this.props.cellVM.cell.id);
                 }
                 break;
             case 'ArrowUp':
-                if (this.props.arrowUp) {
+                if (this.props.arrowUp && !this.props.focusedCell) {
                     event.stopPropagation();
-                    this.props.arrowUp();
+                    this.props.arrowUp(this.props.cellVM.cell.id);
                 }
                 break;
+
+            case 'Enter':
+                if (this.props.selectedCell === this.props.cellVM.cell.id && !this.props.focusedCell && this.code) {
+                    event.stopPropagation();
+
+                    // Can't do this right away as the enter will end up in the code
+                    setTimeout(() => this.code!.giveFocus(), 1);
+                }
+                break;
+
             default:
                 break;
         }

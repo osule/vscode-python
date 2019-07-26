@@ -416,7 +416,7 @@ export class MainStateController implements IMessageHandler {
     }
 
     public codeGotFocus = (cellId: string | undefined) => {
-        this.setState({ focusedCell: cellId });
+        this.setState({ selectedCell: cellId, focusedCell: cellId });
     }
 
     public selectCell = (cellId: string, focusedCell?: string) => {

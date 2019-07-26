@@ -172,9 +172,8 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                         expandImage={noop}
                         ref={this.editCellRef}
                         clearOnSubmit={true}
-                        selectedCell={false}
-                        focusedCell={false}
                         onClick={this.clickEditCell}
+                        escapeKeyHit={this.editCellEscape}
                     />
                 </ErrorBoundary>
             </div>
@@ -249,4 +248,23 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             this.editCellRef.current.giveFocus(true);
         }
     }
+
+    private editCellEscape = () => {
+        const focusedElement = document.activeElement;
+        if (focusedElement) {
+            this.findTabStop(1, focusedElement);
+        }
+    }
+
+    private findTabStop(direction: number, element: Element) : HTMLElement | undefined {
+        if (element) {
+            const allFocusable = document.querySelectorAll('input, button, select, textarea, a[href]');
+            if (allFocusable) {
+                const tabable = Array.prototype.filter.call(allFocusable, (i: HTMLElement) => i.tabIndex >= 0);
+                const self = tabable.indexOf(element);
+                return direction >= 0 ? tabable[self + 1] || tabable[0] : tabable[self - 1] || tabable[0];
+            }
+        }
+    }
+
 }

@@ -45,6 +45,7 @@ export interface IContentPanelProps {
     clickCell?(cellId: string): void;
     focusCell?(cellId: string): void;
     unfocusCell?(cellId: string): void;
+    escapeCell?(cellId: string): void;
 }
 
 export class ContentPanel extends React.Component<IContentPanelProps> {
@@ -128,16 +129,6 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
         const ref = React.createRef<HTMLDivElement>();
         this.cellRefs.set(cellVM.cell.id, cellRef);
         this.cellContainerRefs.set(cellVM.cell.id, ref);
-        const arrowUp = this.props.arrowUp ? () => this.props.arrowUp!(cellVM.cell.id) : undefined;
-        const arrowDown = this.props.arrowDown ? () => this.props.arrowDown!(cellVM.cell.id) : undefined;
-        const gotoCode = () => this.props.gotoCellCode(cellVM.cell.id);
-        const copyCode = () => this.props.copyCellCode(cellVM.cell.id);
-        const deleteCell = () => this.props.deleteCell(cellVM.cell.id);
-        const clickCell = this.props.clickCell ? () => this.props.clickCell!(cellVM.cell.id) : noop;
-        const selectedCell = this.props.selectedCell === cellVM.cell.id;
-        const focusedCell = this.props.focusedCell === cellVM.cell.id;
-        const focusCell = this.props.focusCell ? () => this.props.focusCell!(cellVM.cell.id) : noop;
-        const unfocusCell = this.props.unfocusCell ? () => this.props.unfocusCell!(cellVM.cell.id) : noop;
         return (
             <div key={index} id={cellVM.cell.id} ref={ref}>
                 <ErrorBoundary key={index}>
@@ -156,9 +147,9 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                         allowCollapse={!this.props.editable}
                         showWatermark={showWatermark}
                         editExecutionCount={this.props.editExecutionCount}
-                        gotoCode={gotoCode}
-                        copyCode={copyCode}
-                        delete={deleteCell}
+                        gotoCode={this.props.gotoCellCode}
+                        copyCode={this.props.copyCellCode}
+                        delete={this.props.deleteCell}
                         onCodeChange={this.props.onCodeChange}
                         onCodeCreated={this.props.onCodeCreated}
                         monacoTheme={this.props.monacoTheme}
@@ -166,13 +157,14 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                         expandImage={this.props.expandImage}
                         clearOnSubmit={clearOnSubmit}
                         editorMeasureClassName={this.props.editorMeasureClassName}
-                        arrowUp={arrowUp}
-                        arrowDown={arrowDown}
-                        selectedCell={selectedCell}
-                        focusedCell={focusedCell}
-                        onClick={clickCell}
-                        focused={focusCell}
-                        unfocused={unfocusCell}
+                        arrowUp={this.props.arrowUp}
+                        arrowDown={this.props.arrowDown}
+                        selectedCell={this.props.selectedCell}
+                        focusedCell={this.props.focusedCell}
+                        onClick={this.props.clickCell}
+                        focused={this.props.focusCell}
+                        unfocused={this.props.unfocusCell}
+                        escapeKeyHit={this.props.escapeCell}
                     />
                 </ErrorBoundary>
             </div>);

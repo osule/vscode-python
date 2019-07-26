@@ -154,7 +154,8 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             focusedCell: this.state.focusedCell,
             clickCell: this.clickCell,
             focusCell: this.stateController.codeGotFocus,
-            unfocusCell: this.stateController.codeLostFocus
+            unfocusCell: this.stateController.codeLostFocus,
+            escapeCell: this.escapeCell
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {
@@ -229,7 +230,15 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
     }
 
     private clickCell = (cellId: string) => {
-        this.stateController.selectCell(cellId);
+        const focusedCell = cellId === this.state.focusedCell ? cellId : undefined;
+        this.stateController.selectCell(cellId, focusedCell);
+    }
+
+    private escapeCell = (cellId: string) => {
+        // Unfocus the current cell by giving focus to the cell itself
+        if (this.contentPanelRef && this.contentPanelRef.current) {
+            this.contentPanelRef.current.focusCell(cellId, false);
+        }
     }
 
 }
