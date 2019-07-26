@@ -67,7 +67,7 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
 
     public render() {
         return (
-            <div id='main-panel' ref={this.mainPanelRef}>
+            <div id='main-panel' ref={this.mainPanelRef} role='Main'>
                 <div className='styleSetter'>
                     <style>
                         {this.state.rootCss}
@@ -100,7 +100,7 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                 }
 
                 if (this.editCellRef && this.editCellRef.current) {
-                    this.editCellRef.current.giveFocus();
+                    this.editCellRef.current.giveFocus(true);
                 }
             }, 100);
         }
@@ -172,6 +172,9 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                         expandImage={noop}
                         ref={this.editCellRef}
                         clearOnSubmit={true}
+                        selectedCell={false}
+                        focusedCell={false}
+                        onClick={this.clickEditCell}
                     />
                 </ErrorBoundary>
             </div>
@@ -239,5 +242,11 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
         variableExplorerToggled: this.stateController.variableExplorerToggled,
         baseTheme: baseTheme
        };
+    }
+
+    private clickEditCell = () => {
+        if (this.editCellRef && this.editCellRef.current) {
+            this.editCellRef.current.giveFocus(true);
+        }
     }
 }

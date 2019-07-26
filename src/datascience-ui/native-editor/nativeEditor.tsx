@@ -59,13 +59,9 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         });
     }
 
-    public componentDidMount() {
-        window.addEventListener('onbeforeunload', this.onBeforeUnload);
-    }
-
     public render() {
         return (
-            <div id='main-panel' ref={this.mainPanelRef}>
+            <div id='main-panel' ref={this.mainPanelRef} role='Main'>
                 <div className='styleSetter'>
                     <style>
                         {this.state.rootCss}
@@ -95,7 +91,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                 }
 
                 if (this.editCellRef && this.editCellRef.current) {
-                    this.editCellRef.current.giveFocus();
+                    this.editCellRef.current.giveFocus(true);
                 }
             }, 100);
         }
@@ -153,7 +149,12 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             editExecutionCount: ' ', // Always a space for native. It's what Jupyter does.
             editorMeasureClassName: 'measure-editor-div',
             arrowUp: this.arrowUpFromCell,
-            arrowDown: this.arrowDownFromCell
+            arrowDown: this.arrowDownFromCell,
+            selectedCell: this.state.selectedCell,
+            focusedCell: this.state.focusedCell,
+            clickCell: this.clickCell,
+            focusCell: this.stateController.codeGotFocus,
+            unfocusCell: this.stateController.codeLostFocus
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {
@@ -200,8 +201,11 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             index = this.state.cellVMs.length - 1;
         }
 
-        if (index >= 0 && this.contentPanelRef.current) {
-            this.contentPanelRef.current.focusCell(this.state.cellVMs[index].cell.id);
+        if (index > 0 && this.contentPanelRef.current) {
+            const prevCellId = this.state.cellVMs[index].cell.id;
+            const wasFocused = this.state.focusedCell;
+            this.stateController.selectCell(prevCellId, wasFocused ? prevCellId : undefined);
+            this.contentPanelRef.current.focusCell(prevCellId, wasFocused ? true : false);
         }
     }
 
@@ -218,15 +222,14 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         }
 
         if (nextCellId && this.contentPanelRef.current) {
-            this.contentPanelRef.current.focusCell(nextCellId);
+            const wasFocused = this.state.focusedCell;
+            this.stateController.selectCell(nextCellId, wasFocused ? nextCellId : undefined);
+            this.contentPanelRef.current.focusCell(nextCellId, wasFocused ? true : false);
         }
     }
 
-    private onBeforeUnload = () => {
-        if (this.state.dirty) {
-            // Need to ask the user if it's okay to close.
-            return 'test';
-        }
+    private clickCell = (cellId: string) => {
+        this.stateController.selectCell(cellId);
     }
 
 }

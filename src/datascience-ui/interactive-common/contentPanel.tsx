@@ -29,6 +29,8 @@ export interface IContentPanelProps {
     editExecutionCount: string;
     editorMeasureClassName?: string;
     newCellVM?: ICellViewModel;
+    selectedCell?: string;
+    focusedCell?: string;
     gotoCellCode(cellId: string): void;
     copyCellCode(cellId: string): void;
     deleteCell(cellId: string): void;
@@ -39,6 +41,10 @@ export interface IContentPanelProps {
     submitInput(code: string, cellVM: ICellViewModel): void;
     arrowUp?(cellId: string): void;
     arrowDown?(cellId: string): void;
+    selectCell?(cellId: string): void;
+    clickCell?(cellId: string): void;
+    focusCell?(cellId: string): void;
+    unfocusCell?(cellId: string): void;
 }
 
 export class ContentPanel extends React.Component<IContentPanelProps> {
@@ -86,13 +92,13 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
         }
     }
 
-    public focusCell(cellId: string) {
+    public focusCell(cellId: string, focusCode: boolean) {
         const ref = this.cellContainerRefs.get(cellId);
         if (ref && ref.current) {
             ref.current.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' });
             const cellRef = this.cellRefs.get(cellId);
             if (cellRef && cellRef.current) {
-                cellRef.current.giveFocus();
+                cellRef.current.giveFocus(focusCode);
             }
         }
     }
@@ -127,6 +133,11 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
         const gotoCode = () => this.props.gotoCellCode(cellVM.cell.id);
         const copyCode = () => this.props.copyCellCode(cellVM.cell.id);
         const deleteCell = () => this.props.deleteCell(cellVM.cell.id);
+        const clickCell = this.props.clickCell ? () => this.props.clickCell!(cellVM.cell.id) : noop;
+        const selectedCell = this.props.selectedCell === cellVM.cell.id;
+        const focusedCell = this.props.focusedCell === cellVM.cell.id;
+        const focusCell = this.props.focusCell ? () => this.props.focusCell!(cellVM.cell.id) : noop;
+        const unfocusCell = this.props.unfocusCell ? () => this.props.unfocusCell!(cellVM.cell.id) : noop;
         return (
             <div key={index} id={cellVM.cell.id} ref={ref}>
                 <ErrorBoundary key={index}>
@@ -157,6 +168,11 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                         editorMeasureClassName={this.props.editorMeasureClassName}
                         arrowUp={arrowUp}
                         arrowDown={arrowDown}
+                        selectedCell={selectedCell}
+                        focusedCell={focusedCell}
+                        onClick={clickCell}
+                        focused={focusCell}
+                        unfocused={unfocusCell}
                     />
                 </ErrorBoundary>
             </div>);

@@ -36,6 +36,8 @@ export interface IMainState {
     pendingVariableCount: number;
     debugging: boolean;
     dirty?: boolean;
+    selectedCell?: string;
+    focusedCell?: string;
 }
 
 // tslint:disable-next-line: no-multiline-string

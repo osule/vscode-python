@@ -408,6 +408,21 @@ export class MainStateController implements IMessageHandler {
         this.monacoIdToCellId.set(monacoId, id);
     }
 
+    public codeLostFocus = (cellId: string) => {
+        if (this.state.focusedCell === cellId) {
+            // Only unfocus if we haven't switched somewhere else yet
+            this.setState({ focusedCell: undefined });
+        }
+    }
+
+    public codeGotFocus = (cellId: string | undefined) => {
+        this.setState({ focusedCell: cellId });
+    }
+
+    public selectCell = (cellId: string, focusedCell?: string) => {
+        this.setState({ selectedCell: cellId, focusedCell });
+    }
+
     public submitInput = (code: string, inputCell: ICellViewModel) => {
         // This should be from our last entry. Switch this entry to read only, and add a new item to our list
         if (inputCell && inputCell.cell.id === Identifiers.EditCellId) {

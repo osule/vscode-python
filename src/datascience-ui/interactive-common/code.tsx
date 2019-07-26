@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 'use strict';
-
 import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import * as React from 'react';
 
+import { noop } from '../../client/common/utils/misc';
 import { InputHistory } from '../interactive-common/inputHistory';
 import { getLocString } from '../react-common/locReactSide';
 import { MonacoEditor } from '../react-common/monacoEditor';
@@ -29,10 +29,11 @@ export interface ICodeProps {
     openLink(uri: monacoEditor.Uri): void;
     arrowUp?(): void;
     arrowDown?(): void;
+    focused?(): void;
+    unfocused?(): void;
 }
 
 interface ICodeState {
-    focused: boolean;
     cursorLeft: number;
     cursorTop: number;
     cursorBottom: number;
@@ -49,7 +50,7 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
 
     constructor(prop: ICodeProps) {
         super(prop);
-        this.state = {focused: false, cursorLeft: 0, cursorTop: 0, cursorBottom: 0, charUnderCursor: '', allowWatermark: true, editor: undefined, model: null};
+        this.state = {cursorLeft: 0, cursorTop: 0, cursorBottom: 0, charUnderCursor: '', allowWatermark: true, editor: undefined, model: null};
     }
 
     public componentWillUnmount = () => {
@@ -106,17 +107,9 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
                     ref={this.editorRef}
                     forceBackground={this.props.forceBackgroundColor}
                 />
-                <div className={waterMarkClass}>{this.getWatermarkString()}</div>
+                <div className={waterMarkClass} role='textbox' onClick={this.clickWatermark}>{this.getWatermarkString()}</div>
             </div>
         );
-    }
-
-    public onParentClick(ev: React.MouseEvent<HTMLDivElement>) {
-        const readOnly = this.props.testMode || this.props.readOnly;
-        if (this.state.editor && !readOnly) {
-            ev.stopPropagation();
-            this.state.editor.focus();
-        }
     }
 
     public giveFocus() {
@@ -124,6 +117,12 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
         if (this.state.editor && !readOnly) {
             this.state.editor.focus();
         }
+    }
+
+    private clickWatermark = (ev: React.MouseEvent<HTMLDivElement>) => {
+        ev.stopPropagation();
+        // Give focus to the editor
+        this.giveFocus();
     }
 
     private getWatermarkString = () : string => {
@@ -146,6 +145,10 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
 
         // Indicate we're ready
         this.props.onCreated(this.props.code, model!.id);
+
+        // Track focus changes
+        this.subscriptions.push(editor.onDidFocusEditorWidget(this.props.focused ? this.props.focused : noop));
+        this.subscriptions.push(editor.onDidBlurEditorWidget(this.props.unfocused ? this.props.unfocused : noop));
     }
 
     private modelChanged = (e: monacoEditor.editor.IModelContentChangedEvent) => {

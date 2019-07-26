@@ -42,6 +42,8 @@ interface ICellProps {
     editorMeasureClassName?: string;
     allowCollapse: boolean;
     clearOnSubmit: boolean;
+    selectedCell: boolean;
+    focusedCell: boolean;
     gotoCode(): void;
     copyCode(): void;
     delete(): void;
@@ -52,6 +54,9 @@ interface ICellProps {
     expandImage(imageHtml: string): void;
     arrowUp?(): void;
     arrowDown?(): void;
+    onClick(): void;
+    focused?(): void;
+    unfocused?(): void;
 }
 
 export interface ICellViewModel {
@@ -67,10 +72,10 @@ export interface ICellViewModel {
 
 export class Cell extends React.Component<ICellProps> {
     private code: Code | undefined;
+    private cellWrapperRef : React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
 
     constructor(prop: ICellProps) {
         super(prop);
-        this.state = {focused: this.props.autoFocus};
     }
 
     private static getAnsiToHtmlOptions() : { fg: string; bg: string; colors: string [] } {
@@ -125,9 +130,12 @@ export class Cell extends React.Component<ICellProps> {
         }
     }
 
-    public giveFocus() {
-        if (this.code) {
+    public giveFocus(giveCodeFocus: boolean) {
+        // Either give it to our code or just ourselves.
+        if (this.code && giveCodeFocus) {
             this.code.giveFocus();
+        } else if (this.cellWrapperRef && this.cellWrapperRef.current) {
+            this.cellWrapperRef.current.focus();
         }
     }
 
@@ -178,12 +186,18 @@ export class Cell extends React.Component<ICellProps> {
         const allowsPlainInput = getSettings().showCellInputCode || this.props.cellVM.directInput || this.props.cellVM.editable;
         const shouldRender = allowsPlainInput || (results && results.length > 0);
         const cellOuterClass = this.props.cellVM.editable ? 'cell-outer-editable' : 'cell-outer';
-        const cellWrapperClass = this.props.cellVM.editable ? 'cell-wrapper' : 'cell-wrapper cell-wrapper-noneditable';
+        let cellWrapperClass = this.props.cellVM.editable ? 'cell-wrapper' : 'cell-wrapper cell-wrapper-noneditable';
+        if (this.props.selectedCell && !this.props.focusedCell) {
+            cellWrapperClass += ' cell-wrapper-selected';
+        }
+        if (this.props.focusedCell) {
+            cellWrapperClass += ' cell-wrapper-focused';
+        }
 
         // Only render if we are allowed to.
         if (shouldRender) {
             return (
-                <div className={cellWrapperClass} role={this.props.role} onClick={this.onMouseClick}>
+                <div className={cellWrapperClass} role={this.props.role} ref={this.cellWrapperRef} tabIndex={0} onKeyDown={this.onKeyDown} onClick={this.onMouseClick}>
                     <div className={cellOuterClass}>
                         {this.renderControls()}
                         <div className='content-div'>
@@ -202,9 +216,10 @@ export class Cell extends React.Component<ICellProps> {
     }
 
     private onMouseClick = (ev: React.MouseEvent<HTMLDivElement>) => {
-        // When we receive a click, tell the code element.
-        if (this.code) {
-            this.code.onParentClick(ev);
+        // When we receive a click, propage upwards. Might change our state
+        if (this.props.onClick) {
+            ev.stopPropagation();
+            this.props.onClick();
         }
     }
 
@@ -278,6 +293,8 @@ export class Cell extends React.Component<ICellProps> {
                         clearOnSubmit={this.props.clearOnSubmit}
                         arrowUp={this.props.arrowUp}
                         arrowDown={this.props.arrowDown}
+                        focused={this.props.focused}
+                        unfocused={this.props.unfocused}
                         />
                 </div>
             );
@@ -464,6 +481,26 @@ export class Cell extends React.Component<ICellProps> {
             if (anchor && anchor.href && !anchor.href.startsWith('vscode')) {
                 this.props.openLink(monacoEditor.Uri.parse(anchor.href));
             }
+        }
+    }
+
+    private onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        // Handle keydown events for the entire window
+        switch (event.key) {
+            case 'ArrowDown':
+                if (this.props.arrowDown) {
+                    event.stopPropagation();
+                    this.props.arrowDown();
+                }
+                break;
+            case 'ArrowUp':
+                if (this.props.arrowUp) {
+                    event.stopPropagation();
+                    this.props.arrowUp();
+                }
+                break;
+            default:
+                break;
         }
     }
 
