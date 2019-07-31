@@ -91,7 +91,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         @unmanaged() private readonly listeners: IInteractiveWindowListener[],
         @unmanaged() private liveShare: ILiveShareApi,
         @unmanaged() protected applicationShell: IApplicationShell,
-        @unmanaged() private documentManager: IDocumentManager,
+        @unmanaged() protected documentManager: IDocumentManager,
         @unmanaged() private interpreterService: IInterpreterService,
         @unmanaged() provider: IWebPanelProvider,
         @unmanaged() private disposables: IDisposableRegistry,

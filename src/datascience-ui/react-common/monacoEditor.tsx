@@ -7,9 +7,6 @@ import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import * as React from 'react';
 import { IDisposable } from '../../client/common/types';
 
-// tslint:disable-next-line:no-require-imports no-var-requires
-const debounce = require('lodash/debounce') as typeof import('lodash/debounce');
-
 import './monacoEditor.css';
 
 const LINE_HEIGHT = 18;
@@ -30,8 +27,6 @@ export interface IMonacoEditorProps {
 interface IMonacoEditorState {
     editor?: monacoEditor.editor.IStandaloneCodeEditor;
     model: monacoEditor.editor.ITextModel | null;
-    editorWidth: number;
-    editorHeight: number;
 }
 
 // Need this to prevent wiping of the current value on a componentUpdate. react-monaco-editor has that problem.
@@ -47,13 +42,11 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
     private enteredHover: boolean = false;
     private lastOffsetLeft: number | undefined;
     private lastOffsetTop: number | undefined;
-    private debouncedUpdateEditorSize : () => void | undefined;
     constructor(props: IMonacoEditorProps) {
         super(props);
-        this.state = { editor: undefined, model: null, editorHeight: 0, editorWidth: 0 };
+        this.state = { editor: undefined, model: null };
         this.containerRef = React.createRef<HTMLDivElement>();
         this.measureWidthRef = React.createRef<HTMLDivElement>();
-        this.debouncedUpdateEditorSize = debounce(this.updateEditorSize.bind(this), 150);
     }
 
     public componentDidMount = () => {
@@ -103,11 +96,16 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
             this.windowResized();
 
             // on each edit recompute height (wait a bit)
-            this.subscriptions.push(editor.onDidChangeModelDecorations(() => {
+            if (model) {
+                this.subscriptions.push(model.onDidChangeContent(() => {
+                    this.windowResized();
+                }));
+            }
+
+            // On layout recompute height
+            this.subscriptions.push(editor.onDidLayoutChange(() => {
                 this.windowResized();
             }));
-
-            editor.on
 
             // Setup our context menu to show up outside. Autocomplete doesn't have this problem so it just works
             this.subscriptions.push(editor.onContextMenu((e) => {
@@ -186,13 +184,6 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
             if (prevProps.value !== this.props.value && this.state.model) {
                 this.state.model.setValue(this.props.value);
             }
-        }
-
-        if (this.state.editorHeight === 0 || this.state.editorWidth === 0) {
-            this.updateEditorSize();
-        } else {
-            // Debounce the call. This can happen too fast
-            this.debouncedUpdateEditorSize();
         }
 
         // If this is our first time setting the editor, we might need to dynanically modify the styles
@@ -303,18 +294,16 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
             const editorDomNode = this.state.editor.getDomNode();
             if (!editorDomNode) { return; }
             const container = editorDomNode.getElementsByClassName('view-lines')[0] as HTMLElement;
-            const lineHeight = container.firstChild
-                ? (container.firstChild as HTMLElement).style.height
-                : LINE_HEIGHT;
-            const currLineCount = this.state.model.getLineCount();
+            const currLineCount = container.childElementCount;
+            const lineHeightPx = container.firstChild && (container.firstChild as HTMLElement).style.height ?
+                (container.firstChild as HTMLElement).style.height
+                : `${LINE_HEIGHT}px`;
+            const lineHeight = lineHeightPx && lineHeightPx.endsWith('px') ? parseInt(lineHeightPx.substr(0, lineHeightPx.length - 2), 10) : LINE_HEIGHT;
             const height = (currLineCount * lineHeight) + 3; // Fudge factor
             const width = this.measureWidthRef.current.clientWidth - this.containerRef.current.parentElement.offsetLeft - 15; // Leave room for the scroll bar in regular cell table
 
-            if (this.state.editorHeight !== height || this.state.editorWidth !== width) {
-                this.setState({
-                    editorHeight: height,
-                    editorWidth: width
-                });
+            const layoutInfo = this.state.editor.getLayoutInfo();
+            if (layoutInfo.height !== height || layoutInfo.width !== width) {
                 this.state.editor.layout({width, height});
 
                 // Also need to update our widget positions
