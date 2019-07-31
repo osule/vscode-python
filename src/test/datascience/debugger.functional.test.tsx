@@ -13,6 +13,7 @@ import * as vsls from 'vsls/vscode';
 import { IApplicationShell, IDebugService, IDocumentManager } from '../../client/common/application/types';
 import { IProcessServiceFactory, Output } from '../../client/common/process/types';
 import { createDeferred, waitForPromise } from '../../client/common/utils/async';
+import { noop } from '../../client/common/utils/misc';
 import { EXTENSION_ROOT_DIR } from '../../client/constants';
 import {
     InteractiveWindowMessageListener
@@ -24,10 +25,10 @@ import { DataScienceIocContainer } from './dataScienceIocContainer';
 import { getCellResults } from './interactiveWindowTestHelpers';
 import { getConnectionInfo, getNotebookCapableInterpreter } from './jupyterHelpers';
 import { MockDebuggerService } from './mockDebugService';
+import { MockDocument } from './mockDocument';
 import { MockDocumentManager } from './mockDocumentManager';
 
 //import { asyncDump } from '../common/asyncDump';
-import { MockDocument } from './mockDocument';
 // tslint:disable-next-line:max-func-body-length no-any
 suite('DataScience Debugger tests', () => {
     const disposables: Disposable[] = [];
