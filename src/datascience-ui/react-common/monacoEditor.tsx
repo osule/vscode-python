@@ -107,6 +107,8 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
                 this.windowResized();
             }));
 
+            editor.on
+
             // Setup our context menu to show up outside. Autocomplete doesn't have this problem so it just works
             this.subscriptions.push(editor.onContextMenu((e) => {
                 if (this.state.editor) {
@@ -294,7 +296,6 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
 
     private updateEditorSize() {
         if (this.measureWidthRef.current &&
-            this.measureWidthRef.current.clientWidth &&
             this.containerRef.current &&
             this.containerRef.current.parentElement &&
             this.state.editor &&
@@ -303,7 +304,7 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
             if (!editorDomNode) { return; }
             const container = editorDomNode.getElementsByClassName('view-lines')[0] as HTMLElement;
             const lineHeight = container.firstChild
-                ? (container.firstChild as HTMLElement).offsetHeight
+                ? (container.firstChild as HTMLElement).style.height
                 : LINE_HEIGHT;
             const currLineCount = this.state.model.getLineCount();
             const height = (currLineCount * lineHeight) + 3; // Fudge factor

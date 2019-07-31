@@ -172,7 +172,7 @@ export interface INotebookExporter extends Disposable {
 
 export const IDataScienceErrorHandler = Symbol('IDataScienceErrorHandler');
 export interface IDataScienceErrorHandler {
-    handleError(err: Error): void;
+    handleError(err: Error): Promise<void>;
 }
 
 export const IInteractiveWindowProvider = Symbol('IInteractiveWindowProvider');
@@ -282,6 +282,7 @@ export interface ICodeWatcher {
     runAllCellsAbove(stopLine: number, stopCharacter: number): Promise<void>;
     runCellAndAllBelow(startLine: number, startCharacter: number): Promise<void>;
     runFileInteractive(): Promise<void>;
+    debugFileInteractive(): Promise<void>;
     addEmptyCellToBottom(): Promise<void>;
     runCurrentCellAndAddBelow(): Promise<void>;
     debugCurrentCell(): Promise<void>;
