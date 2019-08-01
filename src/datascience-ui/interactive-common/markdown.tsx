@@ -4,66 +4,51 @@
 import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import * as React from 'react';
 
-import { InputHistory } from '../interactive-common/inputHistory';
-import { getLocString } from '../react-common/locReactSide';
 import { Editor } from './editor';
 
-export interface ICodeProps {
+export interface IMarkdownProps {
     autoFocus: boolean;
-    code : string;
+    markdown : string;
     codeTheme: string;
     testMode: boolean;
-    readOnly: boolean;
-    history: InputHistory | undefined;
-    showWatermark: boolean;
     monacoTheme: string | undefined;
     outermostParentClass: string;
     editorOptions?: monacoEditor.editor.IEditorOptions;
     editorMeasureClassName?: string;
-    clearOnSubmit: boolean;
     onSubmit(code: string): void;
     onCreated(code: string, modelId: string): void;
-    onChange(changes: monacoEditor.editor.IModelContentChange[], modelId: string): void;
-    openLink(uri: monacoEditor.Uri): void;
+    onChange(changes: monacoEditor.editor.IModelContentChange[], model: monacoEditor.editor.ITextModel): void;
     arrowUp?(): void;
     arrowDown?(): void;
     focused?(): void;
     unfocused?(): void;
     escapeKeyHit?(): void;
+    openLink(uri: monacoEditor.Uri): void;
 }
 
-interface ICodeState {
-    allowWatermark: boolean;
-}
-
-export class Code extends React.Component<ICodeProps, ICodeState> {
+export class Markdown extends React.Component<IMarkdownProps> {
     private editorRef: React.RefObject<Editor> = React.createRef<Editor>();
 
-    constructor(prop: ICodeProps) {
+    constructor(prop: IMarkdownProps) {
         super(prop);
-        this.state = { allowWatermark: true };
     }
 
     public render() {
-        const readOnly = this.props.readOnly;
-        const waterMarkClass = this.props.showWatermark && this.state.allowWatermark && !readOnly ? 'code-watermark' : 'hide';
-        const classes = readOnly ? 'code-area' : 'code-area code-area-editable';
 
         return (
-            <div className={classes}>
                 <Editor
                     codeTheme={this.props.codeTheme}
-                    readOnly={readOnly}
+                    readOnly={false}
                     history={undefined}
-                    clearOnSubmit={this.props.clearOnSubmit}
+                    clearOnSubmit={false}
                     onSubmit={this.props.onSubmit}
                     onCreated={this.props.onCreated}
-                    onChange={this.onModelChanged}
+                    onChange={this.props.onChange}
                     testMode={this.props.testMode}
-                    content={this.props.code}
+                    content={this.props.markdown}
                     outermostParentClass={this.props.outermostParentClass}
                     monacoTheme={this.props.monacoTheme}
-                    language='python'
+                    language='markdown'
                     editorOptions={this.props.editorOptions}
                     openLink={this.props.openLink}
                     ref={this.editorRef}
@@ -71,8 +56,6 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
                     arrowUp={this.arrowUp}
                     arrowDown={this.arrowDown}
                 />
-                <div className={waterMarkClass} role='textbox' onClick={this.clickWatermark}>{this.getWatermarkString()}</div>
-            </div>
         );
     }
 
@@ -80,22 +63,6 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
         if (this.editorRef && this.editorRef.current) {
             this.editorRef.current.giveFocus();
         }
-    }
-    private clickWatermark = (ev: React.MouseEvent<HTMLDivElement>) => {
-        ev.stopPropagation();
-        // Give focus to the editor
-        this.giveFocus();
-    }
-
-    private getWatermarkString = () : string => {
-        return getLocString('DataScience.inputWatermark', 'Type code here and press shift-enter to run');
-    }
-
-    private onModelChanged = (changes: monacoEditor.editor.IModelContentChange[], model: monacoEditor.editor.ITextModel) => {
-        if (!this.props.readOnly && model) {
-            this.setState({allowWatermark:  model.getValueLength() === 0});
-        }
-        this.props.onChange(changes, model.id);
     }
 
     private arrowUp = (e: monacoEditor.IKeyboardEvent, isFirstLine: boolean) => {
@@ -109,4 +76,5 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
             this.props.arrowDown();
         }
     }
+
 }

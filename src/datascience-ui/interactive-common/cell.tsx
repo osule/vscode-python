@@ -54,12 +54,10 @@ interface ICellProps {
     onCodeCreated(code: string, file: string, cellId: string, modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
     expandImage(imageHtml: string): void;
-    arrowUp?(cellId: string): void;
-    arrowDown?(cellId: string): void;
+    keyDown?(cellId: string, key: string): void;
     onClick?(cellId: string): void;
     focused?(cellId: string): void;
     unfocused?(cellId: string): void;
-    escapeKeyHit?(cellId: string): void;
 }
 
 export interface ICellViewModel {
@@ -299,8 +297,6 @@ export class Cell extends React.Component<ICellProps> {
 
     private renderInputs = () => {
         if (this.showInputs()) {
-            const backgroundColor = undefined;
-
             return (
                 <div className='cell-input'>
                     <Code
@@ -319,14 +315,13 @@ export class Cell extends React.Component<ICellProps> {
                         outermostParentClass='cell-wrapper'
                         monacoTheme={this.props.monacoTheme}
                         openLink={this.props.openLink}
-                        forceBackgroundColor={backgroundColor}
                         editorMeasureClassName={this.props.editorMeasureClassName}
                         clearOnSubmit={this.props.clearOnSubmit}
                         arrowUp={this.onCodeArrowUp}
                         arrowDown={this.onCodeArrowDown}
                         focused={this.onCodeFocused}
                         unfocused={this.onCodeUnfocused}
-                        escapeKeyHit={this.props.escapeKeyHit ? this.onCodeEscapeKey : undefined}
+                        escapeKeyHit={this.props.keyDown ? this.onCodeEscapeKey : undefined}
                         />
                 </div>
             );
@@ -336,20 +331,20 @@ export class Cell extends React.Component<ICellProps> {
     }
 
     private onCodeEscapeKey = () => {
-        if (this.props.escapeKeyHit) {
-            this.props.escapeKeyHit(this.props.cellVM.cell.id);
+        if (this.props.keyDown) {
+            this.props.keyDown(this.props.cellVM.cell.id, 'Escape');
         }
     }
 
     private onCodeArrowUp = () => {
-        if (this.props.arrowUp) {
-            this.props.arrowUp(this.props.cellVM.cell.id);
+        if (this.props.keyDown) {
+            this.props.keyDown(this.props.cellVM.cell.id, 'ArrowUp');
         }
     }
 
     private onCodeArrowDown = () => {
-        if (this.props.arrowDown) {
-            this.props.arrowDown(this.props.cellVM.cell.id);
+        if (this.props.keyDown) {
+            this.props.keyDown(this.props.cellVM.cell.id, 'ArrowDown');
         }
     }
 
@@ -577,34 +572,11 @@ export class Cell extends React.Component<ICellProps> {
     }
 
     private onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-        // Handle keydown events for the entire window
-        switch (event.key) {
-            case 'ArrowDown':
-                if (this.props.arrowDown && !this.props.focusedCell) {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    this.props.arrowDown(this.props.cellVM.cell.id);
-                }
-                break;
-            case 'ArrowUp':
-                if (this.props.arrowUp && !this.props.focusedCell) {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    this.props.arrowUp(this.props.cellVM.cell.id);
-                }
-                break;
-
-            case 'Enter':
-                if (this.props.selectedCell === this.props.cellVM.cell.id && !this.props.focusedCell && this.code) {
-                    event.stopPropagation();
-
-                    // Can't do this right away as the enter will end up in the code
-                    setTimeout(() => this.code!.giveFocus(), 1);
-                }
-                break;
-
-            default:
-                break;
+        // Handle keydown events for the entire cell
+        if (this.props.keyDown && event.key !== 'Tab') {
+            event.stopPropagation();
+            event.preventDefault();
+            this.props.keyDown(this.props.cellVM.cell.id, event.key);
         }
     }
 

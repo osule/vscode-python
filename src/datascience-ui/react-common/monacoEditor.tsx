@@ -22,11 +22,13 @@ export interface IMonacoEditorProps {
     measureWidthClassName?: string;
     editorMounted(editor: monacoEditor.editor.IStandaloneCodeEditor): void;
     openLink(uri: monacoEditor.Uri): void;
+    lineCountChanged(newCount: number): void;
 }
 
 interface IMonacoEditorState {
     editor?: monacoEditor.editor.IStandaloneCodeEditor;
     model: monacoEditor.editor.ITextModel | null;
+    visibleLineCount: number;
 }
 
 // Need this to prevent wiping of the current value on a componentUpdate. react-monaco-editor has that problem.
@@ -44,7 +46,7 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
     private lastOffsetTop: number | undefined;
     constructor(props: IMonacoEditorProps) {
         super(props);
-        this.state = { editor: undefined, model: null };
+        this.state = { editor: undefined, model: null, visibleLineCount: 0 };
         this.containerRef = React.createRef<HTMLDivElement>();
         this.measureWidthRef = React.createRef<HTMLDivElement>();
     }
@@ -303,7 +305,11 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
             const width = this.measureWidthRef.current.clientWidth - this.containerRef.current.parentElement.offsetLeft - 15; // Leave room for the scroll bar in regular cell table
 
             const layoutInfo = this.state.editor.getLayoutInfo();
-            if (layoutInfo.height !== height || layoutInfo.width !== width) {
+            if (layoutInfo.height !== height || layoutInfo.width !== width || currLineCount !== this.state.visibleLineCount) {
+                if (this.state.visibleLineCount !== currLineCount) {
+                    this.props.lineCountChanged(currLineCount);
+                }
+                this.setState({visibleLineCount: currLineCount});
                 this.state.editor.layout({width, height});
 
                 // Also need to update our widget positions

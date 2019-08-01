@@ -40,13 +40,11 @@ export interface IContentPanelProps {
     openLink(uri: monacoEditor.Uri): void;
     expandImage(imageHtml: string): void;
     submitInput(code: string, cellVM: ICellViewModel): void;
-    arrowUp?(cellId: string): void;
-    arrowDown?(cellId: string): void;
     selectCell?(cellId: string): void;
     clickCell?(cellId: string): void;
     focusCell?(cellId: string): void;
     unfocusCell?(cellId: string): void;
-    escapeCell?(cellId: string): void;
+    keyDownCell?(cellId: string, key: string): void;
 }
 
 export class ContentPanel extends React.Component<IContentPanelProps> {
@@ -158,14 +156,12 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                         expandImage={this.props.expandImage}
                         clearOnSubmit={clearOnSubmit}
                         editorMeasureClassName={this.props.editorMeasureClassName}
-                        arrowUp={this.props.arrowUp}
-                        arrowDown={this.props.arrowDown}
                         selectedCell={this.props.selectedCell}
                         focusedCell={this.props.focusedCell}
                         onClick={this.props.clickCell}
                         focused={this.props.focusCell}
                         unfocused={this.props.unfocusCell}
-                        escapeKeyHit={this.props.escapeCell}
+                        keyDown={this.props.keyDownCell}
                     />
                 </ErrorBoundary>
             </div>);

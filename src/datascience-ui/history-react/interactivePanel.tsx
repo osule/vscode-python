@@ -173,7 +173,7 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                         ref={this.editCellRef}
                         clearOnSubmit={true}
                         onClick={this.clickEditCell}
-                        escapeKeyHit={this.editCellEscape}
+                        keyDown={this.editCellKeyDown}
                     />
                 </ErrorBoundary>
             </div>
@@ -246,6 +246,12 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
     private clickEditCell = () => {
         if (this.editCellRef && this.editCellRef.current) {
             this.editCellRef.current.giveFocus(true);
+        }
+    }
+
+    private editCellKeyDown = (_cellId: string, key: string) => {
+        if (key === 'Escape') {
+            this.editCellEscape();
         }
     }
 

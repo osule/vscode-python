@@ -150,14 +150,12 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             submitInput: this.submitInput,
             editExecutionCount: ' ', // Always a space for native. It's what Jupyter does.
             editorMeasureClassName: 'measure-editor-div',
-            arrowUp: this.arrowUpFromCell,
-            arrowDown: this.arrowDownFromCell,
+            keyDownCell: this.keyDownCell,
             selectedCell: this.state.selectedCell,
             focusedCell: this.state.focusedCell,
             clickCell: this.clickCell,
             focusCell: this.stateController.codeGotFocus,
             unfocusCell: this.stateController.codeLostFocus,
-            escapeCell: this.escapeCell
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {
@@ -197,6 +195,47 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
 
     private getNonMessageCells(): ICell[] {
         return this.state.cellVMs.map(cvm => cvm.cell).filter(c => c.data.cell_type !== 'messages');
+    }
+
+    private keyDownCell = (cellId: string, key: string) => {
+        switch (key) {
+            case 'ArrowUp':
+                this.arrowUpFromCell(cellId);
+                break;
+
+            case 'ArrowDown':
+                this.arrowDownFromCell(cellId);
+                break;
+
+            case 'Escape':
+                if (this.state.focusedCell) {
+                    this.escapeCell(this.state.focusedCell);
+                }
+                break;
+
+            case 'Enter':
+                this.enterCell(cellId);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private enterCell = (cellId: string) => {
+        // If focused, then this call shouldn't be happening
+        if (!this.state.focusedCell && this.contentPanelRef && this.contentPanelRef.current) {
+            // Figure out which cell this is
+            const cellvm = this.state.cellVMs.find(cvm => cvm.cell.id === cellId) ;
+            if (cellvm && this.state.selectedCell === cellId) {
+                // If this is a code cell, give focus to the inner bit
+                if (cellvm.cell.data.cell_type === 'code') {
+                    this.contentPanelRef.current.focusCell(cellId, true);
+                } else {
+                    // If this is a markdown cell, transition to edit mode.
+                }
+            }
+        }
     }
 
     private arrowUpFromCell = (cellId: string) => {
