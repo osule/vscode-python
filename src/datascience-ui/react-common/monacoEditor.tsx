@@ -296,7 +296,7 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
             const editorDomNode = this.state.editor.getDomNode();
             if (!editorDomNode) { return; }
             const container = editorDomNode.getElementsByClassName('view-lines')[0] as HTMLElement;
-            const currLineCount = container.childElementCount;
+            const currLineCount = Math.max(container.childElementCount, this.state.model.getLineCount());
             const lineHeightPx = container.firstChild && (container.firstChild as HTMLElement).style.height ?
                 (container.firstChild as HTMLElement).style.height
                 : `${LINE_HEIGHT}px`;

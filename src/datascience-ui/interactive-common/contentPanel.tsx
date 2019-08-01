@@ -1,15 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 'use strict';
-
 import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import * as React from 'react';
 
-import { noop } from '../../test/core';
 import { ErrorBoundary } from '../react-common/errorBoundary';
+import { IKeyboardEvent } from '../react-common/event';
 import { getSettings } from '../react-common/settingsReactSide';
 import { Cell, ICellViewModel } from './cell';
 import { InputHistory } from './inputHistory';
+
 // See the discussion here: https://github.com/Microsoft/tslint-microsoft-contrib/issues/676
 // tslint:disable: react-this-binding-issue
 // tslint:disable-next-line:no-require-imports no-var-requires
@@ -32,6 +32,7 @@ export interface IContentPanelProps {
     selectedCell?: string;
     focusedCell?: string;
     skipAutoScroll?: boolean;
+    allowsMarkdownEditing?: boolean;
     gotoCellCode(cellId: string): void;
     copyCellCode(cellId: string): void;
     deleteCell(cellId: string): void;
@@ -39,12 +40,11 @@ export interface IContentPanelProps {
     onCodeCreated(code: string, file: string, cellId: string, modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
     expandImage(imageHtml: string): void;
-    submitInput(code: string, cellVM: ICellViewModel): void;
     selectCell?(cellId: string): void;
     clickCell?(cellId: string): void;
     focusCell?(cellId: string): void;
     unfocusCell?(cellId: string): void;
-    keyDownCell?(cellId: string, key: string): void;
+    keyDownCell?(cellId: string, e: IKeyboardEvent): void;
 }
 
 export class ContentPanel extends React.Component<IContentPanelProps> {
@@ -109,7 +109,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
         const baseTheme = getSettings().ignoreVscodeTheme ? 'vscode-light' : this.props.baseTheme;
 
         return this.props.cellVMs.map((cellVM: ICellViewModel, index: number) =>
-            this.renderCell(cellVM, index, baseTheme, maxTextSize, false, false));
+            this.renderCell(cellVM, index, baseTheme, maxTextSize, false));
     }
 
     private renderEdit = () => {
@@ -117,13 +117,13 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
             const maxOutputSize = getSettings().maxOutputSize;
             const maxTextSize = maxOutputSize && maxOutputSize < 10000 && maxOutputSize > 0 ? maxOutputSize : undefined;
             const baseTheme = getSettings().ignoreVscodeTheme ? 'vscode-light' : this.props.baseTheme;
-            return this.renderCell(this.props.newCellVM, 0, baseTheme, maxTextSize, true, true);
+            return this.renderCell(this.props.newCellVM, 0, baseTheme, maxTextSize, true);
         } else {
             return null;
         }
     }
 
-    private renderCell(cellVM: ICellViewModel, index: number, baseTheme: string, maxTextSize: number | undefined, showWatermark: boolean, clearOnSubmit: boolean): JSX.Element {
+    private renderCell(cellVM: ICellViewModel, index: number, baseTheme: string, maxTextSize: number | undefined, showWatermark: boolean): JSX.Element {
         const cellRef = React.createRef<Cell>();
         const ref = React.createRef<HTMLDivElement>();
         this.cellRefs.set(cellVM.cell.id, cellRef);
@@ -140,7 +140,6 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                         autoFocus={false}
                         testMode={this.props.testMode}
                         cellVM={cellVM}
-                        submitNewCode={this.props.editable ? this.props.submitInput : noop}
                         baseTheme={baseTheme}
                         codeTheme={this.props.codeTheme}
                         allowCollapse={!this.props.editable}
@@ -154,7 +153,6 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                         monacoTheme={this.props.monacoTheme}
                         openLink={this.props.openLink}
                         expandImage={this.props.expandImage}
-                        clearOnSubmit={clearOnSubmit}
                         editorMeasureClassName={this.props.editorMeasureClassName}
                         selectedCell={this.props.selectedCell}
                         focusedCell={this.props.focusedCell}
@@ -162,6 +160,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                         focused={this.props.focusCell}
                         unfocused={this.props.unfocusCell}
                         keyDown={this.props.keyDownCell}
+                        allowsMarkdownEditing={this.props.allowsMarkdownEditing}
                     />
                 </ErrorBoundary>
             </div>);

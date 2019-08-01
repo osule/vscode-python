@@ -27,6 +27,8 @@ import { displayOrder, richestMimetype, transforms } from './transforms';
 
 // tslint:disable-next-line: no-require-imports
 import cloneDeep = require('lodash/cloneDeep');
+import { IKeyboardEvent } from '../react-common/event';
+import { Markdown } from './markdown';
 
 interface ICellProps {
     role?: string;
@@ -43,18 +45,17 @@ interface ICellProps {
     editExecutionCount: string;
     editorMeasureClassName?: string;
     allowCollapse: boolean;
-    clearOnSubmit: boolean;
     selectedCell?: string;
     focusedCell?: string;
+    allowsMarkdownEditing?: boolean;
     gotoCode(cellId: string): void;
     copyCode(cellId: string): void;
     delete(cellId: string): void;
-    submitNewCode(code: string, cellVM: ICellViewModel): void;
     onCodeChange(changes: monacoEditor.editor.IModelContentChange[], cellId: string, modelId: string): void;
     onCodeCreated(code: string, file: string, cellId: string, modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
     expandImage(imageHtml: string): void;
-    keyDown?(cellId: string, key: string): void;
+    keyDown?(cellId: string, e: IKeyboardEvent): void;
     onClick?(cellId: string): void;
     focused?(cellId: string): void;
     unfocused?(cellId: string): void;
@@ -71,6 +72,10 @@ export interface ICellViewModel {
     inputBlockToggled(id: string): void;
 }
 
+interface ICellState {
+    showingMarkdownEditor: boolean;
+}
+
 interface ICellOutput {
     mimeType: string;
     data: nbformat.MultilineString | JSONObject;
@@ -81,12 +86,13 @@ interface ICellOutput {
     doubleClick(): void; // Double click handler for plot viewing is stored here
 }
 // tslint:disable: react-this-binding-issue
-export class Cell extends React.Component<ICellProps> {
-    private code: Code | undefined;
+export class Cell extends React.Component<ICellProps, ICellState> {
+    private codeRef: React.RefObject<Code> = React.createRef<Code>();
     private cellWrapperRef : React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
 
     constructor(prop: ICellProps) {
         super(prop);
+        this.state = { showingMarkdownEditor: false };
     }
 
     private static getAnsiToHtmlOptions() : { fg: string; bg: string; colors: string [] } {
@@ -143,8 +149,15 @@ export class Cell extends React.Component<ICellProps> {
 
     public giveFocus(giveCodeFocus: boolean) {
         // Either give it to our code or just ourselves.
-        if (this.code && giveCodeFocus) {
-            this.code.giveFocus();
+        if (giveCodeFocus) {
+            // This depends upon what type of cell we are.
+            if (this.props.cellVM.cell.data.cell_type === 'code') {
+                if (this.codeRef.current) {
+                    this.codeRef.current.giveFocus();
+                }
+            } else if (this.props.allowsMarkdownEditing) {
+                this.setState({showingMarkdownEditor: true});
+            }
         } else if (this.cellWrapperRef && this.cellWrapperRef.current) {
             this.cellWrapperRef.current.focus();
         }
@@ -180,6 +193,10 @@ export class Cell extends React.Component<ICellProps> {
         return this.props.cellVM.cell.data.cell_type === 'code';
     }
 
+    private isMarkdownCell = () => {
+        return this.props.cellVM.cell.data.cell_type === 'markdown';
+    }
+
     private hasOutput = () => {
         return this.getCell().state === CellState.finished || this.getCell().state === CellState.error || this.getCell().state === CellState.executing;
     }
@@ -208,7 +225,7 @@ export class Cell extends React.Component<ICellProps> {
         // Only render if we are allowed to.
         if (shouldRender) {
             return (
-                <div className={cellWrapperClass} role={this.props.role} ref={this.cellWrapperRef} tabIndex={0} onKeyDown={this.onKeyDown} onClick={this.onMouseClick}>
+                <div className={cellWrapperClass} role={this.props.role} ref={this.cellWrapperRef} tabIndex={0} onKeyDown={this.onCellKeyDown} onClick={this.onMouseClick}>
                     <div className={cellOuterClass}>
                         {this.renderControls()}
                         <div className='content-div'>
@@ -234,8 +251,12 @@ export class Cell extends React.Component<ICellProps> {
         }
     }
 
-    private showInputs = () : boolean => {
+    private shouldRenderCodeEditor = () : boolean => {
         return (this.isCodeCell() && (this.props.cellVM.inputBlockShow || this.props.cellVM.editable));
+    }
+
+    private shouldRenderMarkdownEditor = () : boolean => {
+        return (this.isMarkdownCell() && this.state.showingMarkdownEditor);
     }
 
     private getRenderableInputCode = () : string => {
@@ -291,12 +312,16 @@ export class Cell extends React.Component<ICellProps> {
         }
     }
 
-    private updateCodeRef = (ref: Code) => {
-        this.code = ref;
+    private renderInputs = () => {
+        if (this.isCodeCell()) {
+            return this.renderCodeInputs();
+        } else {
+            return this.renderMarkdownInputs();
+        }
     }
 
-    private renderInputs = () => {
-        if (this.showInputs()) {
+    private renderCodeInputs = () => {
+        if (this.shouldRenderCodeEditor()) {
             return (
                 <div className='cell-input'>
                     <Code
@@ -308,43 +333,55 @@ export class Cell extends React.Component<ICellProps> {
                         testMode={this.props.testMode ? true : false}
                         readOnly={!this.props.cellVM.editable}
                         showWatermark={this.props.showWatermark}
-                        onSubmit={this.onSubmit}
-                        ref={this.updateCodeRef}
+                        ref={this.codeRef}
                         onChange={this.onCodeChange}
                         onCreated={this.onCodeCreated}
                         outermostParentClass='cell-wrapper'
                         monacoTheme={this.props.monacoTheme}
                         openLink={this.props.openLink}
                         editorMeasureClassName={this.props.editorMeasureClassName}
-                        clearOnSubmit={this.props.clearOnSubmit}
-                        arrowUp={this.onCodeArrowUp}
-                        arrowDown={this.onCodeArrowDown}
                         focused={this.onCodeFocused}
                         unfocused={this.onCodeUnfocused}
-                        escapeKeyHit={this.props.keyDown ? this.onCodeEscapeKey : undefined}
+                        keyDown={this.onKeyDown}
                         />
                 </div>
             );
-        } else {
-            return null;
         }
+
+        return null;
     }
 
-    private onCodeEscapeKey = () => {
-        if (this.props.keyDown) {
-            this.props.keyDown(this.props.cellVM.cell.id, 'Escape');
+    private renderMarkdownInputs = () => {
+        if (this.shouldRenderMarkdownEditor()) {
+            const source = concatMultilineString(this.getMarkdownCell().source);
+            return (
+                <div className='cell-input'>
+                    <Markdown
+                        editorOptions={this.props.editorOptions}
+                        autoFocus={true}
+                        markdown={source}
+                        codeTheme={this.props.codeTheme}
+                        testMode={this.props.testMode ? true : false}
+                        onChange={this.onCodeChange}
+                        onCreated={this.onCodeCreated}
+                        outermostParentClass='cell-wrapper'
+                        monacoTheme={this.props.monacoTheme}
+                        openLink={this.props.openLink}
+                        editorMeasureClassName={this.props.editorMeasureClassName}
+                        focused={this.onMarkdownFocused}
+                        unfocused={this.onMarkdownUnfocused}
+                        keyDown={this.onKeyDown}
+                        />
+                </div>
+            );
         }
+
+        return null;
     }
 
-    private onCodeArrowUp = () => {
+    private onKeyDown = (e: IKeyboardEvent) => {
         if (this.props.keyDown) {
-            this.props.keyDown(this.props.cellVM.cell.id, 'ArrowUp');
-        }
-    }
-
-    private onCodeArrowDown = () => {
-        if (this.props.keyDown) {
-            this.props.keyDown(this.props.cellVM.cell.id, 'ArrowDown');
+            this.props.keyDown(this.props.cellVM.cell.id, e);
         }
     }
 
@@ -360,8 +397,17 @@ export class Cell extends React.Component<ICellProps> {
         }
     }
 
-    private onSubmit = (code: string) => {
-        this.props.submitNewCode(code, this.props.cellVM);
+    private onMarkdownFocused = () => {
+        if (this.props.focused) {
+            this.props.focused(this.props.cellVM.cell.id);
+        }
+    }
+
+    private onMarkdownUnfocused = () => {
+        this.setState({showingMarkdownEditor: false});
+        if (this.props.unfocused) {
+            this.props.unfocused(this.props.cellVM.cell.id);
+        }
     }
 
     private onCodeChange = (changes: monacoEditor.editor.IModelContentChange[], modelId: string) => {
@@ -388,9 +434,13 @@ export class Cell extends React.Component<ICellProps> {
 
     private renderResults = (): JSX.Element[] => {
         // Results depend upon the type of cell
-        return this.isCodeCell() ?
-            this.renderCodeOutputs() :
-            this.renderMarkdown(this.getMarkdownCell());
+        if (this.isCodeCell()) {
+            return this.renderCodeOutputs();
+        } else if (!this.state.showingMarkdownEditor) {
+            return this.renderMarkdownOutputs();
+        } else {
+            return [];
+        }
     }
 
     private renderCodeOutputs = () => {
@@ -402,7 +452,8 @@ export class Cell extends React.Component<ICellProps> {
         return [];
     }
 
-    private renderMarkdown = (markdown: nbformat.IMarkdownCell) => {
+    private renderMarkdownOutputs = () => {
+        const markdown = this.getMarkdownCell();
         // React-markdown expects that the source is a string
         const source = concatMultilineString(markdown.source);
         const Transform = transforms['text/markdown'];
@@ -571,12 +622,21 @@ export class Cell extends React.Component<ICellProps> {
         }
     }
 
-    private onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    private onCellKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
         // Handle keydown events for the entire cell
         if (this.props.keyDown && event.key !== 'Tab') {
-            event.stopPropagation();
-            event.preventDefault();
-            this.props.keyDown(this.props.cellVM.cell.id, event.key);
+            this.props.keyDown(
+                this.props.cellVM.cell.id,
+                {
+                    code: event.key,
+                    shiftKey: event.shiftKey,
+                    ctrlKey: event.ctrlKey,
+                    metaKey: event.metaKey,
+                    altKey: event.altKey,
+                    target: event.target as HTMLDivElement,
+                    stopPropagation: () => event.stopPropagation(),
+                    preventDefault: () => event.preventDefault()
+                });
         }
     }
 

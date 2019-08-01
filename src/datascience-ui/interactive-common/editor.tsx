@@ -5,6 +5,7 @@ import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import * as React from 'react';
 
 import { noop } from '../../client/common/utils/misc';
+import { IKeyboardEvent } from '../react-common/event';
 import { MonacoEditor } from '../react-common/monacoEditor';
 import { InputHistory } from './inputHistory';
 
@@ -17,18 +18,14 @@ export interface IEditorProps {
     outermostParentClass: string;
     editorOptions?: monacoEditor.editor.IEditorOptions;
     history: InputHistory | undefined;
-    clearOnSubmit: boolean;
     editorMeasureClassName?: string;
     language: string;
-    onSubmit(code: string): void;
     onCreated(code: string, modelId: string): void;
     onChange(changes: monacoEditor.editor.IModelContentChange[], model: monacoEditor.editor.ITextModel): void;
     openLink(uri: monacoEditor.Uri): void;
-    arrowUp?(e: monacoEditor.IKeyboardEvent, isFirstLine: boolean): void;
-    arrowDown?(e: monacoEditor.IKeyboardEvent, isLastLine: boolean): void;
+    keyDown?(e: IKeyboardEvent): void;
     focused?(): void;
     unfocused?(): void;
-    escapeKeyHit?(): void;
 }
 
 interface IEditorState {
@@ -144,19 +141,52 @@ export class Editor extends React.Component<IEditorProps, IEditorState> {
     }
 
     private onKeyDown = (e: monacoEditor.IKeyboardEvent) => {
-        if (e.shiftKey && e.keyCode === monacoEditor.KeyCode.Enter && this.state.model && this.state.editor) {
-            // Shift enter was hit
-            e.stopPropagation();
-            e.preventDefault();
-            window.setTimeout(this.submitContent, 0);
-        } else if (e.keyCode === monacoEditor.KeyCode.UpArrow) {
-            this.arrowUp(e);
-        } else if (e.keyCode === monacoEditor.KeyCode.DownArrow) {
-            this.arrowDown(e);
-        } else if (e.keyCode === monacoEditor.KeyCode.Escape && this.editorRef && this.editorRef.current && !this.editorRef.current.isSuggesting()) {
-            if (this.props.escapeKeyHit) {
-                this.props.escapeKeyHit();
-                e.stopPropagation();
+        if (this.state.editor && this.state.model && this.editorRef && this.editorRef.current && !this.editorRef.current.isSuggesting()) {
+            const cursor = this.state.editor.getPosition();
+            const isFirstLine = cursor !== null && cursor.lineNumber === 1;
+            const isLastLine = cursor !== null && cursor.lineNumber === this.state.visibleLineCount;
+            const isDirty = this.state.model!.getVersionId() > this.lastCleanVersionId;
+
+            // See if we need to use the history or not
+            if (cursor && this.props.history && e.code === 'ArrowUp' && isFirstLine) {
+                const currentValue = this.getContents();
+                const newValue = this.props.history.completeUp(currentValue);
+                if (newValue !== currentValue) {
+                    this.state.model.setValue(newValue);
+                    this.lastCleanVersionId = this.state.model.getVersionId();
+                    this.state.editor.setPosition({lineNumber: 1, column: 1});
+                    e.stopPropagation();
+                }
+            } else if (cursor && this.props.history && e.code === 'ArrowDown' && isLastLine) {
+                const currentValue = this.getContents();
+                const newValue = this.props.history.completeDown(currentValue);
+                if (newValue !== currentValue) {
+                    this.state.model.setValue(newValue);
+                    this.lastCleanVersionId = this.state.model.getVersionId();
+                    const lastLine = this.state.model.getLineCount();
+                    this.state.editor.setPosition({lineNumber: lastLine, column: this.state.model.getLineLength(lastLine) + 1});
+                    e.stopPropagation();
+                }
+            } else if (this.props.keyDown) {
+                // Forward up the chain
+                this.props.keyDown(
+                    {
+                        code: e.code,
+                        shiftKey: e.shiftKey,
+                        altKey: e.altKey,
+                        ctrlKey: e.ctrlKey,
+                        target: e.target,
+                        metaKey: e.metaKey,
+                        editorInfo: {
+                            isFirstLine,
+                            isLastLine,
+                            isDirty,
+                            contents: this.getContents()
+                        },
+                        shouldClear: () => this.state.model!.setValue(''),
+                        stopPropagation: () => e.stopPropagation(),
+                        preventDefault: () => e.preventDefault()
+                    });
             }
         }
     }
@@ -169,82 +199,10 @@ export class Editor extends React.Component<IEditorProps, IEditorState> {
         }
     }
 
-    private submitContent = () => {
-        let content = this.getContents();
-        if (content) {
-            // Remove empty lines off the end
-            let endPos = content.length - 1;
-            while (endPos >= 0 && content[endPos] === '\n') {
-                endPos -= 1;
-            }
-            content = content.slice(0, endPos + 1);
-
-            // Send to the input history too if necessary
-            if (this.props.history) {
-                this.props.history.add(content, this.state.model!.getVersionId() > this.lastCleanVersionId);
-            }
-
-            // Clear our current contents since we submitted
-            if (this.props.clearOnSubmit) {
-                this.state.model!.setValue('');
-            }
-
-            // Send to jupyter
-            this.props.onSubmit(content);
-        }
-    }
-
     private getContents() : string {
         if (this.state.model) {
             return this.state.model.getValue().replace(/\r/g, '');
         }
         return '';
     }
-
-    private isAutoCompleteOpen() : boolean {
-        if (this.editorRef.current) {
-            return this.editorRef.current.isSuggesting();
-        }
-        return false;
-    }
-
-    private arrowUp(e: monacoEditor.IKeyboardEvent) {
-        if (this.state.editor && this.state.model && !this.isAutoCompleteOpen()) {
-            const cursor = this.state.editor.getPosition();
-            if (cursor && cursor.lineNumber === 1 && this.props.history) {
-                const currentValue = this.getContents();
-                const newValue = this.props.history.completeUp(currentValue);
-                if (newValue !== currentValue) {
-                    this.state.model.setValue(newValue);
-                    this.lastCleanVersionId = this.state.model.getVersionId();
-                    this.state.editor.setPosition({lineNumber: 1, column: 1});
-                    e.stopPropagation();
-                }
-            } else if (this.props.arrowUp) {
-                const isFirstLine = cursor && cursor.lineNumber === 1 ? true : false;
-                this.props.arrowUp(e, isFirstLine);
-            }
-        }
-    }
-
-    private arrowDown(e: monacoEditor.IKeyboardEvent) {
-        if (this.state.editor && this.state.model && !this.isAutoCompleteOpen()) {
-            const cursor = this.state.editor.getPosition();
-            if (cursor && cursor.lineNumber === this.state.model.getLineCount() && this.props.history) {
-                const currentValue = this.getContents();
-                const newValue = this.props.history.completeDown(currentValue);
-                if (newValue !== currentValue) {
-                    this.state.model.setValue(newValue);
-                    this.lastCleanVersionId = this.state.model.getVersionId();
-                    const lastLine = this.state.model.getLineCount();
-                    this.state.editor.setPosition({lineNumber: lastLine, column: this.state.model.getLineLength(lastLine) + 1});
-                    e.stopPropagation();
-                }
-            } else if (this.props.arrowDown) {
-                const isLastLine = cursor && cursor.lineNumber === this.state.visibleLineCount ? true : false;
-                this.props.arrowDown(e, isLastLine);
-            }
-        }
-    }
-
 }

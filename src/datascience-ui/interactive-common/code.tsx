@@ -5,6 +5,7 @@ import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import * as React from 'react';
 
 import { InputHistory } from '../interactive-common/inputHistory';
+import { IKeyboardEvent } from '../react-common/event';
 import { getLocString } from '../react-common/locReactSide';
 import { Editor } from './editor';
 
@@ -20,16 +21,12 @@ export interface ICodeProps {
     outermostParentClass: string;
     editorOptions?: monacoEditor.editor.IEditorOptions;
     editorMeasureClassName?: string;
-    clearOnSubmit: boolean;
-    onSubmit(code: string): void;
     onCreated(code: string, modelId: string): void;
     onChange(changes: monacoEditor.editor.IModelContentChange[], modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
-    arrowUp?(): void;
-    arrowDown?(): void;
+    keyDown?(e: IKeyboardEvent): void;
     focused?(): void;
     unfocused?(): void;
-    escapeKeyHit?(): void;
 }
 
 interface ICodeState {
@@ -55,8 +52,6 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
                     codeTheme={this.props.codeTheme}
                     readOnly={readOnly}
                     history={undefined}
-                    clearOnSubmit={this.props.clearOnSubmit}
-                    onSubmit={this.props.onSubmit}
                     onCreated={this.props.onCreated}
                     onChange={this.onModelChanged}
                     testMode={this.props.testMode}
@@ -68,8 +63,9 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
                     openLink={this.props.openLink}
                     ref={this.editorRef}
                     editorMeasureClassName={this.props.editorMeasureClassName}
-                    arrowUp={this.arrowUp}
-                    arrowDown={this.arrowDown}
+                    keyDown={this.props.keyDown}
+                    focused={this.props.focused}
+                    unfocused={this.props.unfocused}
                 />
                 <div className={waterMarkClass} role='textbox' onClick={this.clickWatermark}>{this.getWatermarkString()}</div>
             </div>
@@ -96,17 +92,5 @@ export class Code extends React.Component<ICodeProps, ICodeState> {
             this.setState({allowWatermark:  model.getValueLength() === 0});
         }
         this.props.onChange(changes, model.id);
-    }
-
-    private arrowUp = (e: monacoEditor.IKeyboardEvent, isFirstLine: boolean) => {
-        if (!e.shiftKey && this.props.arrowUp && isFirstLine) {
-            this.props.arrowUp();
-        }
-    }
-
-    private arrowDown = (e: monacoEditor.IKeyboardEvent, isLastLine: boolean) => {
-        if (!e.shiftKey && this.props.arrowDown && isLastLine) {
-            this.props.arrowDown();
-        }
     }
 }

@@ -4,6 +4,7 @@
 import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import * as React from 'react';
 
+import { IKeyboardEvent } from '../react-common/event';
 import { Editor } from './editor';
 
 export interface IMarkdownProps {
@@ -15,15 +16,12 @@ export interface IMarkdownProps {
     outermostParentClass: string;
     editorOptions?: monacoEditor.editor.IEditorOptions;
     editorMeasureClassName?: string;
-    onSubmit(code: string): void;
     onCreated(code: string, modelId: string): void;
-    onChange(changes: monacoEditor.editor.IModelContentChange[], model: monacoEditor.editor.ITextModel): void;
-    arrowUp?(): void;
-    arrowDown?(): void;
+    onChange(changes: monacoEditor.editor.IModelContentChange[], modelId: string): void;
     focused?(): void;
     unfocused?(): void;
-    escapeKeyHit?(): void;
     openLink(uri: monacoEditor.Uri): void;
+    keyDown?(e: IKeyboardEvent): void;
 }
 
 export class Markdown extends React.Component<IMarkdownProps> {
@@ -33,6 +31,12 @@ export class Markdown extends React.Component<IMarkdownProps> {
         super(prop);
     }
 
+    public componentDidUpdate() {
+        if (this.props.autoFocus && this.editorRef.current) {
+            this.editorRef.current.giveFocus();
+        }
+    }
+
     public render() {
 
         return (
@@ -40,10 +44,8 @@ export class Markdown extends React.Component<IMarkdownProps> {
                     codeTheme={this.props.codeTheme}
                     readOnly={false}
                     history={undefined}
-                    clearOnSubmit={false}
-                    onSubmit={this.props.onSubmit}
                     onCreated={this.props.onCreated}
-                    onChange={this.props.onChange}
+                    onChange={this.onModelChanged}
                     testMode={this.props.testMode}
                     content={this.props.markdown}
                     outermostParentClass={this.props.outermostParentClass}
@@ -53,8 +55,9 @@ export class Markdown extends React.Component<IMarkdownProps> {
                     openLink={this.props.openLink}
                     ref={this.editorRef}
                     editorMeasureClassName={this.props.editorMeasureClassName}
-                    arrowUp={this.arrowUp}
-                    arrowDown={this.arrowDown}
+                    keyDown={this.props.keyDown}
+                    focused={this.props.focused}
+                    unfocused={this.props.unfocused}
                 />
         );
     }
@@ -65,16 +68,8 @@ export class Markdown extends React.Component<IMarkdownProps> {
         }
     }
 
-    private arrowUp = (e: monacoEditor.IKeyboardEvent, isFirstLine: boolean) => {
-        if (!e.shiftKey && this.props.arrowUp && isFirstLine) {
-            this.props.arrowUp();
-        }
-    }
-
-    private arrowDown = (e: monacoEditor.IKeyboardEvent, isLastLine: boolean) => {
-        if (!e.shiftKey && this.props.arrowDown && isLastLine) {
-            this.props.arrowDown();
-        }
+    private onModelChanged = (changes: monacoEditor.editor.IModelContentChange[], model: monacoEditor.editor.ITextModel) => {
+        this.props.onChange(changes, model.id);
     }
 
 }

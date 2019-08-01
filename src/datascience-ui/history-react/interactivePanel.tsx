@@ -13,6 +13,7 @@ import { createEditableCellVM, IMainState } from '../interactive-common/mainStat
 import { IToolbarPanelProps, ToolbarPanel } from '../interactive-common/toolbarPanel';
 import { IVariablePanelProps, VariablePanel } from '../interactive-common/variablePanel';
 import { ErrorBoundary } from '../react-common/errorBoundary';
+import { IKeyboardEvent } from '../react-common/event';
 import { getLocString } from '../react-common/locReactSide';
 import { getSettings } from '../react-common/settingsReactSide';
 import { InteractivePanelStateController } from './interactivePanelStateController';
@@ -156,7 +157,6 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                         autoFocus={document.hasFocus()}
                         testMode={this.props.testMode}
                         cellVM={this.state.editCellVM}
-                        submitNewCode={this.stateController.submitInput}
                         baseTheme={baseTheme}
                         allowCollapse={false}
                         codeTheme={this.props.codeTheme}
@@ -171,7 +171,6 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                         openLink={this.stateController.openLink}
                         expandImage={noop}
                         ref={this.editCellRef}
-                        clearOnSubmit={true}
                         onClick={this.clickEditCell}
                         keyDown={this.editCellKeyDown}
                     />
@@ -204,7 +203,6 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             expandImage: this.stateController.showPlot,
             editable: false,
             newCellVM: undefined,
-            submitInput: this.stateController.submitInput,
             editExecutionCount: this.getInputExecutionCount().toString()
         };
     }
@@ -249,9 +247,43 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
         }
     }
 
-    private editCellKeyDown = (_cellId: string, key: string) => {
-        if (key === 'Escape') {
+    private editCellKeyDown = (_cellId: string, e: IKeyboardEvent) => {
+        if (e.code === 'Escape') {
             this.editCellEscape();
+        } else if (e.code === 'Enter' && e.shiftKey) {
+            this.editCellSubmit(e);
+        }
+    }
+
+    private editCellSubmit(e: IKeyboardEvent) {
+        if (e.editorInfo && e.editorInfo.contents && this.state.editCellVM) {
+            // Prevent shift+enter from turning into a enter
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+
+            // Remove empty lines off the end
+            let endPos = e.editorInfo.contents.length - 1;
+            while (endPos >= 0 && e.editorInfo.contents[endPos] === '\n') {
+                endPos -= 1;
+            }
+            const content = e.editorInfo.contents.slice(0, endPos + 1);
+
+            // Send to the input history too if necessary
+            if (this.state.history) {
+                this.state.history.add(content, e.editorInfo.isDirty);
+            }
+
+            // Clear our current contents since we submitted
+            if (e.shouldClear) {
+                e.shouldClear();
+            }
+
+            // Send to jupyter
+            this.stateController.submitInput(content, this.state.editCellVM);
         }
     }
 
@@ -275,5 +307,4 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             }
         }
     }
-
 }

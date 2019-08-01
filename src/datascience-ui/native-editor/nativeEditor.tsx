@@ -5,6 +5,7 @@ import './nativeEditor.less';
 
 import * as React from 'react';
 
+import { Identifiers } from '../../client/datascience/constants';
 import { ICell } from '../../client/datascience/types';
 import { Cell, ICellViewModel } from '../interactive-common/cell';
 import { ContentPanel, IContentPanelProps } from '../interactive-common/contentPanel';
@@ -12,6 +13,7 @@ import { InputHistory } from '../interactive-common/inputHistory';
 import { createEditableCellVM, IMainState } from '../interactive-common/mainState';
 import { IToolbarPanelProps, ToolbarPanel } from '../interactive-common/toolbarPanel';
 import { IVariablePanelProps, VariablePanel } from '../interactive-common/variablePanel';
+import { IKeyboardEvent } from '../react-common/event';
 import { getLocString } from '../react-common/locReactSide';
 import { getSettings } from '../react-common/settingsReactSide';
 import { NativeEditorStateController } from './nativeEditorStateController';
@@ -147,7 +149,6 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             expandImage: this.stateController.showPlot,
             editable: true,
             newCellVM: this.state.editCellVM,
-            submitInput: this.submitInput,
             editExecutionCount: ' ', // Always a space for native. It's what Jupyter does.
             editorMeasureClassName: 'measure-editor-div',
             keyDownCell: this.keyDownCell,
@@ -156,6 +157,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             clickCell: this.clickCell,
             focusCell: this.stateController.codeGotFocus,
             unfocusCell: this.stateController.codeLostFocus,
+            allowsMarkdownEditing: true
         };
     }
     private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {
@@ -197,24 +199,44 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         return this.state.cellVMs.map(cvm => cvm.cell).filter(c => c.data.cell_type !== 'messages');
     }
 
-    private keyDownCell = (cellId: string, key: string) => {
-        switch (key) {
+    private findCellViewModel(cellId: string): ICellViewModel | undefined {
+        let result = this.state.cellVMs.find(c => c.cell.id === cellId);
+        if (!result) {
+            result = cellId === Identifiers.EditCellId ? this.state.editCellVM : undefined;
+        }
+        return result;
+    }
+
+    private keyDownCell = (cellId: string, e: IKeyboardEvent) => {
+        switch (e.code) {
             case 'ArrowUp':
-                this.arrowUpFromCell(cellId);
+                if (this.state.focusedCell === cellId && e.editorInfo && e.editorInfo.isFirstLine) {
+                    this.arrowUpFromCell(cellId, e);
+                } else if (!this.state.focusedCell) {
+                    this.arrowUpFromCell(cellId, e);
+                }
                 break;
 
             case 'ArrowDown':
-                this.arrowDownFromCell(cellId);
+                if (this.state.focusedCell === cellId && e.editorInfo && e.editorInfo.isLastLine) {
+                    this.arrowDownFromCell(cellId, e);
+                } else if (!this.state.focusedCell) {
+                    this.arrowDownFromCell(cellId, e);
+                }
                 break;
 
             case 'Escape':
                 if (this.state.focusedCell) {
-                    this.escapeCell(this.state.focusedCell);
+                    this.escapeCell(this.state.focusedCell, e);
                 }
                 break;
 
             case 'Enter':
-                this.enterCell(cellId);
+                if (e.shiftKey) {
+                    this.submitCell(cellId, e);
+                } else {
+                    this.enterCell(cellId, e);
+                }
                 break;
 
             default:
@@ -222,23 +244,46 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         }
     }
 
-    private enterCell = (cellId: string) => {
-        // If focused, then this call shouldn't be happening
-        if (!this.state.focusedCell && this.contentPanelRef && this.contentPanelRef.current) {
+    private enterCell = (cellId: string, e: IKeyboardEvent) => {
+        // If focused, then ignore this call. It should go to the focused cell instead.
+        if (!this.state.focusedCell && !e.editorInfo && this.contentPanelRef && this.contentPanelRef.current) {
+            e.stopPropagation();
+
             // Figure out which cell this is
             const cellvm = this.state.cellVMs.find(cvm => cvm.cell.id === cellId) ;
             if (cellvm && this.state.selectedCell === cellId) {
-                // If this is a code cell, give focus to the inner bit
-                if (cellvm.cell.data.cell_type === 'code') {
-                    this.contentPanelRef.current.focusCell(cellId, true);
-                } else {
-                    // If this is a markdown cell, transition to edit mode.
-                }
+                this.contentPanelRef.current.focusCell(cellId, true);
             }
         }
     }
 
-    private arrowUpFromCell = (cellId: string) => {
+    private submitCell = (cellId: string, e: IKeyboardEvent) => {
+        if (e.editorInfo && e.editorInfo.contents && this.state.editCellVM) {
+            // Prevent shift+enter from turning into a enter
+            e.stopPropagation();
+            e.preventDefault();
+
+            // Remove empty lines off the end
+            let endPos = e.editorInfo.contents.length - 1;
+            while (endPos >= 0 && e.editorInfo.contents[endPos] === '\n') {
+                endPos -= 1;
+            }
+            const content = e.editorInfo.contents.slice(0, endPos + 1);
+
+            // Clear our current contents since we submitted if this is the edit cell
+            if (e.shouldClear && cellId === Identifiers.EditCellId) {
+                e.shouldClear();
+            }
+
+            // Send to jupyter
+            const cellVM = this.findCellViewModel(cellId);
+            if (cellVM) {
+                this.submitInput(content, cellVM);
+            }
+        }
+    }
+
+    private arrowUpFromCell = (cellId: string, e: IKeyboardEvent) => {
         const cells = this.getNonMessageCells();
 
         // Find the previous cell index
@@ -250,6 +295,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         }
 
         if (index >= 0 && this.contentPanelRef.current) {
+            e.stopPropagation();
             const prevCellId = cells[index].id;
             const wasFocused = this.state.focusedCell;
             this.stateController.selectCell(prevCellId, wasFocused ? prevCellId : undefined);
@@ -257,7 +303,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         }
     }
 
-    private arrowDownFromCell = (cellId: string) => {
+    private arrowDownFromCell = (cellId: string, e: IKeyboardEvent) => {
         const cells = this.getNonMessageCells();
 
         // Find the next cell to move to
@@ -272,6 +318,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         }
 
         if (nextCellId && this.contentPanelRef.current) {
+            e.stopPropagation();
             const wasFocused = this.state.focusedCell;
             this.stateController.selectCell(nextCellId, wasFocused ? nextCellId : undefined);
             this.contentPanelRef.current.focusCell(nextCellId, wasFocused ? true : false);
@@ -283,9 +330,10 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         this.stateController.selectCell(cellId, focusedCell);
     }
 
-    private escapeCell = (cellId: string) => {
+    private escapeCell = (cellId: string, e: IKeyboardEvent) => {
         // Unfocus the current cell by giving focus to the cell itself
         if (this.contentPanelRef && this.contentPanelRef.current) {
+            e.stopPropagation();
             this.contentPanelRef.current.focusCell(cellId, false);
         }
     }

@@ -14,7 +14,7 @@ export class EventEmitter<T> {
 
     public get event(): Event<T> {
         if (!this._event) {
-            this._event = (listener: (e?: T) => any) : void => {
+            this._event = (listener: (e?: T) => any): void => {
                 this._listeners.add(listener);
             };
         }
@@ -28,4 +28,22 @@ export class EventEmitter<T> {
     public dispose(): void {
         this._listeners.clear();
     }
+}
+
+export interface IKeyboardEvent {
+    readonly code: string;
+    readonly target: HTMLElement;
+    readonly ctrlKey: boolean;
+    readonly shiftKey: boolean;
+    readonly altKey: boolean;
+    readonly metaKey: boolean;
+    readonly editorInfo?: {
+        isFirstLine: boolean;
+        isLastLine: boolean;
+        isDirty: boolean;
+        contents: string;
+    };
+    preventDefault(): void;
+    stopPropagation(): void;
+    shouldClear?(): void;
 }
