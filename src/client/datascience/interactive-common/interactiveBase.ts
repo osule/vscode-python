@@ -601,6 +601,12 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         return this.loadPromise;
     }
 
+    // tslint:disable-next-line:no-any
+    protected dispatchMessage<M extends IInteractiveWindowMapping, T extends keyof M>(_message: T, payload: any, handler: (args: M[T]) => void) {
+        const args = payload as M[T];
+        handler.bind(this)(args);
+    }
+
     private async startServerImpl(): Promise<void> {
         // Status depends upon if we're about to connect to existing server or not.
         const status = (await this.jupyterExecution.getServer(await this.getNotebookOptions())) ?
@@ -710,12 +716,6 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         } catch (e) {
             this.applicationShell.showErrorMessage(e.toString());
         }
-    }
-
-    // tslint:disable-next-line:no-any
-    private dispatchMessage<M extends IInteractiveWindowMapping, T extends keyof M>(_message: T, payload: any, handler: (args: M[T]) => void) {
-        const args = payload as M[T];
-        handler.bind(this)(args);
     }
 
     // tslint:disable-next-line:no-any

@@ -155,6 +155,7 @@ export namespace DataScience {
     export const restartServer = localize('DataScience.restartServer', 'Restart IPython Kernel');
     export const undo = localize('DataScience.undo', 'Undo');
     export const redo = localize('DataScience.redo', 'Redo');
+    export const save = localize('DataScience.save', 'Save file');
     export const clearAll = localize('DataScience.clearAll', 'Remove all cells');
     export const pythonVersionHeader = localize('DataScience.pythonVersionHeader', 'Python Version:');
     export const pythonRestartHeader = localize('DataScience.pythonRestartHeader', 'Restarted Kernel:');

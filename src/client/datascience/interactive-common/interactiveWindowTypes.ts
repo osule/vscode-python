@@ -63,6 +63,7 @@ export namespace InteractiveWindowMessages {
     export const ReExecuteCell = 'rexecute_cell';
     export const NotebookIdentity = 'identity';
     export const NotebookDirty = 'dirty';
+    export const SaveAll = 'save_all';
 
 }
 
@@ -189,6 +190,10 @@ export interface INotebookIdentity {
     resource: string;
 }
 
+export interface ISaveAll {
+    cells: ICell[];
+}
+
 // Map all messages to specific payloads
 export class IInteractiveWindowMapping {
     public [InteractiveWindowMessages.StartCell]: ICell;
@@ -249,4 +254,5 @@ export class IInteractiveWindowMapping {
     public [InteractiveWindowMessages.ReExecuteCell]: ISubmitNewCell;
     public [InteractiveWindowMessages.NotebookIdentity]: INotebookIdentity;
     public [InteractiveWindowMessages.NotebookDirty]: never | undefined;
+    public [InteractiveWindowMessages.SaveAll]: ISaveAll;
 }

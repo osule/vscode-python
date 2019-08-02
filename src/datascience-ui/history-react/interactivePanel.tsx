@@ -10,10 +10,11 @@ import { Cell } from '../interactive-common/cell';
 import { ContentPanel, IContentPanelProps } from '../interactive-common/contentPanel';
 import { InputHistory } from '../interactive-common/inputHistory';
 import { createEditableCellVM, IMainState } from '../interactive-common/mainState';
-import { IToolbarPanelProps, ToolbarPanel } from '../interactive-common/toolbarPanel';
 import { IVariablePanelProps, VariablePanel } from '../interactive-common/variablePanel';
 import { ErrorBoundary } from '../react-common/errorBoundary';
 import { IKeyboardEvent } from '../react-common/event';
+import { Image, ImageName } from '../react-common/image';
+import { ImageButton } from '../react-common/imageButton';
 import { getLocString } from '../react-common/locReactSide';
 import { getSettings } from '../react-common/settingsReactSide';
 import { InteractivePanelStateController } from './interactivePanelStateController';
@@ -75,7 +76,7 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                     </style>
                 </div>
                 <header id='main-panel-toolbar'>
-                    {this.renderToolbarPanel(this.props.baseTheme)}
+                    {this.renderToolbarPanel()}
                 </header>
                 <section id='main-panel-variable' aria-label={getLocString('DataScience.collapseVariableExplorerLabel', 'Variables')}>
                     {this.renderVariablePanel(this.props.baseTheme)}
@@ -113,9 +114,39 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
         }
     }
 
-    private renderToolbarPanel(baseTheme: string) {
-        const toolbarProps = this.getToolbarProps(baseTheme);
-        return <ToolbarPanel {...toolbarProps} />;
+    private renderToolbarPanel() {
+        return (
+            <div id='toolbar-panel'>
+                <div className='toolbar-menu-bar'>
+                    <div className='toolbar-menu-bar-child'>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.clearAll} tooltip={getLocString('DataScience.clearAll', 'Remove all cells')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.redo} disabled={!this.stateController.canRedo()} tooltip={getLocString('DataScience.redo', 'Redo')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Redo} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.undo} disabled={!this.stateController.canUndo()} tooltip={getLocString('DataScience.undo', 'Undo')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Undo} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.interruptKernel} tooltip={getLocString('DataScience.interruptKernel', 'Interrupt IPython kernel')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Interrupt} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.restartKernel} tooltip={getLocString('DataScience.restartServer', 'Restart IPython kernel')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Restart} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.export} disabled={!this.stateController.canExport()} tooltip={getLocString('DataScience.export', 'Export as Jupyter notebook')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.SaveAs} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.expandAll} disabled={!this.stateController.canExpandAll()} tooltip={getLocString('DataScience.expandAll', 'Expand all cell inputs')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.ExpandAll} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.collapseAll} disabled={!this.stateController.canCollapseAll()} tooltip={getLocString('DataScience.collapseAll', 'Collapse all cell inputs')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.CollapseAll} />
+                        </ImageButton>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     private renderVariablePanel(baseTheme: string) {
@@ -206,26 +237,6 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             editExecutionCount: this.getInputExecutionCount().toString()
         };
     }
-    private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {
-       return {
-        collapseAll: this.stateController.collapseAll,
-        expandAll: this.stateController.expandAll,
-        export: this.stateController.export,
-        restartKernel: this.stateController.restartKernel,
-        interruptKernel: this.stateController.interruptKernel,
-        undo: this.stateController.undo,
-        redo: this.stateController.redo,
-        clearAll: this.stateController.clearAll,
-        skipDefault: this.props.skipDefault,
-        canCollapseAll: this.stateController.canCollapseAll(),
-        canExpandAll: this.stateController.canExpandAll(),
-        canExport: this.stateController.canExport(),
-        canUndo: this.stateController.canUndo(),
-        canRedo: this.stateController.canRedo(),
-        baseTheme: baseTheme
-       };
-    }
-
     private getVariableProps = (baseTheme: string): IVariablePanelProps => {
        return {
         variables: this.state.variables,

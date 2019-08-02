@@ -35,6 +35,10 @@ export class NativeEditorStateController extends MainStateController {
         return result;
     }
 
+    public canSave(): boolean {
+        return this.getState().dirty ? true : false;
+    }
+
     // Adjust the visibility or collapsed state of a cell
     protected alterCellVM(cellVM: ICellViewModel, _visible: boolean, _expanded: boolean): ICellViewModel {
         // cells are always editable

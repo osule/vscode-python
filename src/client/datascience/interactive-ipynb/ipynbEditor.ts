@@ -16,6 +16,7 @@ import {
     IWorkspaceService
 } from '../../common/application/types';
 import { ContextKey } from '../../common/contextKey';
+import { traceError } from '../../common/logger';
 import { IFileSystem } from '../../common/platform/types';
 import { IConfigurationService, IDisposableRegistry, ILogger } from '../../common/types';
 import { createDeferred, Deferred } from '../../common/utils/async';
@@ -25,7 +26,7 @@ import { IInterpreterService } from '../../interpreter/contracts';
 import { captureTelemetry } from '../../telemetry';
 import { EditorContexts, Identifiers, Settings, Telemetry } from '../constants';
 import { InteractiveBase } from '../interactive-common/interactiveBase';
-import { InteractiveWindowMessages, ISubmitNewCell } from '../interactive-common/interactiveWindowTypes';
+import { InteractiveWindowMessages, ISaveAll, ISubmitNewCell } from '../interactive-common/interactiveWindowTypes';
 import {
     ICell,
     ICodeCssGenerator,
@@ -160,6 +161,19 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         return this.closedEvent.event;
     }
 
+    // tslint:disable-next-line: no-any
+    public onMessage(message: string, payload: any) {
+        super.onMessage(message, payload);
+        switch (message) {
+            case InteractiveWindowMessages.SaveAll:
+                this.dispatchMessage(message, payload, this.saveAll);
+                break;
+
+            default:
+                break;
+        }
+    }
+
     @captureTelemetry(Telemetry.SubmitCellThroughInput, undefined, false)
     // tslint:disable-next-line:no-any
     protected submitNewCell(info: ISubmitNewCell) {
@@ -261,31 +275,42 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
     }
 
     private async saveContents(): Promise<void> {
-        let fileToSaveTo: Uri | undefined = this.file;
+        try {
+            let fileToSaveTo: Uri | undefined = this.file;
 
-        // Ask user for a save as dialog if no title
-        const baseName = path.basename(this.file.fsPath);
-        if (baseName.includes(localize.DataScience.untitledNotebookFileName())) {
-            const filtersKey = localize.DataScience.dirtyNotebookDialogFilter();
-            const filtersObject: { [name: string]: string[] } = {};
-            filtersObject[filtersKey] = ['ipynb'];
+            // Ask user for a save as dialog if no title
+            const baseName = path.basename(this.file.fsPath);
+            if (baseName.includes(localize.DataScience.untitledNotebookFileName())) {
+                const filtersKey = localize.DataScience.dirtyNotebookDialogFilter();
+                const filtersObject: { [name: string]: string[] } = {};
+                filtersObject[filtersKey] = ['ipynb'];
 
-            fileToSaveTo = await this.applicationShell.showSaveDialog({
-                saveLabel: localize.DataScience.dirtyNotebookDialogTitle(),
-                filters: filtersObject
-            });
-        }
-
-        if (fileToSaveTo) {
-            let directoryChange;
-            const settings = this.configuration.getSettings();
-            if (settings.datascience.changeDirOnImportExport) {
-                directoryChange = fileToSaveTo.fsPath;
+                fileToSaveTo = await this.applicationShell.showSaveDialog({
+                    saveLabel: localize.DataScience.dirtyNotebookDialogTitle(),
+                    filters: filtersObject
+                });
             }
 
-            // Save our visible cells into the file
-            const notebook = await this.jupyterExporter.translateToNotebook(this.visibleCells, directoryChange);
-            await this.fileSystem.writeFile(fileToSaveTo.fsPath, JSON.stringify(notebook));
+            if (fileToSaveTo) {
+                let directoryChange;
+                const settings = this.configuration.getSettings();
+                if (settings.datascience.changeDirOnImportExport) {
+                    directoryChange = fileToSaveTo.fsPath;
+                }
+
+                // Save our visible cells into the file
+                const notebook = await this.jupyterExporter.translateToNotebook(this.visibleCells, directoryChange);
+                await this.fileSystem.writeFile(fileToSaveTo.fsPath, JSON.stringify(notebook));
+                this._dirty = false;
+            }
+
+        } catch (e) {
+            traceError(e);
         }
+    }
+
+    private saveAll(args: ISaveAll) {
+        this.visibleCells = args.cells;
+        this.saveContents().ignoreErrors();
     }
 }

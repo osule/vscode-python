@@ -295,6 +295,15 @@ export class MainStateController implements IMessageHandler {
         this.clearAllSilent();
     }
 
+    public canSave(): boolean {
+        return false;
+    }
+
+    public save = () => {
+        this.sendMessage(InteractiveWindowMessages.SaveAll, { cells: this.getNonEditCellVMs().map(cvm => cvm.cell) });
+        this.clearAllSilent();
+    }
+
     public showPlot = (imageHtml: string) => {
         this.sendMessage(InteractiveWindowMessages.ShowPlot, imageHtml);
     }
@@ -497,6 +506,9 @@ export class MainStateController implements IMessageHandler {
             this.setState({
                 cellVMs: [...this.state.cellVMs]
             });
+
+            // Send a message to rexecute this code
+            this.sendMessage(InteractiveWindowMessages.ReExecuteCell, { code, id: inputCell.cell.id });
         }
     }
 
@@ -551,6 +563,10 @@ export class MainStateController implements IMessageHandler {
         this.props.setState(newState, () => {
             this.state = { ...this.state, ...newState };
         });
+    }
+
+    protected getState(): IMainState {
+        return this.state;
     }
 
     protected onCodeLostFocus(_cellId: string) {

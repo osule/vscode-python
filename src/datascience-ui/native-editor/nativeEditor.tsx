@@ -11,9 +11,10 @@ import { Cell, ICellViewModel } from '../interactive-common/cell';
 import { ContentPanel, IContentPanelProps } from '../interactive-common/contentPanel';
 import { InputHistory } from '../interactive-common/inputHistory';
 import { createEditableCellVM, IMainState } from '../interactive-common/mainState';
-import { IToolbarPanelProps, ToolbarPanel } from '../interactive-common/toolbarPanel';
 import { IVariablePanelProps, VariablePanel } from '../interactive-common/variablePanel';
 import { IKeyboardEvent } from '../react-common/event';
+import { Image, ImageName } from '../react-common/image';
+import { ImageButton } from '../react-common/imageButton';
 import { getLocString } from '../react-common/locReactSide';
 import { getSettings } from '../react-common/settingsReactSide';
 import { NativeEditorStateController } from './nativeEditorStateController';
@@ -71,7 +72,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                     </style>
                 </div>
                 <header id='main-panel-toolbar'>
-                    {this.renderToolbarPanel(this.props.baseTheme)}
+                    {this.renderToolbarPanel()}
                 </header>
                 <section id='main-panel-variable' aria-label={getLocString('DataScience.collapseVariableExplorerLabel', 'Variables')}>
                     {this.renderVariablePanel(this.props.baseTheme)}
@@ -106,9 +107,33 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         }
     }
 
-    private renderToolbarPanel(baseTheme: string) {
-        const toolbarProps = this.getToolbarProps(baseTheme);
-        return <ToolbarPanel {...toolbarProps} />;
+    private renderToolbarPanel() {
+        return (
+            <div id='toolbar-panel'>
+                <div className='toolbar-menu-bar'>
+                    <div className='toolbar-menu-bar-child'>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.clearAll} tooltip={getLocString('DataScience.clearAll', 'Remove all cells')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.redo} disabled={!this.stateController.canRedo()} tooltip={getLocString('DataScience.redo', 'Redo')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Redo} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.undo} disabled={!this.stateController.canUndo()} tooltip={getLocString('DataScience.undo', 'Undo')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Undo} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.interruptKernel} tooltip={getLocString('DataScience.interruptKernel', 'Interrupt IPython kernel')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Interrupt} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.restartKernel} tooltip={getLocString('DataScience.restartServer', 'Restart IPython kernel')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Restart} />
+                        </ImageButton>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.save} disabled={!this.stateController.canSave()} tooltip={getLocString('DataScience.save', 'Save File')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.SaveAs} />
+                        </ImageButton>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     private renderVariablePanel(baseTheme: string) {
@@ -161,26 +186,6 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             allowsMarkdownEditing: true
         };
     }
-    private getToolbarProps = (baseTheme: string): IToolbarPanelProps => {
-       return {
-        collapseAll: undefined,
-        expandAll: undefined,
-        export: this.stateController.export,
-        restartKernel: this.stateController.restartKernel,
-        interruptKernel: this.stateController.interruptKernel,
-        undo: this.stateController.undo,
-        redo: this.stateController.redo,
-        clearAll: this.stateController.clearAll,
-        skipDefault: this.props.skipDefault,
-        canCollapseAll: false,
-        canExpandAll: false,
-        canExport: this.stateController.canExport(),
-        canUndo: this.stateController.canUndo(),
-        canRedo: this.stateController.canRedo(),
-        baseTheme: baseTheme
-       };
-    }
-
     private getVariableProps = (baseTheme: string): IVariablePanelProps => {
        return {
         variables: this.state.variables,
