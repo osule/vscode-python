@@ -42,6 +42,7 @@ export interface IContentPanelProps {
     expandImage(imageHtml: string): void;
     selectCell?(cellId: string): void;
     clickCell?(cellId: string): void;
+    doubleClickCell?(cellId: string): void;
     focusCell?(cellId: string): void;
     unfocusCell?(cellId: string): void;
     keyDownCell?(cellId: string, e: IKeyboardEvent): void;
@@ -161,6 +162,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                         unfocused={this.props.unfocusCell}
                         keyDown={this.props.keyDownCell}
                         allowsMarkdownEditing={this.props.allowsMarkdownEditing}
+                        onDoubleClick={this.props.doubleClickCell}
                     />
                 </ErrorBoundary>
             </div>);

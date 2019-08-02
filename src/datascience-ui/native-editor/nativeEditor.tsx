@@ -155,6 +155,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             selectedCell: this.state.selectedCell,
             focusedCell: this.state.focusedCell,
             clickCell: this.clickCell,
+            doubleClickCell: this.doubleClickCell,
             focusCell: this.stateController.codeGotFocus,
             unfocusCell: this.stateController.codeLostFocus,
             allowsMarkdownEditing: true
@@ -332,6 +333,12 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
     private clickCell = (cellId: string) => {
         const focusedCell = cellId === this.state.focusedCell ? cellId : undefined;
         this.stateController.selectCell(cellId, focusedCell);
+    }
+
+    private doubleClickCell = (cellId: string) => {
+        if (this.contentPanelRef.current) {
+            this.contentPanelRef.current.focusCell(cellId, true);
+        }
     }
 
     private escapeCell = (cellId: string, e: IKeyboardEvent) => {

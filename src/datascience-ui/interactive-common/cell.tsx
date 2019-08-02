@@ -57,6 +57,7 @@ interface ICellProps {
     expandImage(imageHtml: string): void;
     keyDown?(cellId: string, e: IKeyboardEvent): void;
     onClick?(cellId: string): void;
+    onDoubleClick?(cellId: string): void;
     focused?(cellId: string): void;
     unfocused?(cellId: string): void;
 }
@@ -225,7 +226,7 @@ export class Cell extends React.Component<ICellProps, ICellState> {
         // Only render if we are allowed to.
         if (shouldRender) {
             return (
-                <div className={cellWrapperClass} role={this.props.role} ref={this.cellWrapperRef} tabIndex={0} onKeyDown={this.onCellKeyDown} onClick={this.onMouseClick}>
+                <div className={cellWrapperClass} role={this.props.role} ref={this.cellWrapperRef} tabIndex={0} onKeyDown={this.onCellKeyDown} onClick={this.onMouseClick} onDoubleClick={this.onMouseDoubleClick}>
                     <div className={cellOuterClass}>
                         {this.renderControls()}
                         <div className='content-div'>
@@ -244,10 +245,18 @@ export class Cell extends React.Component<ICellProps, ICellState> {
     }
 
     private onMouseClick = (ev: React.MouseEvent<HTMLDivElement>) => {
-        // When we receive a click, propage upwards. Might change our state
+        // When we receive a click, propagate upwards. Might change our state
         if (this.props.onClick) {
             ev.stopPropagation();
             this.props.onClick(this.props.cellVM.cell.id);
+        }
+    }
+
+    private onMouseDoubleClick = (ev: React.MouseEvent<HTMLDivElement>) => {
+        // When we receive double click, propagate upwards. Might change our state
+        if (this.props.onDoubleClick) {
+            ev.stopPropagation();
+            this.props.onDoubleClick(this.props.cellVM.cell.id);
         }
     }
 
