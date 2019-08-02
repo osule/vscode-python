@@ -258,7 +258,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
     }
 
     private submitCell = (cellId: string, e: IKeyboardEvent) => {
-        if (e.editorInfo && e.editorInfo.contents && this.state.editCellVM) {
+        if (e.editorInfo && e.editorInfo.contents) {
             // Prevent shift+enter from turning into a enter
             e.stopPropagation();
             e.preventDefault();
@@ -277,8 +277,12 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
 
             // Send to jupyter
             const cellVM = this.findCellViewModel(cellId);
-            if (cellVM) {
+            if (cellVM && cellVM.cell.data.cell_type === 'code') {
                 this.submitInput(content, cellVM);
+            } else if (cellVM && cellVM.cell.data.cell_type === 'markdown') {
+                // If a markdown cell, force focus loss (or the same thing as hitting escape).
+                // Focus loss should cause a submit.
+                this.escapeCell(cellId, e);
             }
         }
     }
@@ -336,6 +340,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             e.stopPropagation();
             this.contentPanelRef.current.focusCell(cellId, false);
         }
+
     }
 
     private submitInput = (code: string, inputCell: ICellViewModel) => {

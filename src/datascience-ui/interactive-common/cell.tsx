@@ -404,10 +404,10 @@ export class Cell extends React.Component<ICellProps, ICellState> {
     }
 
     private onMarkdownUnfocused = () => {
-        this.setState({showingMarkdownEditor: false});
         if (this.props.unfocused) {
             this.props.unfocused(this.props.cellVM.cell.id);
         }
+        this.setState({showingMarkdownEditor: false});
     }
 
     private onCodeChange = (changes: monacoEditor.editor.IModelContentChange[], modelId: string) => {

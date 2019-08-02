@@ -54,6 +54,7 @@ export class MainStateController implements IMessageHandler {
     private onigasmPromise: Deferred<ArrayBuffer> | undefined;
     private tmlangugePromise: Deferred<string> | undefined;
     private monacoIdToCellId: Map<string, string> = new Map<string, string>();
+    private cellIdToMonacoId: Map<string, string> = new Map<string, string>();
 
     // tslint:disable-next-line:max-func-body-length
     constructor(private props: IMainStateControllerProps) {
@@ -381,6 +382,7 @@ export class MainStateController implements IMessageHandler {
         if (expectedCellId !== id) {
             // A cell has been reused. Update our mapping
             this.monacoIdToCellId.set(modelId, id);
+            this.cellIdToMonacoId.set(id, modelId);
         } else {
             // Just a normal edit. Pass this onto the completion provider running in the extension
             this.sendMessage(InteractiveWindowMessages.EditCell, { changes, id });
@@ -401,14 +403,17 @@ export class MainStateController implements IMessageHandler {
 
         // Save in our map of monaco id to cell id
         this.monacoIdToCellId.set(monacoId, id);
+        this.cellIdToMonacoId.set(id, monacoId);
     }
 
     public editableCodeCreated = (_text: string, _file: string, id: string, monacoId: string) => {
         // Save in our map of monaco id to cell id
         this.monacoIdToCellId.set(monacoId, id);
+        this.cellIdToMonacoId.set(id, monacoId);
     }
 
     public codeLostFocus = (cellId: string) => {
+        this.onCodeLostFocus(cellId);
         if (this.state.focusedCell === cellId) {
             // Only unfocus if we haven't switched somewhere else yet
             this.setState({ focusedCell: undefined });
@@ -470,7 +475,7 @@ export class MainStateController implements IMessageHandler {
             if (newCell.cell.state !== CellState.finished) {
                 this.sendMessage(InteractiveWindowMessages.SubmitNewCell, { code, id: newCell.cell.id });
             }
-        } else {
+        } else if (inputCell.cell.data.cell_type === 'code') {
             // Update our input cell to be in progress again
             inputCell.cell.state = CellState.executing;
 
@@ -484,6 +489,14 @@ export class MainStateController implements IMessageHandler {
 
             // Send a message to rexecute this code
             this.sendMessage(InteractiveWindowMessages.ReExecuteCell, { code, id: inputCell.cell.id });
+        } else if (inputCell.cell.data.cell_type === 'markdown') {
+            // Change the input on the cell
+            inputCell.cell.data.source = code;
+
+            // Update our state to display the new status
+            this.setState({
+                cellVMs: [...this.state.cellVMs]
+            });
         }
     }
 
@@ -538,6 +551,32 @@ export class MainStateController implements IMessageHandler {
         this.props.setState(newState, () => {
             this.state = { ...this.state, ...newState };
         });
+    }
+
+    protected onCodeLostFocus(_cellId: string) {
+        // Default is do nothing.
+    }
+
+    protected getCellId(monacoId: string): string {
+        const result = this.monacoIdToCellId.get(monacoId);
+        if (result) {
+            return result;
+        }
+
+        // Just assume it's the edit cell if not found.
+        return Identifiers.EditCellId;
+    }
+
+    protected findCell(cellId: string): ICellViewModel | undefined {
+        const nonEdit = this.state.cellVMs.find(cvm => cvm.cell.id === cellId);
+        if (!nonEdit && cellId === Identifiers.EditCellId) {
+            return this.state.editCellVM;
+        }
+        return nonEdit;
+    }
+
+    protected getMonacoId(cellId: string): string | undefined {
+        return this.cellIdToMonacoId.get(cellId);
     }
 
     private computeEditorOptions(): monacoEditor.editor.IEditorOptions {
@@ -859,16 +898,6 @@ export class MainStateController implements IMessageHandler {
                 variablesResponse.variables.forEach(this.refreshVariable);
             }
         }
-    }
-
-    private getCellId = (monacoId: string): string => {
-        const result = this.monacoIdToCellId.get(monacoId);
-        if (result) {
-            return result;
-        }
-
-        // Just assume it's the edit cell if not found.
-        return Identifiers.EditCellId;
     }
 
     // tslint:disable-next-line: no-any

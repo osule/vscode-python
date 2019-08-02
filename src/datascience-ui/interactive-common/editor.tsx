@@ -11,6 +11,7 @@ import { InputHistory } from './inputHistory';
 
 export interface IEditorProps {
     content : string;
+    autoFocus?: boolean;
     codeTheme: string;
     readOnly: boolean;
     testMode: boolean;
@@ -132,6 +133,11 @@ export class Editor extends React.Component<IEditorProps, IEditorState> {
         // Track focus changes
         this.subscriptions.push(editor.onDidFocusEditorWidget(this.props.focused ? this.props.focused : noop));
         this.subscriptions.push(editor.onDidBlurEditorWidget(this.props.unfocused ? this.props.unfocused : noop));
+
+        // Give focus if necessary
+        if (this.props.autoFocus) {
+            setTimeout(() => editor.focus(), 1);
+        }
     }
 
     private modelChanged = (e: monacoEditor.editor.IModelContentChangedEvent) => {

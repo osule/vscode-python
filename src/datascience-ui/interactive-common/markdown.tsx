@@ -31,17 +31,11 @@ export class Markdown extends React.Component<IMarkdownProps> {
         super(prop);
     }
 
-    public componentDidUpdate() {
-        if (this.props.autoFocus && this.editorRef.current) {
-            this.editorRef.current.giveFocus();
-        }
-    }
-
     public render() {
-
         return (
                 <Editor
                     codeTheme={this.props.codeTheme}
+                    autoFocus={this.props.autoFocus}
                     readOnly={false}
                     history={undefined}
                     onCreated={this.props.onCreated}
