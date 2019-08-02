@@ -33,9 +33,6 @@ export interface IContentPanelProps {
     focusedCell?: string;
     skipAutoScroll?: boolean;
     allowsMarkdownEditing?: boolean;
-    gotoCellCode(cellId: string): void;
-    copyCellCode(cellId: string): void;
-    deleteCell(cellId: string): void;
     onCodeChange(changes: monacoEditor.editor.IModelContentChange[], cellId: string, modelId: string): void;
     onCodeCreated(code: string, file: string, cellId: string, modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
@@ -46,6 +43,7 @@ export interface IContentPanelProps {
     focusCell?(cellId: string): void;
     unfocusCell?(cellId: string): void;
     keyDownCell?(cellId: string, e: IKeyboardEvent): void;
+    renderCellToolbar(cellId: string): JSX.Element | null;
 }
 
 export class ContentPanel extends React.Component<IContentPanelProps> {
@@ -146,9 +144,6 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                         allowCollapse={!this.props.editable}
                         showWatermark={showWatermark}
                         editExecutionCount={this.props.editExecutionCount}
-                        gotoCode={this.props.gotoCellCode}
-                        copyCode={this.props.copyCellCode}
-                        delete={this.props.deleteCell}
                         onCodeChange={this.props.onCodeChange}
                         onCodeCreated={this.props.onCodeCreated}
                         monacoTheme={this.props.monacoTheme}
@@ -163,6 +158,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                         keyDown={this.props.keyDownCell}
                         allowsMarkdownEditing={this.props.allowsMarkdownEditing}
                         onDoubleClick={this.props.doubleClickCell}
+                        renderCellToolbar={this.props.renderCellToolbar}
                     />
                 </ErrorBoundary>
             </div>);

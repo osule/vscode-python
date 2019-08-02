@@ -5,6 +5,7 @@ import './nativeEditor.less';
 
 import * as React from 'react';
 
+import { concatMultilineString } from '../../client/datascience/common';
 import { Identifiers } from '../../client/datascience/constants';
 import { ICell } from '../../client/datascience/types';
 import { Cell, ICellViewModel } from '../interactive-common/cell';
@@ -162,9 +163,6 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             testMode: this.props.testMode,
             codeTheme: this.props.codeTheme,
             submittedText: this.state.submittedText,
-            gotoCellCode: this.stateController.gotoCellCode,
-            copyCellCode: this.stateController.copyCellCode,
-            deleteCell: this.stateController.deleteCell,
             skipNextScroll: this.state.skipNextScroll ? true : false,
             skipAutoScroll: true,
             monacoTheme: this.state.monacoTheme,
@@ -183,7 +181,8 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             doubleClickCell: this.doubleClickCell,
             focusCell: this.stateController.codeGotFocus,
             unfocusCell: this.stateController.codeLostFocus,
-            allowsMarkdownEditing: true
+            allowsMarkdownEditing: true,
+            renderCellToolbar: this.renderCellToolbar
         };
     }
     private getVariableProps = (baseTheme: string): IVariablePanelProps => {
@@ -365,6 +364,40 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                 this.contentPanelRef.current.focusCell(inputCell.cell.id, true);
             }
         }, 10);
+    }
+
+    private copyToClipboard = (cellId: string) => {
+        const cell = this.stateController.findCell(cellId);
+        if (cell) {
+            // Need to do this in this process so it copies to the user's clipboard and not
+            // the remote clipboard where the extension is running
+            const textArea = document.createElement('textarea');
+            textArea.value = concatMultilineString(cell.cell.data.source);
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('Copy');
+            textArea.remove();
+        }
+    }
+
+    private renderCellToolbar = (cellId: string) => {
+        if (cellId !== Identifiers.EditCellId) {
+            const deleteCode = () => this.stateController.deleteCell(cellId);
+            const copyCode = () => this.copyToClipboard(cellId);
+
+            return (
+                <div>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={copyCode} tooltip={getLocString('DataScience.copyToClipboardButtonTooltip', 'Copy code to clipboard')}>
+                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
+                    </ImageButton>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={deleteCode} tooltip={getLocString('DataScience.deleteButtonTooltip', 'Remove Cell')}>
+                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
+                    </ImageButton>
+                </div>
+            );
+        }
+
+        return null;
     }
 
 }

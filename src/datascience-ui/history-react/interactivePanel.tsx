@@ -6,6 +6,7 @@ import './interactivePanel.less';
 import * as React from 'react';
 
 import { noop } from '../../client/common/utils/misc';
+import { Identifiers } from '../../client/datascience/constants';
 import { Cell } from '../interactive-common/cell';
 import { ContentPanel, IContentPanelProps } from '../interactive-common/contentPanel';
 import { InputHistory } from '../interactive-common/inputHistory';
@@ -192,9 +193,6 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                         allowCollapse={false}
                         codeTheme={this.props.codeTheme}
                         showWatermark={true}
-                        gotoCode={noop}
-                        copyCode={noop}
-                        delete={noop}
                         editExecutionCount={executionCount.toString()}
                         onCodeCreated={this.stateController.editableCodeCreated}
                         onCodeChange={this.stateController.codeChange}
@@ -204,6 +202,7 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                         ref={this.editCellRef}
                         onClick={this.clickEditCell}
                         keyDown={this.editCellKeyDown}
+                        renderCellToolbar={this.renderEditCellToolbar}
                     />
                 </ErrorBoundary>
             </div>
@@ -223,9 +222,6 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             testMode: this.props.testMode,
             codeTheme: this.props.codeTheme,
             submittedText: this.state.submittedText,
-            gotoCellCode: this.stateController.gotoCellCode,
-            copyCellCode: this.stateController.copyCellCode,
-            deleteCell: this.stateController.deleteCell,
             skipNextScroll: this.state.skipNextScroll ? true : false,
             monacoTheme: this.state.monacoTheme,
             onCodeCreated: this.stateController.readOnlyCodeCreated,
@@ -234,7 +230,8 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
             expandImage: this.stateController.showPlot,
             editable: false,
             newCellVM: undefined,
-            editExecutionCount: this.getInputExecutionCount().toString()
+            editExecutionCount: this.getInputExecutionCount().toString(),
+            renderCellToolbar: this.renderCellToolbar
         };
     }
     private getVariableProps = (baseTheme: string): IVariablePanelProps => {
@@ -317,5 +314,31 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                 return direction >= 0 ? tabable[self + 1] || tabable[0] : tabable[self - 1] || tabable[0];
             }
         }
+    }
+
+    private renderCellToolbar = (cellId: string) => {
+        const gotoCode = () => this.stateController.gotoCellCode(cellId);
+        const deleteCode = () => this.stateController.deleteCell(cellId);
+        const copyCode = () => this.stateController.copyCellCode(cellId);
+        const cell = this.stateController.findCell(cellId);
+        const hasNoSource = !cell || !cell.cell.file || cell.cell.file === Identifiers.EmptyFileName;
+
+        return (
+            <div>
+                <ImageButton baseTheme={this.props.baseTheme} onClick={gotoCode} tooltip={getLocString('DataScience.gotoCodeButtonTooltip', 'Go to code')} hidden={hasNoSource}>
+                    <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
+                </ImageButton>
+                <ImageButton baseTheme={this.props.baseTheme} onClick={copyCode} tooltip={getLocString('DataScience.copyBackToSourceButtonTooltip', 'Paste code into file')} hidden={!hasNoSource}>
+                    <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
+                </ImageButton>
+                <ImageButton baseTheme={this.props.baseTheme} onClick={deleteCode} tooltip={getLocString('DataScience.deleteButtonTooltip', 'Remove Cell')}>
+                    <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
+                </ImageButton>
+            </div>
+        );
+    }
+
+    private renderEditCellToolbar = (_cellId: string) => {
+        return null;
     }
 }

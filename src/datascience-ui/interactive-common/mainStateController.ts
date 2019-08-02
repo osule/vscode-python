@@ -512,6 +512,14 @@ export class MainStateController implements IMessageHandler {
         }
     }
 
+    public findCell(cellId: string): ICellViewModel | undefined {
+        const nonEdit = this.state.cellVMs.find(cvm => cvm.cell.id === cellId);
+        if (!nonEdit && cellId === Identifiers.EditCellId) {
+            return this.state.editCellVM;
+        }
+        return nonEdit;
+    }
+
     // Adjust the visibility or collapsed state of a cell
     protected alterCellVM(cellVM: ICellViewModel, visible: boolean, expanded: boolean): ICellViewModel {
         if (cellVM.cell.data.cell_type === 'code') {
@@ -581,14 +589,6 @@ export class MainStateController implements IMessageHandler {
 
         // Just assume it's the edit cell if not found.
         return Identifiers.EditCellId;
-    }
-
-    protected findCell(cellId: string): ICellViewModel | undefined {
-        const nonEdit = this.state.cellVMs.find(cvm => cvm.cell.id === cellId);
-        if (!nonEdit && cellId === Identifiers.EditCellId) {
-            return this.state.editCellVM;
-        }
-        return nonEdit;
     }
 
     protected getMonacoId(cellId: string): string | undefined {

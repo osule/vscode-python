@@ -156,6 +156,7 @@
     "DataScience.deleteButtonTooltip": "Remove cell",
     "DataScience.gotoCodeButtonTooltip": "Go to code",
     "DataScience.copyBackToSourceButtonTooltip": "Paste code into file",
+    "DataScience.copyToClipboardButtonTooltip": "Copy source to clipboard",
     "DataScience.plotOpen": "Expand image",
     "Linter.enableLinter": "Enable {0}",
     "Linter.enablePylint": "You have a pylintrc file in your workspace. Do you want to enable pylint?",

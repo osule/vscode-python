@@ -48,9 +48,6 @@ interface ICellProps {
     selectedCell?: string;
     focusedCell?: string;
     allowsMarkdownEditing?: boolean;
-    gotoCode(cellId: string): void;
-    copyCode(cellId: string): void;
-    delete(cellId: string): void;
     onCodeChange(changes: monacoEditor.editor.IModelContentChange[], cellId: string, modelId: string): void;
     onCodeCreated(code: string, file: string, cellId: string, modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
@@ -60,6 +57,7 @@ interface ICellProps {
     onDoubleClick?(cellId: string): void;
     focused?(cellId: string): void;
     unfocused?(cellId: string): void;
+    renderCellToolbar(cellId: string): JSX.Element | null;
 }
 
 export interface ICellViewModel {
@@ -174,18 +172,6 @@ export class Cell extends React.Component<ICellProps, ICellState> {
         this.props.cellVM.inputBlockToggled(cellId);
     }
 
-    private getDeleteString = () => {
-        return getLocString('DataScience.deleteButtonTooltip', 'Remove Cell');
-    }
-
-    private getGoToCodeString = () => {
-        return getLocString('DataScience.gotoCodeButtonTooltip', 'Go to code');
-    }
-
-    private getCopyBackToSourceString = () => {
-        return getLocString('DataScience.copyBackToSource', 'Paste code into file');
-    }
-
     private getCell = () => {
         return this.props.cellVM.cell;
     }
@@ -277,7 +263,6 @@ export class Cell extends React.Component<ICellProps, ICellState> {
         const collapseVisible = (this.props.allowCollapse && this.props.cellVM.inputBlockCollapseNeeded && this.props.cellVM.inputBlockShow && !this.props.cellVM.editable && this.isCodeCell());
         const executionCount = this.props.cellVM && this.props.cellVM.cell && this.props.cellVM.cell.data && this.props.cellVM.cell.data.execution_count ?
             this.props.cellVM.cell.data.execution_count.toString() : '-';
-        const hasNoSource = this.props.cellVM.cell.file === Identifiers.EmptyFileName;
         const isEditOnlyCell = this.props.cellVM.cell.id === Identifiers.EditCellId;
 
         return (
@@ -289,36 +274,10 @@ export class Cell extends React.Component<ICellProps, ICellState> {
                     onClick={this.toggleInputBlock}
                     tooltip={getLocString('DataScience.collapseInputTooltip', 'Collapse input block')} />
                 <div className='cell-menu-bar-outer'>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.gotoCode} tooltip={this.getGoToCodeString()} hidden={hasNoSource || this.props.cellVM.editable}>
-                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
-                    </ImageButton>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.copyCode} tooltip={this.getCopyBackToSourceString()} hidden={!hasNoSource || isEditOnlyCell}>
-                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
-                    </ImageButton>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={this.deleteCode} tooltip={this.getDeleteString()} hidden={isEditOnlyCell}>
-                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
-                    </ImageButton>
+                    {this.props.renderCellToolbar(this.props.cellVM.cell.id)}
                 </div>
             </div>
         );
-    }
-
-    private gotoCode = () => {
-        if (this.props.gotoCode) {
-            this.props.gotoCode(this.props.cellVM.cell.id);
-        }
-    }
-
-    private copyCode = () => {
-        if (this.props.copyCode) {
-            this.props.copyCode(this.props.cellVM.cell.id);
-        }
-    }
-
-    private deleteCode = () => {
-        if (this.props.delete) {
-            this.props.delete(this.props.cellVM.cell.id);
-        }
     }
 
     private renderInputs = () => {
