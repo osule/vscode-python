@@ -10,7 +10,7 @@ import * as localize from '../../common/utils/localize';
 import { noop } from '../../common/utils/misc';
 import { generateCellRanges } from '../cellFactory';
 import { CodeLensCommands, Commands } from '../constants';
-import { InteractiveWindowMessages } from '../interactive-window/interactiveWindowTypes';
+import { InteractiveWindowMessages } from '../interactive-common/interactiveWindowTypes';
 import { ICell, ICellHashProvider, ICodeLensFactory, IFileHashes, IInteractiveWindowListener } from '../types';
 
 @injectable()
@@ -99,6 +99,7 @@ export class CodeLensFactory implements ICodeLensFactory, IInteractiveWindowList
         return fullCommandList;
     }
 
+    // tslint:disable-next-line: max-func-body-length
     private createCodeLens(document: TextDocument, cellRange: { range: Range; cell_type: string }, commandName: string, isFirst: boolean): CodeLens | undefined {
         // We only support specific commands
         // Be careful here. These arguments will be serialized during liveshare sessions

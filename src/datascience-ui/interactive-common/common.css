@@ -27,7 +27,6 @@ body, html {
 
 #main-panel-toolbar {
     grid-area: toolbar;
-    justify-self: end;
     overflow: hidden;
 }
 
@@ -341,9 +340,6 @@ body, html {
 .toolbar-menu-bar {
     margin-top: 2px;
     margin-bottom: 2px;
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: right;
 }
 
 .execution-count {

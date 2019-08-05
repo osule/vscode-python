@@ -507,8 +507,8 @@ export class MainStateController implements IMessageHandler {
                 cellVMs: [...this.state.cellVMs]
             });
 
-            // Send a message to rexecute this code
-            this.sendMessage(InteractiveWindowMessages.ReExecuteCell, { code, id: inputCell.cell.id });
+            // Update the other side with our new state
+            this.sendInfo();
         }
     }
 

@@ -21,9 +21,9 @@ import {
 } from '../../common/application/types';
 import { CancellationError } from '../../common/cancellation';
 import { EXTENSION_ROOT_DIR, PYTHON_LANGUAGE } from '../../common/constants';
-import { traceInfo, traceWarning } from '../../common/logger';
+import { traceError, traceInfo, traceWarning } from '../../common/logger';
 import { IFileSystem } from '../../common/platform/types';
-import { IConfigurationService, IDisposableRegistry, ILogger } from '../../common/types';
+import { IConfigurationService, IDisposableRegistry } from '../../common/types';
 import { createDeferred, Deferred } from '../../common/utils/async';
 import * as localize from '../../common/utils/localize';
 import { StopWatch } from '../../common/utils/stopWatch';
@@ -97,7 +97,6 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         @unmanaged() private disposables: IDisposableRegistry,
         @unmanaged() cssGenerator: ICodeCssGenerator,
         @unmanaged() themeFinder: IThemeFinder,
-        @unmanaged() private logger: ILogger,
         @unmanaged() private statusProvider: IStatusProvider,
         @unmanaged() private jupyterExecution: IJupyterExecution,
         @unmanaged() protected fileSystem: IFileSystem,
@@ -379,7 +378,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
                 }
             } catch (err) {
                 status.dispose();
-                this.logger.logError(err);
+                traceError(err);
                 this.applicationShell.showErrorMessage(err);
             }
         }
@@ -432,7 +431,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     }
 
     protected async submitCode(code: string, file: string, line: number, id?: string, _editor?: TextEditor, debug?: boolean): Promise<boolean> {
-        this.logger.logInformation(`Submitting code for ${this.id}`);
+        traceInfo(`Submitting code for ${this.id}`);
         let result = true;
 
         // Start a status item
@@ -456,7 +455,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
             // Make sure we're loaded first.
             try {
-                this.logger.logInformation('Waiting for jupyter server and web panel ...');
+                traceInfo('Waiting for jupyter server and web panel ...');
                 await this.startServer();
             } catch (exc) {
                 // We should dispose ourselves if the load fails. Othewise the user
@@ -782,7 +781,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
             } else {
                 // Show the error message
                 this.applicationShell.showErrorMessage(exc);
-                this.logger.logError(exc);
+                traceError(exc);
             }
         } finally {
             status.dispose();
@@ -975,14 +974,14 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
                     }
                 });
             } catch (exc) {
-                this.logger.logError('Error in exporting notebook file');
+                traceError('Error in exporting notebook file');
                 this.applicationShell.showInformationMessage(localize.DataScience.exportDialogFailed().format(exc));
             }
         }
     }
 
     private async createNotebook(): Promise<void> {
-        this.logger.logInformation('Getting jupyter server options ...');
+        traceInfo('Getting jupyter server options ...');
 
         // Wait for the webpanel to pass back our current theme darkness
         const knownDark = await this.isDark();
@@ -990,7 +989,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         // Extract our options
         const options = await this.getNotebookOptions();
 
-        this.logger.logInformation('Connecting to jupyter server ...');
+        traceInfo('Connecting to jupyter server ...');
 
         // Now try to create a notebook server
         const server = await this.jupyterExecution.connectToNotebookServer(options);
@@ -1005,7 +1004,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
             await this.notebook.setMatplotLibStyle(knownDark);
         }
 
-        this.logger.logInformation('Connected to jupyter server.');
+        traceInfo('Connected to jupyter server.');
     }
 
     private generateSysInfoCell = async (reason: SysInfoReason): Promise<ICell | undefined> => {
@@ -1056,7 +1055,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
                 return localize.DataScience.pythonNewHeader();
                 break;
             default:
-                this.logger.logError('Invalid SysInfoReason');
+                traceError('Invalid SysInfoReason');
                 return '';
                 break;
         }
@@ -1075,7 +1074,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
     private addSysInfo = async (reason: SysInfoReason): Promise<void> => {
         if (!this.addSysInfoPromise || reason !== SysInfoReason.Start) {
-            this.logger.logInformation(`Adding sys info for ${this.id} ${reason}`);
+            traceInfo(`Adding sys info for ${this.id} ${reason}`);
             const deferred = createDeferred<boolean>();
             this.addSysInfoPromise = deferred;
 
@@ -1098,10 +1097,10 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
                 }
             }
 
-            this.logger.logInformation(`Sys info for ${this.id} ${reason} complete`);
+            traceInfo(`Sys info for ${this.id} ${reason} complete`);
             deferred.resolve(true);
         } else if (this.addSysInfoPromise) {
-            this.logger.logInformation(`Wait for sys info for ${this.id} ${reason}`);
+            traceInfo(`Wait for sys info for ${this.id} ${reason}`);
             await this.addSysInfoPromise.promise;
         }
     }

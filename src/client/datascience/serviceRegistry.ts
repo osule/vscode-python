@@ -19,6 +19,8 @@ import { DataScienceCodeLensProvider } from './editor-integration/codelensprovid
 import { CodeWatcher } from './editor-integration/codewatcher';
 import { Decorator } from './editor-integration/decorator';
 import { DataScienceErrorHandler } from './errorHandler/errorHandler';
+import { GatherExecution } from './gather/gather';
+import { GatherListener } from './gather/gatherListener';
 import { DebugListener } from './interactive-common/debugListener';
 import { DotNetIntellisenseProvider } from './interactive-common/intellisense/dotNetIntellisenseProvider';
 import { JediIntellisenseProvider } from './interactive-common/intellisense/jediIntellisenseProvider';
@@ -27,8 +29,6 @@ import { ShowPlotListener } from './interactive-common/showPlotListener';
 import { IpynbCommandListener } from './interactive-ipynb/ipynbCommandListener';
 import { IpynbEditor } from './interactive-ipynb/ipynbEditor';
 import { IpynbProvider } from './interactive-ipynb/ipynbEditorProvider';
-import { GatherExecution } from './gather/gather';
-import { GatherListener } from './gather/gatherListener';
 import { InteractiveWindow } from './interactive-window/interactiveWindow';
 import { InteractiveWindowCommandListener } from './interactive-window/interactiveWindowCommandListener';
 import { InteractiveWindowProvider } from './interactive-window/interactiveWindowProvider';

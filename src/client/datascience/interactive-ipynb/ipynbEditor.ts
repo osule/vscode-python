@@ -18,7 +18,7 @@ import {
 import { ContextKey } from '../../common/contextKey';
 import { traceError } from '../../common/logger';
 import { IFileSystem } from '../../common/platform/types';
-import { IConfigurationService, IDisposableRegistry, ILogger } from '../../common/types';
+import { IConfigurationService, IDisposableRegistry } from '../../common/types';
 import { createDeferred, Deferred } from '../../common/utils/async';
 import * as localize from '../../common/utils/localize';
 import { EXTENSION_ROOT_DIR } from '../../constants';
@@ -63,7 +63,6 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         @inject(IDisposableRegistry) disposables: IDisposableRegistry,
         @inject(ICodeCssGenerator) cssGenerator: ICodeCssGenerator,
         @inject(IThemeFinder) themeFinder: IThemeFinder,
-        @inject(ILogger) logger: ILogger,
         @inject(IStatusProvider) statusProvider: IStatusProvider,
         @inject(IJupyterExecution) jupyterExecution: IJupyterExecution,
         @inject(IFileSystem) fileSystem: IFileSystem,
@@ -87,7 +86,6 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             disposables,
             cssGenerator,
             themeFinder,
-            logger,
             statusProvider,
             jupyterExecution,
             fileSystem,
@@ -128,11 +126,13 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
                 const yes = localize.DataScience.dirtyNotebookYes();
                 const no = localize.DataScience.dirtyNotebookNo();
                 // tslint:disable-next-line: messages-must-be-localized
-                this.applicationShell.showWarningMessage(`${message1}\n${message2}`, yes, no).then(v => {
+                this.applicationShell.showInformationMessage(`${message1}\n${message2}`, { modal: true }, yes, no).then(v => {
                     if (v === yes) {
                         this.saveContents().ignoreErrors();
                     }
                 });
+            } else {
+                this.saveContents().ignoreErrors();
             }
         }
         if (this.closedEvent) {
