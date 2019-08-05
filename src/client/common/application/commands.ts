@@ -25,6 +25,8 @@ interface ICommandNameWithoutArgumentTypeMapping {
     [Commands.Set_ShebangInterpreter]: [];
     [Commands.Run_Linter]: [];
     [Commands.Enable_Linter]: [];
+    ['workbench.action.debug.continue']: [];
+    ['workbench.action.debug.stepOver']: [];
     ['workbench.action.debug.stop']: [];
     ['workbench.action.reloadWindow']: [];
     ['workbench.action.closeActiveEditor']: [];
@@ -122,6 +124,9 @@ export interface ICommandNameArgumentTypeMapping extends ICommandNameWithoutArgu
     [DSCommands.RunFileInInteractiveWindows]: [string];
     [DSCommands.DebugFileInInteractiveWindows]: [string];
     [DSCommands.DebugCell]: [string, number, number, number, number];
+    [DSCommands.DebugStepOver]: [];
+    [DSCommands.DebugStop]: [];
+    [DSCommands.DebugContinue]: [];
     [DSCommands.RunCurrentCellAndAddBelow]: [string];
     [DSCommands.ScrollToCell]: [string, string];
 }

@@ -7,7 +7,7 @@ import { SemVer } from 'semver';
 import { Event } from 'vscode';
 import { LanguageClient, LanguageClientOptions } from 'vscode-languageclient';
 import { NugetPackage } from '../common/nuget/types';
-import { IDisposable, LanguageServerDownloadChannels, Resource } from '../common/types';
+import { IDisposable, IOutputChannel, LanguageServerDownloadChannels, Resource } from '../common/types';
 
 export const IExtensionActivationManager = Symbol('IExtensionActivationManager');
 export interface IExtensionActivationManager extends IDisposable {
@@ -18,7 +18,7 @@ export interface IExtensionActivationManager extends IDisposable {
 export const IExtensionActivationService = Symbol('IExtensionActivationService');
 /**
  * Classes implementing this interface will have their `activate` methods
- * invoked during the actiavtion of the extension.
+ * invoked for every workspace folder (in multi-root workspace folders) during the activation of the extension.
  * This is a great hook for extension activation code, i.e. you don't need to modify
  * the `extension.ts` file to invoke some code when extension gets activated.
  * @export
@@ -122,4 +122,28 @@ export interface IPlatformData {
     readonly platformName: PlatformName;
     readonly engineDllName: string;
     readonly engineExecutableName: string;
+}
+
+export const ILanguageServerOutputChannel = Symbol('ILanguageServerOutputChannel');
+export interface ILanguageServerOutputChannel {
+    /**
+     * Creates output channel if necessary and returns it
+     *
+     * @type {IOutputChannel}
+     * @memberof ILanguageServerOutputChannel
+     */
+    readonly channel: IOutputChannel;
+}
+
+export const IExtensionSingleActivationService = Symbol('IExtensionSingleActivationService');
+/**
+ * Classes implementing this interface will have their `activate` methods
+ * invoked during the activation of the extension.
+ * This is a great hook for extension activation code, i.e. you don't need to modify
+ * the `extension.ts` file to invoke some code when extension gets activated.
+ * @export
+ * @interface IExtensionSingleActivationService
+ */
+export interface IExtensionSingleActivationService {
+    activate(): Promise<void>;
 }

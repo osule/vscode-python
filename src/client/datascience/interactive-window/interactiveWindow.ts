@@ -17,7 +17,7 @@ import {
 } from '../../common/application/types';
 import { ContextKey } from '../../common/contextKey';
 import { IFileSystem } from '../../common/platform/types';
-import { IConfigurationService, IDisposableRegistry, ILogger } from '../../common/types';
+import { IConfigurationService, IDisposableRegistry } from '../../common/types';
 import * as localize from '../../common/utils/localize';
 import { EXTENSION_ROOT_DIR } from '../../constants';
 import { IInterpreterService } from '../../interpreter/contracts';
@@ -55,11 +55,10 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
         @inject(IDisposableRegistry) disposables: IDisposableRegistry,
         @inject(ICodeCssGenerator) cssGenerator: ICodeCssGenerator,
         @inject(IThemeFinder) themeFinder: IThemeFinder,
-        @inject(ILogger) logger: ILogger,
-        @inject(IStatusProvider) statusProvider: IStatusProvider,
-        @inject(IJupyterExecution) jupyterExecution: IJupyterExecution,
-        @inject(IFileSystem) fileSystem: IFileSystem,
-        @inject(IConfigurationService) configuration: IConfigurationService,
+        @inject(IStatusProvider) private statusProvider: IStatusProvider,
+        @inject(IJupyterExecution) private jupyterExecution: IJupyterExecution,
+        @inject(IFileSystem) private fileSystem: IFileSystem,
+        @inject(IConfigurationService) private configuration: IConfigurationService,
         @inject(ICommandManager) private commandManager: ICommandManager,
         @inject(INotebookExporter) jupyterExporter: INotebookExporter,
         @inject(IWorkspaceService) workspaceService: IWorkspaceService,

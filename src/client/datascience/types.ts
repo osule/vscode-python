@@ -5,7 +5,11 @@ import { nbformat } from '@jupyterlab/coreutils';
 import { Kernel, KernelMessage } from '@jupyterlab/services/lib/kernel';
 import { JSONObject } from '@phosphor/coreutils';
 import { Observable } from 'rxjs/Observable';
+<<<<<<< HEAD
 import { CancellationToken, CodeLens, CodeLensProvider, Disposable, Event, Range, TextDocument, TextEditor, Uri } from 'vscode';
+=======
+import { CancellationToken, CodeLens, CodeLensProvider, DebugAdapterTracker, DebugAdapterTrackerFactory, DebugSession, Disposable, Event, Range, TextDocument, TextEditor } from 'vscode';
+>>>>>>> origin/master
 
 import { ICommandManager } from '../common/application/types';
 import { ExecutionResult, ObservableExecutionResult, SpawnOptions } from '../common/process/types';
@@ -102,6 +106,12 @@ export const INotebookExecutionLogger = Symbol('INotebookExecutionLogger');
 export interface INotebookExecutionLogger {
     preExecute(cell: ICell, silent: boolean): Promise<void>;
     postExecute(cell: ICell, silent: boolean): Promise<void>;
+}
+
+export const IGatherExecution = Symbol('IGatherExecution');
+export interface IGatherExecution {
+    enabled: boolean;
+    gatherCode(vscCell: ICell): string;
 }
 
 export const IJupyterExecution = Symbol('IJupyterExecution');
@@ -453,8 +463,8 @@ export interface ISourceMapRequest {
 }
 
 export interface ICellHash {
-    line: number;       // 1 based
-    endLine: number;    // 1 based and inclusive
+    line: number; // 1 based
+    endLine: number; // 1 based and inclusive
     runtimeLine: number; // Line in the jupyter source to start at
     hash: string;
     executionCount: number;
@@ -475,4 +485,21 @@ export const ICellHashProvider = Symbol('ICellHashProvider');
 export interface ICellHashProvider {
     updated: Event<void>;
     getHashes(): IFileHashes[];
+}
+
+export const IDebugLocationTrackerFactory = Symbol('IDebugLocationTrackerFactory');
+export interface IDebugLocationTrackerFactory extends DebugAdapterTrackerFactory {
+}
+
+export interface IDebugLocation {
+    fileName: string;
+    lineNumber: number;
+    column: number;
+}
+
+export const IDebugLocationTracker = Symbol('IDebugLocationTracker');
+export interface IDebugLocationTracker extends DebugAdapterTracker {
+    debugLocationUpdated: Event<void>;
+    debugLocation: IDebugLocation | undefined;
+    setDebugSession(targetSession: DebugSession): void;
 }

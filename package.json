@@ -352,6 +352,26 @@
                 "category": "Python"
             },
             {
+                "command": "python.datascience.debugcell",
+                "title": "%python.command.python.datascience.debugcell.title%",
+                "category": "Python"
+            },
+            {
+                "command": "python.datascience.debugstepover",
+                "title": "%python.command.python.datascience.debugstepover.title%",
+                "category": "Python"
+            },
+            {
+                "command": "python.datascience.debugstop",
+                "title": "%python.command.python.datascience.debugstop.title%",
+                "category": "Python"
+            },
+            {
+                "command": "python.datascience.debugcontinue",
+                "title": "%python.command.python.datascience.debugcontinue.title%",
+                "category": "Python"
+            },
+            {
                 "command": "python.datascience.runcurrentcelladvance",
                 "title": "%python.command.python.datascience.runcurrentcelladvance.title%",
                 "category": "Python"
@@ -979,6 +999,17 @@
                 }
             ]
         },
+        "breakpoints": [
+            {
+                "language": "python"
+            },
+            {
+                "language": "html"
+            },
+            {
+                "language": "jinja"
+            }
+        ],
         "debuggers": [
             {
                 "type": "python",
@@ -986,14 +1017,6 @@
                 "languages": [
                     "python"
                 ],
-                "enableBreakpointsFor": {
-                    "languageIds": [
-                        "python",
-                        "html",
-                        "jinja"
-                    ]
-                },
-                "aiKey": "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217",
                 "program": "./out/client/debugger/debugAdapter/main.js",
                 "runtime": "node",
                 "configurationSnippets": [],
@@ -1304,6 +1327,68 @@
                     "description": "Allows a user to import a jupyter notebook into a python file anytime one is opened.",
                     "scope": "resource"
                 },
+                "python.dataScience.gatherRules": {
+                    "type": "array",
+                    "default": [
+                        {
+                            "objectName": "df",
+                            "functionName": "head",
+                            "doesNotModify": [
+                                "OBJECT"
+                            ]
+                        },
+                        {
+                            "objectName": "df",
+                            "functionName": "describe",
+                            "doesNotModify": [
+                                "OBJECT"
+                            ]
+                        },
+                        {
+                            "objectName": "df",
+                            "functionName": "tail",
+                            "doesNotModify": [
+                                "OBJECT"
+                            ]
+                        },
+                        {
+                            "functionName": "print",
+                            "doesNotModify": [
+                                "ARGUMENTS"
+                            ]
+                        },
+                        {
+                            "functionName": "KMeans",
+                            "doesNotModify": [
+                                "ARGUMENTS"
+                            ]
+                        },
+                        {
+                            "functionName": "scatter",
+                            "doesNotModify": [
+                                "ARGUMENTS"
+                            ]
+                        },
+                        {
+                            "functionName": "fit",
+                            "doesNotModify": [
+                                "ARGUMENTS"
+                            ]
+                        },
+                        {
+                            "functionName": "sum",
+                            "doesNotModify": [
+                                "ARGUMENTS"
+                            ]
+                        },
+                        {
+                            "functionName": "len",
+                            "doesNotModify": [
+                                "ARGUMENTS"
+                            ]
+                        }
+                    ]
+                },
                 "python.dataScience.askForLargeDataFrames": {
                     "type": "boolean",
                     "default": true,
@@ -1491,10 +1576,22 @@
                     "description": "Modify plot output so that it can be expanded into a plot viewer window.",
                     "scope": "resource"
                 },
+                "python.dataScience.enableGather": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable code gathering for single cells in the interactive window (experimental).",
+                    "scope": "resource"
+                },
                 "python.dataScience.codeLenses": {
                     "type": "string",
                     "default": "python.datascience.runcell,  python.datascience.runallcellsabove, python.datascience.debugcell",
                     "description": "Set of commands to put as code lens above a cell. Defaults to 'python.datascience.runcell,  python.datascience.runallcellsabove, python.datascience.debugcell'",
+                    "scope": "resource"
+                },
+                "python.dataScience.debugCodeLenses": {
+                    "type": "string",
+                    "default": "python.datascience.debugcontinue, python.datascience.debugstop, python.datascience.debugstepover",
+                    "description": "Set of debug commands to put as code lens above a cell while debugging.",
                     "scope": "resource"
                 },
                 "python.dataScience.ptvsdDistPath": {
@@ -2423,6 +2520,7 @@
     },
     "dependencies": {
         "@jupyterlab/services": "^3.2.1",
+        "@msrvida/python-program-analysis": "0.0.5",
         "ansi-regex": "^4.1.0",
         "arch": "^2.1.0",
         "azure-storage": "^2.10.1",
@@ -2435,6 +2533,7 @@
         "hash.js": "^1.1.7",
         "iconv-lite": "^0.4.21",
         "inversify": "^4.11.1",
+        "jison": "^0.4.18",
         "jsonc-parser": "^2.0.3",
         "less-plugin-inline-urls": "^1.2.0",
         "line-by-line": "^0.1.6",
@@ -2472,7 +2571,7 @@
         "untildify": "^3.0.2",
         "vscode-debugadapter": "^1.28.0",
         "vscode-debugprotocol": "^1.28.0",
-        "vscode-extension-telemetry": "^0.1.0",
+        "vscode-extension-telemetry": "0.1.0",
         "vscode-languageclient": "^5.2.1",
         "vscode-languageserver": "^5.2.1",
         "vscode-languageserver-protocol": "^3.14.1",
@@ -2607,7 +2706,6 @@
         "raw-loader": "^0.5.1",
         "react": "^16.5.2",
         "react-data-grid": "^6.0.2-0",
-        "react-data-grid-addons": "^6.0.2-0",
         "react-dev-utils": "^5.0.2",
         "react-dom": "^16.5.2",
         "react-json-tree": "^0.11.0",

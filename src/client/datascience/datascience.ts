@@ -8,7 +8,7 @@ import { inject, injectable, multiInject, optional } from 'inversify';
 import { URL } from 'url';
 import * as vscode from 'vscode';
 
-import { IApplicationShell, ICommandManager, IDocumentManager, IWorkspaceService } from '../common/application/types';
+import { IApplicationShell, ICommandManager, IDebugService, IDocumentManager, IWorkspaceService } from '../common/application/types';
 import { PYTHON_ALLFILES, PYTHON_LANGUAGE } from '../common/constants';
 import { ContextKey } from '../common/contextKey';
 import { traceError } from '../common/logger';
@@ -44,7 +44,8 @@ export class DataScience implements IDataScience {
         @inject(IApplicationShell) private appShell: IApplicationShell,
         @inject(IWorkspaceService) private workspace: IWorkspaceService,
         @multiInject(IDataScienceCommandListener) @optional() private commandListeners: IDataScienceCommandListener[] | undefined,
-        @inject(INotebookEditorProvider) private notebookProvider: INotebookEditorProvider
+        @inject(INotebookEditorProvider) private notebookProvider: INotebookEditorProvider,
+        @inject(IDebugService) private debugService: IDebugService
     ) {
         this.dataScienceSurveyBanner = this.serviceContainer.get<IPythonExtensionBanner>(IPythonExtensionBanner, BANNER_NAME_DS_SURVEY);
     }
@@ -243,6 +244,36 @@ export class DataScience implements IDataScience {
         }
     }
 
+    @captureTelemetry(Telemetry.DebugStepOver)
+    public async debugStepOver(): Promise<void> {
+        this.dataScienceSurveyBanner.showBanner().ignoreErrors();
+
+        // Make sure that we are in debug mode
+        if (this.debugService.activeDebugSession) {
+            this.commandManager.executeCommand('workbench.action.debug.stepOver');
+        }
+    }
+
+    @captureTelemetry(Telemetry.DebugStop)
+    public async debugStop(): Promise<void> {
+        this.dataScienceSurveyBanner.showBanner().ignoreErrors();
+
+        // Make sure that we are in debug mode
+        if (this.debugService.activeDebugSession) {
+            this.commandManager.executeCommand('workbench.action.debug.stop');
+        }
+    }
+
+    @captureTelemetry(Telemetry.DebugContinue)
+    public async debugContinue(): Promise<void> {
+        this.dataScienceSurveyBanner.showBanner().ignoreErrors();
+
+        // Make sure that we are in debug mode
+        if (this.debugService.activeDebugSession) {
+            this.commandManager.executeCommand('workbench.action.debug.continue');
+        }
+    }
+
     @captureTelemetry(Telemetry.SetJupyterURIToLocal)
     private async setJupyterURIToLocal(): Promise<void> {
         await this.configuration.updateSetting('dataScience.jupyterServerURI', Settings.JupyterServerLocalLaunch, undefined, vscode.ConfigurationTarget.Workspace);
@@ -416,6 +447,12 @@ export class DataScience implements IDataScience {
         disposable = this.commandManager.registerCommand(Commands.RunCurrentCellAndAddBelow, this.runCurrentCellAndAddBelow, this);
         this.disposableRegistry.push(disposable);
         disposable = this.commandManager.registerCommand(Commands.DebugCell, this.debugCell, this);
+        this.disposableRegistry.push(disposable);
+        disposable = this.commandManager.registerCommand(Commands.DebugStepOver, this.debugStepOver, this);
+        this.disposableRegistry.push(disposable);
+        disposable = this.commandManager.registerCommand(Commands.DebugContinue, this.debugContinue, this);
+        this.disposableRegistry.push(disposable);
+        disposable = this.commandManager.registerCommand(Commands.DebugStop, this.debugStop, this);
         this.disposableRegistry.push(disposable);
         disposable = this.commandManager.registerCommand(Commands.DebugCurrentCellPalette, this.debugCurrentCellFromCursor, this);
         this.disposableRegistry.push(disposable);

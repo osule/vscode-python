@@ -8,7 +8,7 @@ import * as stackTrace from 'stack-trace';
 import TelemetryReporter from 'vscode-extension-telemetry';
 
 import { IWorkspaceService } from '../common/application/types';
-import { EXTENSION_ROOT_DIR, isTestExecution, PVSC_EXTENSION_ID } from '../common/constants';
+import { AppinsightsKey, EXTENSION_ROOT_DIR, isTestExecution, PVSC_EXTENSION_ID } from '../common/constants';
 import { traceInfo } from '../common/logger';
 import { StopWatch } from '../common/utils/stopWatch';
 import { Telemetry } from '../datascience/constants';
@@ -79,12 +79,10 @@ function getTelemetryReporter() {
     const extension = extensions.getExtension(extensionId)!;
     // tslint:disable-next-line:no-unsafe-any
     const extensionVersion = extension.packageJSON.version;
-    // tslint:disable-next-line:no-unsafe-any
-    const aiKey = extension.packageJSON.contributes.debuggers[0].aiKey;
 
     // tslint:disable-next-line:no-require-imports
     const reporter = require('vscode-extension-telemetry').default as typeof TelemetryReporter;
-    return (telemetryReporter = new reporter(extensionId, extensionVersion, aiKey));
+    return (telemetryReporter = new reporter(extensionId, extensionVersion, AppinsightsKey));
 }
 
 export function clearTelemetryReporter() {
@@ -247,7 +245,9 @@ function getStackTrace(ex: Error): string {
             trace += '\n\tat <anonymous>';
         }
     }
-    return trace.trim();
+    // Ensure we always use `/` as path seperators.
+    // This way stack traces (with relative paths) comming from different OS will always look the same.
+    return trace.trim().replace(/\\/g, '/');
 }
 
 function getCallsite(frame: stackTrace.StackFrame) {
@@ -459,6 +459,15 @@ export interface IEventNamePropertyMapping {
          */
         error?: string;
     };
+    /**
+     * When user clicks a button in the python extension survey prompt, this telemetry event is sent with details
+     */
+    [EventName.EXTENSION_SURVEY_PROMPT]: {
+        /**
+         * Carries the selection of user when they are asked to take the extension survey
+         */
+        selection: 'Yes' | 'Maybe later' | 'Do not show again' | undefined;
+    };
     [EventName.REFACTOR_EXTRACT_FUNCTION]: never | undefined;
     [EventName.REFACTOR_EXTRACT_VAR]: never | undefined;
     [EventName.REFACTOR_RENAME]: never | undefined;
@@ -496,7 +505,10 @@ export interface IEventNamePropertyMapping {
     [Telemetry.CreateNewNotebook]: never | undefined;
     [Telemetry.DataScienceSettings]: JSONObject;
     [Telemetry.DataViewerFetchTime]: never | undefined;
+    [Telemetry.DebugContinue]: never | undefined;
     [Telemetry.DebugCurrentCell]: never | undefined;
+    [Telemetry.DebugStepOver]: never | undefined;
+    [Telemetry.DebugStop]: never | undefined;
     [Telemetry.DebugFileInteractive]: never | undefined;
     [Telemetry.DeleteAllCells]: never | undefined;
     [Telemetry.DeleteCell]: never | undefined;

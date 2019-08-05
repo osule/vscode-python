@@ -75,6 +75,11 @@ export namespace ExtensionChannels {
     export const installingStableMessage = localize('ExtensionChannels.installingStableMessage', 'Installing Stable build of extension... ');
     export const installationCompleteMessage = localize('ExtensionChannels.installationCompleteMessage', 'complete.');
 }
+export namespace OutputChannelNames {
+    export const languageServer = localize('OutputChannelNames.languageServer', 'Python Language Server');
+    export const python = localize('OutputChannelNames.python', 'Python');
+    export const pythonTest = localize('OutputChannelNames.pythonTest', 'Python Test Log');
+}
 
 export namespace Logging {
     export const currentWorkingDirectory = localize('Logging.CurrentWorkingDirectory', 'cwd:');
@@ -96,6 +101,11 @@ export namespace DataScienceSurveyBanner {
     export const bannerMessage = localize('DataScienceSurveyBanner.bannerMessage', 'Can you please take 2 minutes to tell us how the Python Data Science features are working for you?');
     export const bannerLabelYes = localize('DataScienceSurveyBanner.bannerLabelYes', 'Yes, take survey now');
     export const bannerLabelNo = localize('DataScienceSurveyBanner.bannerLabelNo', 'No, thanks');
+}
+
+export namespace ExtensionSurveyBanner {
+    export const bannerMessage = localize('ExtensionSurveyBanner.bannerMessage', 'Can you please take 2 minutes to tell us how the Python extension is working for you?');
+    export const maybeLater = localize('ExtensionSurveyBanner.maybeLater', 'Maybe later');
 }
 
 export namespace DataScience {
@@ -157,6 +167,7 @@ export namespace DataScience {
     export const redo = localize('DataScience.redo', 'Redo');
     export const save = localize('DataScience.save', 'Save file');
     export const clearAll = localize('DataScience.clearAll', 'Remove all cells');
+    export const reloadRequired = localize('DataScience.reloadRequired', 'Please reload the window for new settings to take effect.');
     export const pythonVersionHeader = localize('DataScience.pythonVersionHeader', 'Python Version:');
     export const pythonRestartHeader = localize('DataScience.pythonRestartHeader', 'Restarted Kernel:');
     export const pythonNewHeader = localize('DataScience.pythonNewHeader', 'Started new kernel:');
@@ -230,6 +241,9 @@ export namespace DataScience {
     export const jupyterDataRateExceeded = localize('DataScience.jupyterDataRateExceeded', 'Cannot view variable because data rate exceeded. Please restart your server with a higher data rate limit. For example, --NotebookApp.iopub_data_rate_limit=10000000000.0');
     export const addCellBelowCommandTitle = localize('DataScience.addCellBelowCommandTitle', 'Add cell');
     export const debugCellCommandTitle = localize('DataScience.debugCellCommandTitle', 'Debug cell');
+    export const debugStepOverCommandTitle = localize('DataScience.debugStepOverCommandTitle', 'Step over');
+    export const debugContinueCommandTitle = localize('DataScience.debugContinueCommandTitle', 'Continue');
+    export const debugStopCommandTitle = localize('DataScience.debugStopCommandTitle', 'Stop');
     export const runCurrentCellAndAddBelow = localize('DataScience.runCurrentCellAndAddBelow', 'Run current and add cell below');
     export const variableExplorerDisabledDuringDebugging = localize('DataScience.variableExplorerDisabledDuringDebugging', 'Please see the Debug Side Bar\'s VARIABLES section.');
     export const jupyterDebuggerNotInstalledError = localize('DataScience.jupyterDebuggerNotInstalledError', 'Pip module ptvsd is required for debugging cells. You will need to install it to debug cells.');

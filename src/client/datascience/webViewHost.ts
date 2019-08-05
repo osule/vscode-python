@@ -232,7 +232,8 @@ export class WebViewHost<IMapping> implements IDisposable {
     private onPossibleSettingsChange = (event: ConfigurationChangeEvent) => {
         if (event.affectsConfiguration('workbench.colorTheme') ||
             event.affectsConfiguration('editor.cursorStyle') ||
-            event.affectsConfiguration('editor.cursorBlinking')) {
+            event.affectsConfiguration('editor.cursorBlinking') ||
+            event.affectsConfiguration('python.dataScience.enableGather')) {
             // See if the theme changed
             const newSettings = this.generateDataScienceExtraSettings();
             if (newSettings) {
