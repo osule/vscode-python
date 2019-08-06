@@ -30,6 +30,7 @@ import { StopWatch } from '../../common/utils/stopWatch';
 import { IInterpreterService, PythonInterpreter } from '../../interpreter/contracts';
 import { captureTelemetry, sendTelemetryEvent } from '../../telemetry';
 import { generateCellRanges } from '../cellFactory';
+import { CellMatcher } from '../cellMatcher';
 import { Identifiers, Telemetry } from '../constants';
 import { ColumnWarningSize } from '../data-viewing/types';
 import {
@@ -421,6 +422,12 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     protected async submitCode(code: string, file: string, line: number, id?: string, _editor?: TextEditor, debug?: boolean): Promise<boolean> {
         traceInfo(`Submitting code for ${this.id}`);
         let result = true;
+
+        // Do not execute or render empty code cells
+        const cellMatcher = new CellMatcher(this.configService.getSettings().datascience);
+        if (cellMatcher.stripFirstMarker(code).length === 0) {
+            return result;
+        }
 
         // Start a status item
         const status = this.setStatus(localize.DataScience.executingCode());
