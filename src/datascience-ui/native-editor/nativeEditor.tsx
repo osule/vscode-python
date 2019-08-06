@@ -143,6 +143,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                     <ImageButton baseTheme={this.props.baseTheme} onClick={moveDown} disabled={!canMoveDown} tooltip={getLocString('DataScience.moveSelectedCellDown', 'Move selected cell down')}>
                             <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Down} />
                     </ImageButton>
+                    {this.renderCellType()}
                 </div>
                 <div className='toolbar-extra-button'>
                 <Button onClick={this.stateController.export} disabled={!this.stateController.canExport()} className='toolbar-panel-button' tooltip={getLocString('DataScience.exportAsPythonFileTooltip', 'Export code')}>
@@ -151,6 +152,20 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                 </div>
             </div>
         );
+    }
+
+    private renderCellType() {
+        const selectedCell = this.stateController.findCell(this.state.selectedCell);
+        if (selectedCell) {
+            return (
+                <select id='cell_type' aria-label='combobox' role='combobox' aria-expanded='false' aria-controls='' value={selectedCell.cell.data.cell_type} onChange={this.codeTypeChanged} className='cell-state-selector'>
+                        <option key={0} aria-selected='false' value='code'>{getLocString('DataScience.codeCell', 'Code')}</option>,
+                        <option key={1} aria-selected='false' value='markdown'>{getLocString('DataScience.markdownCell', 'Markdown')}</option>
+                </select>
+            );
+        }
+
+        return null;
     }
 
     private renderVariablePanel(baseTheme: string) {
@@ -271,7 +286,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             e.stopPropagation();
 
             // Figure out which cell this is
-            const cellvm = this.state.cellVMs.find(cvm => cvm.cell.id === cellId) ;
+            const cellvm = this.stateController.findCell(cellId);
             if (cellvm && this.state.selectedCell === cellId) {
                 this.contentPanelRef.current.focusCell(cellId, true);
             }
@@ -382,6 +397,18 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         }, 10);
     }
 
+    private codeTypeChanged = (event: React.SyntheticEvent<HTMLSelectElement>) => {
+        if (this.state.selectedCell && event.currentTarget.value) {
+            const value = event.currentTarget.value === 'code' ? 'code' : 'markdown';
+            this.stateController.changeCellType(this.state.selectedCell, value);
+
+            // If this cell is the last cell, immediately give it focus
+            if (this.state.selectedCell === Identifiers.EditCellId && this.contentPanelRef.current) {
+                this.contentPanelRef.current.focusCell(this.state.selectedCell, true);
+            }
+        }
+    }
+
     // private copyToClipboard = (cellId: string) => {
     //     const cell = this.stateController.findCell(cellId);
     //     if (cell) {
@@ -427,7 +454,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                 const canMoveDown = this.stateController.canMoveDown(cellId);
 
                 const outerPortion =
-                    <div className='native-editor-celltoolbar-outer'>
+                    <div className='native-editor-celltoolbar-outer' key={0}>
                         <ImageButton baseTheme={this.props.baseTheme} onClick={moveUp} disabled={!canMoveUp} tooltip={getLocString('DataScience.moveCellUp', 'Move cell up')}>
                             <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Up} />
                         </ImageButton>
@@ -440,7 +467,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                     </div>;
 
                 const innerPortion =
-                    <div className='native-editor-celltoolbar-inner'>
+                    <div className='native-editor-celltoolbar-inner' key={1}>
                         <ImageButton baseTheme={this.props.baseTheme} onClick={runCell} tooltip={getLocString('DataScience.runCell', 'Run cell')}>
                             <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Run} />
                         </ImageButton>

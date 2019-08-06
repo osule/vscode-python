@@ -450,6 +450,14 @@ export class MainStateController implements IMessageHandler {
         this.setState({ selectedCell: cellId, focusedCell });
     }
 
+    public changeCellType = (cellId: string, newType: 'code' | 'markdown') => {
+        const cell = this.findCell(cellId);
+        if (cell && cell.cell.data.cell_type !== newType) {
+            cell.cell.data.cell_type = newType;
+            this.setState({ cellVMs: this.state.cellVMs });
+        }
+    }
+
     public submitInput = (code: string, inputCell: ICellViewModel) => {
         // This should be from our last entry. Switch this entry to read only, and add a new item to our list
         if (inputCell && inputCell.cell.id === Identifiers.EditCellId) {
@@ -463,7 +471,7 @@ export class MainStateController implements IMessageHandler {
             const split = code.splitLines({ trim: false });
             const firstLine = split[0];
             const matcher = new CellMatcher(getSettings());
-            if (matcher.isMarkdown(firstLine)) {
+            if (matcher.isMarkdown(firstLine) || newCell.cell.data.cell_type === 'markdown') {
                 newCell.cell.data.cell_type = 'markdown';
                 newCell.cell.data.source = generateMarkdownFromCodeLines(split);
                 newCell.cell.state = CellState.finished;
@@ -525,7 +533,7 @@ export class MainStateController implements IMessageHandler {
         this.sendInfo();
     }
 
-    public findCell(cellId: string): ICellViewModel | undefined {
+    public findCell(cellId?: string): ICellViewModel | undefined {
         const nonEdit = this.state.cellVMs.find(cvm => cvm.cell.id === cellId);
         if (!nonEdit && cellId === Identifiers.EditCellId) {
             return this.state.editCellVM;
