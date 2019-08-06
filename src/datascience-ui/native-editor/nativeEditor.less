@@ -1,6 +1,20 @@
 /* Import common styles and then override them below */
 @import "../interactive-common/common.css";
 
+.toolbar-panel-button {
+    border-width: 1px;
+    border-style: solid;
+    border-color: var(--override-badge-background, var(--vscode-badge-background));
+    cursor: pointer;
+    text-align: center;
+    overflow: hidden;
+    margin-left: 2px;
+    padding: 2px;
+    background-color: transparent;
+    cursor: hand;
+}
+
+
 .cell-wrapper {
     margin: 1px 2px;
     border-color: transparent;
@@ -47,7 +61,7 @@
 
 .cell-input {
     margin: 0px 10px 0px 0px;
-    border-color:  var(--override-badge-background, var(--vscode-badge-background));;
+    border-color:  var(--override-badge-background, var(--vscode-badge-background));
     border-style: solid;
     border-width: 1px;
     padding: 2px;

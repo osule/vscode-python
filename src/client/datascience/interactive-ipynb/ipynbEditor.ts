@@ -17,7 +17,7 @@ import {
 } from '../../common/application/types';
 import { ContextKey } from '../../common/contextKey';
 import { traceError } from '../../common/logger';
-import { IFileSystem } from '../../common/platform/types';
+import { IFileSystem, TemporaryFile } from '../../common/platform/types';
 import { IConfigurationService, IDisposableRegistry } from '../../common/types';
 import { createDeferred, Deferred } from '../../common/utils/async';
 import * as localize from '../../common/utils/localize';
@@ -30,6 +30,7 @@ import { InteractiveWindowMessages, ISaveAll, ISubmitNewCell } from '../interact
 import {
     ICell,
     ICodeCssGenerator,
+    IDataScienceErrorHandler,
     IDataViewerProvider,
     IInteractiveWindowInfo,
     IInteractiveWindowListener,
@@ -74,7 +75,8 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         @inject(IDataViewerProvider) dataExplorerProvider: IDataViewerProvider,
         @inject(IJupyterVariables) jupyterVariables: IJupyterVariables,
         @inject(IJupyterDebugger) jupyterDebugger: IJupyterDebugger,
-        @inject(INotebookImporter) private importer: INotebookImporter
+        @inject(INotebookImporter) private importer: INotebookImporter,
+        @inject(IDataScienceErrorHandler) private errorHandler: IDataScienceErrorHandler
     ) {
         super(
             listeners,
@@ -167,6 +169,10 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         switch (message) {
             case InteractiveWindowMessages.SaveAll:
                 this.dispatchMessage(message, payload, this.saveAll);
+                break;
+
+            case InteractiveWindowMessages.Export:
+                this.dispatchMessage(message, payload, this.export);
                 break;
 
             default:
@@ -272,6 +278,38 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             this.setTitle(`${path.basename(this.file.fsPath)}*`);
             this.postMessage(InteractiveWindowMessages.NotebookDirty).ignoreErrors();
         }
+    }
+
+    private async export(cells: ICell[]): Promise<void> {
+        // First generate a temporary notebook with these cells.
+        let tempFile: TemporaryFile | undefined;
+        try {
+            tempFile = await this.fileSystem.createTemporaryFile('.ipynb');
+
+            // Translate the cells into a notebook
+            const notebook = await this.jupyterExporter.translateToNotebook(cells, undefined);
+
+            // Write the cells to this file
+            await this.fileSystem.writeFile(tempFile.filePath, JSON.stringify(notebook), { encoding: 'utf-8' });
+
+            // Import this file and show it
+            const contents = await this.importer.importFromFile(tempFile.filePath);
+            if (contents) {
+                await this.viewDocument(contents);
+            }
+
+        } catch (e) {
+            await this.errorHandler.handleError(e);
+        } finally {
+            if (tempFile) {
+                tempFile.dispose();
+            }
+        }
+    }
+
+    private async viewDocument(contents: string): Promise<void> {
+        const doc = await this.documentManager.openTextDocument({ language: 'python', content: contents });
+        await this.documentManager.showTextDocument(doc, ViewColumn.One);
     }
 
     private async saveContents(): Promise<void> {

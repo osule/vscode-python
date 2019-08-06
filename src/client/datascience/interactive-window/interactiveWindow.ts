@@ -26,6 +26,7 @@ import { EditorContexts, Identifiers, Telemetry } from '../constants';
 import { InteractiveBase } from '../interactive-common/interactiveBase';
 import { InteractiveWindowMessages, ISubmitNewCell } from '../interactive-common/interactiveWindowTypes';
 import {
+    ICell,
     ICodeCssGenerator,
     IDataViewerProvider,
     IInteractiveWindow,
@@ -44,6 +45,7 @@ import {
 @injectable()
 export class InteractiveWindow extends InteractiveBase implements IInteractiveWindow {
     private closedEvent: EventEmitter<IInteractiveWindow> = new EventEmitter<IInteractiveWindow>();
+    private waitingForExportCells: boolean = false;
 
     constructor(
         @multiInject(IInteractiveWindowListener) listeners: IInteractiveWindowListener[],
@@ -117,6 +119,32 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
     public addCode(code: string, file: string, line: number, editor?: TextEditor): Promise<boolean> {
         // Call the internal method.
         return this.submitCode(code, file, line, undefined, editor, false);
+    }
+
+    public exportCells() {
+        // First ask for all cells. Set state to indicate waiting for result
+        this.waitingForExportCells = true;
+
+        // Telemetry will fire when the export function is called.
+        this.postMessage(InteractiveWindowMessages.GetAllCells).ignoreErrors();
+    }
+
+    // tslint:disable-next-line: no-any
+    public onMessage(message: string, payload: any) {
+        super.onMessage(message, payload);
+
+        switch (message) {
+            case InteractiveWindowMessages.Export:
+                this.dispatchMessage(message, payload, this.export);
+                break;
+
+            case InteractiveWindowMessages.ReturnAllCells:
+                this.dispatchMessage(message, payload, this.handleReturnAllCells);
+                break;
+
+            default:
+                break;
+        }
     }
 
     public async debugCode(code: string, file: string, line: number, editor?: TextEditor): Promise<boolean> {
@@ -208,4 +236,36 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
             redoableContext.set(false).catch();
         }
     }
+
+    @captureTelemetry(Telemetry.ExportNotebook, undefined, false)
+    // tslint:disable-next-line: no-any no-empty
+    private export(cells: ICell[]) {
+        // Should be an array of cells
+        if (cells && this.applicationShell) {
+
+            const filtersKey = localize.DataScience.exportDialogFilter();
+            const filtersObject: Record<string, string[]> = {};
+            filtersObject[filtersKey] = ['ipynb'];
+
+            // Bring up the open file dialog box
+            this.applicationShell.showSaveDialog(
+                {
+                    saveLabel: localize.DataScience.exportDialogTitle(),
+                    filters: filtersObject
+                }).then(async (uri: Uri | undefined) => {
+                    if (uri) {
+                        await this.exportToFile(cells, uri.fsPath);
+                    }
+                });
+        }
+    }
+
+    // tslint:disable-next-line:no-any
+    private handleReturnAllCells(cells: ICell[]) {
+        // See what we're waiting for.
+        if (this.waitingForExportCells) {
+            this.export(cells);
+        }
+    }
+
 }

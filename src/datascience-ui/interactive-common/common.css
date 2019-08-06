@@ -337,9 +337,16 @@ body, html {
     flex-direction: column;
 }
 
-.toolbar-menu-bar {
+#toolbar-panel {
     margin-top: 2px;
     margin-bottom: 2px;
+    display: flex;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.toolbar-extra-button {
+    margin-left: auto;
 }
 
 .execution-count {

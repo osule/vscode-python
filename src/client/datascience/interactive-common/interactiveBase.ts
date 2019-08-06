@@ -79,7 +79,6 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     private restartingKernel: boolean = false;
     private potentiallyUnfinishedStatus: Disposable[] = [];
     private addSysInfoPromise: Deferred<boolean> | undefined;
-    private waitingForExportCells: boolean = false;
     private notebook: INotebook | undefined;
     private _id: string;
     private executeEvent: EventEmitter<string> = new EventEmitter<string>();
@@ -179,16 +178,8 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
                 this.restartKernel().ignoreErrors();
                 break;
 
-            case InteractiveWindowMessages.ReturnAllCells:
-                this.dispatchMessage(message, payload, this.handleReturnAllCells);
-                break;
-
             case InteractiveWindowMessages.Interrupt:
                 this.interruptKernel().ignoreErrors();
-                break;
-
-            case InteractiveWindowMessages.Export:
-                this.dispatchMessage(message, payload, this.export);
                 break;
 
             case InteractiveWindowMessages.SendInfo:
@@ -318,14 +309,6 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         this.postMessage(InteractiveWindowMessages.DeleteAllCells).ignoreErrors();
     }
 
-    public exportCells() {
-        // First ask for all cells. Set state to indicate waiting for result
-        this.waitingForExportCells = true;
-
-        // Telemetry will fire when the export function is called.
-        this.postMessage(InteractiveWindowMessages.GetAllCells).ignoreErrors();
-    }
-
     @captureTelemetry(Telemetry.RestartKernel)
     public async restartKernel(): Promise<void> {
         if (this.notebook && !this.restartingKernel) {
@@ -430,6 +413,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         }
     }
 
+    // tslint:disable-next-line: max-func-body-length
     protected async submitCode(code: string, file: string, line: number, id?: string, _editor?: TextEditor, debug?: boolean): Promise<boolean> {
         traceInfo(`Submitting code for ${this.id}`);
         let result = true;
@@ -604,6 +588,34 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
     protected dispatchMessage<M extends IInteractiveWindowMapping, T extends keyof M>(_message: T, payload: any, handler: (args: M[T]) => void) {
         const args = payload as M[T];
         handler.bind(this)(args);
+    }
+
+    protected exportToFile = async (cells: ICell[], file: string) => {
+        // Take the list of cells, convert them to a notebook json format and write to disk
+        if (this.notebook) {
+            let directoryChange;
+            const settings = this.configuration.getSettings();
+            if (settings.datascience.changeDirOnImportExport) {
+                directoryChange = file;
+            }
+
+            const notebook = await this.jupyterExporter.translateToNotebook(cells, directoryChange);
+
+            try {
+                // tslint:disable-next-line: no-any
+                await this.fileSystem.writeFile(file, JSON.stringify(notebook), { encoding: 'utf8', flag: 'w' });
+                const openQuestion = (await this.jupyterExecution.isSpawnSupported()) ? localize.DataScience.exportOpenQuestion() : undefined;
+                this.showInformationMessage(localize.DataScience.exportDialogComplete().format(file), openQuestion).then((str: string | undefined) => {
+                    if (str && this.notebook) {
+                        // If the user wants to, open the notebook they just generated.
+                        this.jupyterExecution.spawnNotebook(file).ignoreErrors();
+                    }
+                });
+            } catch (exc) {
+                traceError('Error in exporting notebook file');
+                this.applicationShell.showInformationMessage(localize.DataScience.exportDialogFailed().format(exc));
+            }
+        }
     }
 
     private async startServerImpl(): Promise<void> {
@@ -789,14 +801,6 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         }
     }
 
-    // tslint:disable-next-line:no-any
-    private handleReturnAllCells(cells: ICell[]) {
-        // See what we're waiting for.
-        if (this.waitingForExportCells) {
-            this.export(cells);
-        }
-    }
-
     private setStatus = (message: string): Disposable => {
         const result = this.statusProvider.set(message, undefined, undefined, this);
         this.potentiallyUnfinishedStatus.push(result);
@@ -921,62 +925,11 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         }
     }
 
-    @captureTelemetry(Telemetry.ExportNotebook, undefined, false)
-    // tslint:disable-next-line: no-any no-empty
-    private export(cells: ICell[]) {
-        // Should be an array of cells
-        if (cells && this.applicationShell) {
-
-            const filtersKey = localize.DataScience.exportDialogFilter();
-            const filtersObject: Record<string, string[]> = {};
-            filtersObject[filtersKey] = ['ipynb'];
-
-            // Bring up the open file dialog box
-            this.applicationShell.showSaveDialog(
-                {
-                    saveLabel: localize.DataScience.exportDialogTitle(),
-                    filters: filtersObject
-                }).then(async (uri: Uri | undefined) => {
-                    if (uri) {
-                        await this.exportToFile(cells, uri.fsPath);
-                    }
-                });
-        }
-    }
-
     private showInformationMessage(message: string, question?: string): Thenable<string | undefined> {
         if (question) {
             return this.applicationShell.showInformationMessage(message, question);
         } else {
             return this.applicationShell.showInformationMessage(message);
-        }
-    }
-
-    private exportToFile = async (cells: ICell[], file: string) => {
-        // Take the list of cells, convert them to a notebook json format and write to disk
-        if (this.notebook) {
-            let directoryChange;
-            const settings = this.configuration.getSettings();
-            if (settings.datascience.changeDirOnImportExport) {
-                directoryChange = file;
-            }
-
-            const notebook = await this.jupyterExporter.translateToNotebook(cells, directoryChange);
-
-            try {
-                // tslint:disable-next-line: no-any
-                await this.fileSystem.writeFile(file, JSON.stringify(notebook), { encoding: 'utf8', flag: 'w' });
-                const openQuestion = (await this.jupyterExecution.isSpawnSupported()) ? localize.DataScience.exportOpenQuestion() : undefined;
-                this.showInformationMessage(localize.DataScience.exportDialogComplete().format(file), openQuestion).then((str: string | undefined) => {
-                    if (str && this.notebook) {
-                        // If the user wants to, open the notebook they just generated.
-                        this.jupyterExecution.spawnNotebook(file).ignoreErrors();
-                    }
-                });
-            } catch (exc) {
-                traceError('Error in exporting notebook file');
-                this.applicationShell.showInformationMessage(localize.DataScience.exportDialogFailed().format(exc));
-            }
         }
     }
 

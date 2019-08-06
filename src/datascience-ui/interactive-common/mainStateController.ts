@@ -692,7 +692,7 @@ export class MainStateController implements IMessageHandler {
     }
 
     private getNonEditCellVMs(): ICellViewModel[] {
-        return this.state.cellVMs.filter(c => !c.editable);
+        return this.state.cellVMs;
     }
 
     private pushStack = (stack: ICellViewModel[][], cells: ICellViewModel[]) => {
