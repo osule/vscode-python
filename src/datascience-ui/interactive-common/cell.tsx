@@ -57,7 +57,7 @@ interface ICellProps {
     onDoubleClick?(cellId: string): void;
     focused?(cellId: string): void;
     unfocused?(cellId: string): void;
-    renderCellToolbar(cellId: string): JSX.Element | null;
+    renderCellToolbar(cellId: string): JSX.Element[] | null;
 }
 
 export interface ICellViewModel {
@@ -273,9 +273,7 @@ export class Cell extends React.Component<ICellProps, ICellState> {
                     open={this.props.cellVM.inputBlockOpen}
                     onClick={this.toggleInputBlock}
                     tooltip={getLocString('DataScience.collapseInputTooltip', 'Collapse input block')} />
-                <div className='cell-menu-bar-outer'>
-                    {this.props.renderCellToolbar(this.props.cellVM.cell.id)}
-                </div>
+                {this.props.renderCellToolbar(this.props.cellVM.cell.id)}
             </div>
         );
     }

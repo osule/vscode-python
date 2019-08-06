@@ -324,7 +324,8 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
         const hasNoSource = !cell || !cell.cell.file || cell.cell.file === Identifiers.EmptyFileName;
 
         return (
-            <div>
+            [
+            <div key='0' className='cell-menu-bar-outer'>
                 <ImageButton baseTheme={this.props.baseTheme} onClick={gotoCode} tooltip={getLocString('DataScience.gotoCodeButtonTooltip', 'Go to code')} hidden={hasNoSource}>
                     <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
                 </ImageButton>
@@ -335,6 +336,7 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                     <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
                 </ImageButton>
             </div>
+            ]
         );
     }
 

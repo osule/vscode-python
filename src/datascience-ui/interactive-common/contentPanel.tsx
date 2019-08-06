@@ -43,7 +43,7 @@ export interface IContentPanelProps {
     focusCell?(cellId: string): void;
     unfocusCell?(cellId: string): void;
     keyDownCell?(cellId: string, e: IKeyboardEvent): void;
-    renderCellToolbar(cellId: string): JSX.Element | null;
+    renderCellToolbar(cellId: string): JSX.Element[] | null;
 }
 
 export class ContentPanel extends React.Component<IContentPanelProps> {

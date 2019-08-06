@@ -40,6 +40,38 @@ export class NativeEditorStateController extends MainStateController {
         return result;
     }
 
+    public canMoveUp = (cellId: string) => {
+        const index = this.getState().cellVMs.findIndex(cvm => cvm.cell.id === cellId);
+        return (index > 0);
+    }
+
+    public canMoveDown = (cellId: string) => {
+        const index = this.getState().cellVMs.findIndex(cvm => cvm.cell.id === cellId);
+        return (index < this.getState().cellVMs.length - 1);
+    }
+
+    public moveCellUp = (cellId: string) => {
+        const cellVms = this.getState().cellVMs;
+        const index = cellVms.findIndex(cvm => cvm.cell.id === cellId);
+        if (index > 0) {
+            [cellVms[index - 1], cellVms[index]] = [cellVms[index], cellVms[index - 1]];
+            this.setState({
+                cellVMs: cellVms
+            });
+        }
+    }
+
+    public moveCellDown = (cellId: string) => {
+        const cellVms = this.getState().cellVMs;
+        const index = cellVms.findIndex(cvm => cvm.cell.id === cellId);
+        if (index < cellVms.length - 1) {
+            [cellVms[index + 1], cellVms[index]] = [cellVms[index], cellVms[index + 1]];
+            this.setState({
+                cellVMs: cellVms
+            });
+        }
+    }
+
     // Adjust the visibility or collapsed state of a cell
     protected alterCellVM(cellVM: ICellViewModel, _visible: boolean, _expanded: boolean): ICellViewModel {
         // cells are always editable

@@ -20,6 +20,8 @@
     border-color: transparent;
     border-style: solid;
     border-width: 2px 2px 2px 20px;
+    position: relative;
+    min-height: 55px;
 }
 
 .cell-wrapper-focused {
@@ -89,4 +91,24 @@
 
 .execution-count-busy-outer {
     justify-self: end;
+}
+
+.native-editor-celltoolbar-inner {
+    justify-self: end;
+}
+
+.native-editor-celltoolbar-outer {
+    display: grid;
+    justify-items: left;
+    position: absolute; /* Relative to cell wrapper */
+    left: -21px;
+    visibility: hidden;
+}
+
+.cell-wrapper-selected .native-editor-celltoolbar-outer {
+    visibility: visible;
+}
+
+.cell-wrapper-focused .native-editor-celltoolbar-outer {
+    visibility: visible;
 }
