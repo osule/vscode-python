@@ -370,35 +370,38 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         }, 10);
     }
 
-    private copyToClipboard = (cellId: string) => {
-        const cell = this.stateController.findCell(cellId);
-        if (cell) {
-            // Need to do this in this process so it copies to the user's clipboard and not
-            // the remote clipboard where the extension is running
-            const textArea = document.createElement('textarea');
-            textArea.value = concatMultilineString(cell.cell.data.source);
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('Copy');
-            textArea.remove();
-        }
-    }
+    // private copyToClipboard = (cellId: string) => {
+    //     const cell = this.stateController.findCell(cellId);
+    //     if (cell) {
+    //         // Need to do this in this process so it copies to the user's clipboard and not
+    //         // the remote clipboard where the extension is running
+    //         const textArea = document.createElement('textarea');
+    //         textArea.value = concatMultilineString(cell.cell.data.source);
+    //         document.body.appendChild(textArea);
+    //         textArea.select();
+    //         document.execCommand('Copy');
+    //         textArea.remove();
+    //     }
+    // }
 
     private renderCellToolbar = (cellId: string) => {
         if (cellId !== Identifiers.EditCellId) {
-            const deleteCode = () => this.stateController.deleteCell(cellId);
-            const copyCode = () => this.copyToClipboard(cellId);
+            const cell = this.state.cellVMs.find(cvm => cvm.cell.id === cellId);
+            if (cell && cell.cell.data.cell_type === 'code') {
+                const runCell = () => {
+                    this.stateController.updateCellSource(cellId);
+                    this.stateController.submitInput(concatMultilineString(cell.cell.data.source), cell);
+                };
 
-            return (
-                <div>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={copyCode} tooltip={getLocString('DataScience.copyToClipboardButtonTooltip', 'Copy code to clipboard')}>
-                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
-                    </ImageButton>
-                    <ImageButton baseTheme={this.props.baseTheme} onClick={deleteCode} tooltip={getLocString('DataScience.deleteButtonTooltip', 'Remove Cell')}>
-                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
-                    </ImageButton>
-                </div>
-            );
+                return (
+                    <div>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={runCell} tooltip={getLocString('DataScience.runCell', 'Run cell')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Run} />
+                        </ImageButton>
+                    </div>
+                );
+
+            }
         }
 
         return null;

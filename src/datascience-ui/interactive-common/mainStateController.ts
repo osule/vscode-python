@@ -295,19 +295,25 @@ export class MainStateController implements IMessageHandler {
         this.clearAllSilent();
     }
 
-    public save = () => {
-        // We have to take the current value of each cell to make sure we have the correct text.
+    public updateCellSource = (cellId: string) => {
         const models = monacoEditor.editor.getModels();
-        this.state.cellVMs.forEach(c => {
-            const modelId = this.getMonacoId(c.cell.id);
+        const cvm = this.findCell(cellId);
+        if (cvm) {
+            const modelId = this.getMonacoId(cvm.cell.id);
             if (modelId) {
                 const model = models.find(m => m.id === modelId);
                 if (model) {
-                    c.cell.data.source = model.getValue().replace(/\r/g, '');
+                    cvm.cell.data.source = model.getValue().replace(/\r/g, '');
                 }
             }
-        });
+        }
+    }
 
+    public save = () => {
+        // We have to take the current value of each cell to make sure we have the correct text.
+        this.state.cellVMs.forEach(c => this.updateCellSource(c.cell.id));
+
+        // Then send the save with the new state.
         this.sendMessage(InteractiveWindowMessages.SaveAll, { cells: this.getNonEditCellVMs().map(cvm => cvm.cell) });
     }
 
