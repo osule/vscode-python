@@ -273,6 +273,11 @@ export namespace DataScience {
     export const exportAsPythonFileTooltip = localize('DataScience.exportAsPythonFileTooltip', 'Generate a python script');
     export const exportAsPythonFileTitle = localize('DataScience.exportAsPythonFileTitle', 'Export');
     export const runCell = localize('DataScience.runCell', 'Run cell');
+    export const deleteCell = localize('DataScience.deleteCell', 'Delete cell');
+    export const moveCellUp = localize('DataScience.moveCellUp', 'Move cell up');
+    export const moveCellDown = localize('DataScience.moveCellDown', 'Move cell down');
+    export const moveSelectedCellUp = localize('DataScience.moveSelectedCellUp', 'Move selected cell up');
+    export const moveSelectedCellDown = localize('DataScience.deleteCell', 'Move selected cell down');
 }
 
 export namespace DebugConfigStrings {

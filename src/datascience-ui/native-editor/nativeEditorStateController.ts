@@ -40,17 +40,17 @@ export class NativeEditorStateController extends MainStateController {
         return result;
     }
 
-    public canMoveUp = (cellId: string) => {
+    public canMoveUp = (cellId?: string) => {
         const index = this.getState().cellVMs.findIndex(cvm => cvm.cell.id === cellId);
         return (index > 0);
     }
 
-    public canMoveDown = (cellId: string) => {
+    public canMoveDown = (cellId?: string) => {
         const index = this.getState().cellVMs.findIndex(cvm => cvm.cell.id === cellId);
         return (index < this.getState().cellVMs.length - 1);
     }
 
-    public moveCellUp = (cellId: string) => {
+    public moveCellUp = (cellId?: string) => {
         const cellVms = this.getState().cellVMs;
         const index = cellVms.findIndex(cvm => cvm.cell.id === cellId);
         if (index > 0) {
@@ -61,7 +61,7 @@ export class NativeEditorStateController extends MainStateController {
         }
     }
 
-    public moveCellDown = (cellId: string) => {
+    public moveCellDown = (cellId?: string) => {
         const cellVms = this.getState().cellVMs;
         const index = cellVms.findIndex(cvm => cvm.cell.id === cellId);
         if (index < cellVms.length - 1) {

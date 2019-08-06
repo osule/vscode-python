@@ -109,7 +109,13 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         }
     }
 
+    // tslint:disable: react-this-binding-issue
     private renderToolbarPanel() {
+        const moveUp = () => this.moveCellUp(this.state.selectedCell);
+        const moveDown = () => this.moveCellDown(this.state.selectedCell);
+        const canMoveUp = this.stateController.canMoveUp(this.state.selectedCell);
+        const canMoveDown = this.stateController.canMoveDown(this.state.selectedCell);
+
         return (
             <div id='toolbar-panel'>
                 <div className='toolbar-menu-bar'>
@@ -130,6 +136,12 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                     </ImageButton>
                     <ImageButton baseTheme={this.props.baseTheme} onClick={this.stateController.save} disabled={!this.state.dirty} tooltip={getLocString('DataScience.save', 'Save File')}>
                         <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.SaveAs} />
+                    </ImageButton>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={moveUp} disabled={!canMoveUp} tooltip={getLocString('DataScience.moveSelectedCellUp', 'Move selected cell up')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Up} />
+                    </ImageButton>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={moveDown} disabled={!canMoveDown} tooltip={getLocString('DataScience.moveSelectedCellDown', 'Move selected cell down')}>
+                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Down} />
                     </ImageButton>
                 </div>
                 <div className='toolbar-extra-button'>
@@ -384,6 +396,22 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
     //     }
     // }
 
+    private moveCellUp = (cellId?: string) => {
+        if (this.contentPanelRef.current && cellId) {
+            const wasFocused = this.state.focusedCell;
+            this.stateController.moveCellUp(cellId);
+            this.contentPanelRef.current.focusCell(cellId, wasFocused ? true : false);
+        }
+    }
+
+    private moveCellDown = (cellId?: string) => {
+        if (this.contentPanelRef.current && cellId) {
+            const wasFocused = this.state.focusedCell;
+            this.stateController.moveCellDown(cellId);
+            this.contentPanelRef.current.focusCell(cellId, wasFocused ? true : false);
+        }
+    }
+
     private renderCellToolbar = (cellId: string): JSX.Element[] | null => {
         if (cellId !== Identifiers.EditCellId) {
             const cell = this.state.cellVMs.find(cvm => cvm.cell.id === cellId);
@@ -393,8 +421,8 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                     this.stateController.updateCellSource(cellId);
                     this.stateController.submitInput(concatMultilineString(cell.cell.data.source), cell);
                 };
-                const moveUp = () => this.stateController.moveCellUp(cellId);
-                const moveDown = () => this.stateController.moveCellDown(cellId);
+                const moveUp = () => this.moveCellUp(cellId);
+                const moveDown = () => this.moveCellDown(cellId);
                 const canMoveUp = this.stateController.canMoveUp(cellId);
                 const canMoveDown = this.stateController.canMoveDown(cellId);
 
