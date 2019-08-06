@@ -24,9 +24,15 @@ import * as localize from '../../common/utils/localize';
 import { EXTENSION_ROOT_DIR } from '../../constants';
 import { IInterpreterService } from '../../interpreter/contracts';
 import { captureTelemetry } from '../../telemetry';
+import { concatMultilineString } from '../common';
 import { EditorContexts, Identifiers, Settings, Telemetry } from '../constants';
 import { InteractiveBase } from '../interactive-common/interactiveBase';
-import { InteractiveWindowMessages, ISaveAll, ISubmitNewCell } from '../interactive-common/interactiveWindowTypes';
+import {
+    IEditCell,
+    InteractiveWindowMessages,
+    ISaveAll,
+    ISubmitNewCell
+} from '../interactive-common/interactiveWindowTypes';
 import {
     ICell,
     ICodeCssGenerator,
@@ -116,7 +122,7 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
     }
 
     public dispose(): void {
-        super.dispose();
+        let allowDispose = true;
 
         // Ask user if they want to save if hotExit is not enabled.
         if (this._dirty) {
@@ -128,17 +134,25 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
                 const yes = localize.DataScience.dirtyNotebookYes();
                 const no = localize.DataScience.dirtyNotebookNo();
                 // tslint:disable-next-line: messages-must-be-localized
-                this.applicationShell.showInformationMessage(`${message1}\n${message2}`, yes, no).then(v => {
+                this.applicationShell.showInformationMessage(`${message1}\n${message2}`, { modal: true }, yes, no).then(v => {
                     if (v === yes) {
                         this.saveContents().ignoreErrors();
+                    } else if (v === undefined) {
+                        // We don't want to close, reopen
+                        allowDispose = false;
+                        this.reopen(this.visibleCells).ignoreErrors();
                     }
                 });
             } else {
                 this.saveContents().ignoreErrors();
             }
         }
-        if (this.closedEvent) {
-            this.closedEvent.fire(this);
+
+        if (allowDispose) {
+            super.dispose();
+            if (this.closedEvent) {
+                this.closedEvent.fire(this);
+            }
         }
     }
 
@@ -175,8 +189,35 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
                 this.dispatchMessage(message, payload, this.export);
                 break;
 
+            case InteractiveWindowMessages.EditCell:
+                this.dispatchMessage(message, payload, this.editCell);
+                break;
+
             default:
                 break;
+        }
+    }
+
+    protected async reopen(cells: ICell[]): Promise<void> {
+        try {
+            super.reload();
+            await this.show();
+
+            // Indicate we have our identity
+            this.loadedPromise.resolve();
+
+            // Update our title to match
+            if (this._dirty) {
+                this._dirty = false;
+                this.setDirty();
+            } else {
+                this.setTitle(path.basename(this._file.fsPath));
+            }
+
+            // If that works, send the cells to the web view
+            return this.postMessage(InteractiveWindowMessages.LoadAllCells, { cells });
+        } catch (e) {
+            this.errorHandler.handleError(e).ignoreErrors();
         }
     }
 
@@ -261,7 +302,9 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         }
 
         // Also keep track of our visible cells. We use this to save to the file when we close
-        this.visibleCells = info ? info.visibleCells : [];
+        if (info && info.visibleCells) {
+            this.visibleCells = info.visibleCells;
+        }
     }
 
     protected async onViewStateChanged(visible: boolean, active: boolean) {
@@ -272,11 +315,40 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         interactiveContext.set(visible && active).catch();
     }
 
+    private editCell(request: IEditCell) {
+        // Apply the changes to the visible cell list. We won't get an update until
+        // submission otherwise
+        if (request.changes && request.changes.length) {
+            const change = request.changes[0];
+            const normalized = change.text.replace(/\r/g, '');
+
+            // Figure out which cell we're editing.
+            const cell = this.visibleCells.find(c => c.id === request.id);
+            if (cell) {
+                // This is an actual edit.
+                const contents = concatMultilineString(cell.data.source);
+                const before = contents.substr(0, change.rangeOffset);
+                const after = contents.substr(change.rangeOffset + change.rangeLength);
+                cell.data.source = `${before}${normalized}${after}`;
+            }
+
+            this.setDirty();
+        }
+    }
+
     private setDirty(): void {
         if (!this._dirty) {
             this._dirty = true;
             this.setTitle(`${path.basename(this.file.fsPath)}*`);
             this.postMessage(InteractiveWindowMessages.NotebookDirty).ignoreErrors();
+        }
+    }
+
+    private setClean(): void {
+        if (this._dirty) {
+            this._dirty = false;
+            this.setTitle(`${path.basename(this.file.fsPath)}`);
+            this.postMessage(InteractiveWindowMessages.NotebookClean).ignoreErrors();
         }
     }
 
@@ -339,7 +411,7 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
                 // Save our visible cells into the file
                 const notebook = await this.jupyterExporter.translateToNotebook(this.visibleCells, directoryChange);
                 await this.fileSystem.writeFile(fileToSaveTo.fsPath, JSON.stringify(notebook));
-                this._dirty = false;
+                this.setClean();
             }
 
         } catch (e) {

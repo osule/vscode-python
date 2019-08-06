@@ -295,13 +295,20 @@ export class MainStateController implements IMessageHandler {
         this.clearAllSilent();
     }
 
-    public canSave(): boolean {
-        return false;
-    }
-
     public save = () => {
+        // We have to take the current value of each cell to make sure we have the correct text.
+        const models = monacoEditor.editor.getModels();
+        this.state.cellVMs.forEach(c => {
+            const modelId = this.getMonacoId(c.cell.id);
+            if (modelId) {
+                const model = models.find(m => m.id === modelId);
+                if (model) {
+                    c.cell.data.source = model.getValue().replace(/\r/g, '');
+                }
+            }
+        });
+
         this.sendMessage(InteractiveWindowMessages.SaveAll, { cells: this.getNonEditCellVMs().map(cvm => cvm.cell) });
-        this.clearAllSilent();
     }
 
     public showPlot = (imageHtml: string) => {
@@ -506,10 +513,10 @@ export class MainStateController implements IMessageHandler {
             this.setState({
                 cellVMs: [...this.state.cellVMs]
             });
-
-            // Update the other side with our new state
-            this.sendInfo();
         }
+
+        // Update the other side with our new state
+        this.sendInfo();
     }
 
     public findCell(cellId: string): ICellViewModel | undefined {
@@ -518,6 +525,10 @@ export class MainStateController implements IMessageHandler {
             return this.state.editCellVM;
         }
         return nonEdit;
+    }
+
+    public getMonacoId(cellId: string): string | undefined {
+        return this.cellIdToMonacoId.get(cellId);
     }
 
     // Adjust the visibility or collapsed state of a cell
@@ -581,7 +592,7 @@ export class MainStateController implements IMessageHandler {
         // Default is do nothing.
     }
 
-    protected getCellId(monacoId: string): string {
+    protected getCellId = (monacoId: string): string => {
         const result = this.monacoIdToCellId.get(monacoId);
         if (result) {
             return result;
@@ -589,10 +600,6 @@ export class MainStateController implements IMessageHandler {
 
         // Just assume it's the edit cell if not found.
         return Identifiers.EditCellId;
-    }
-
-    protected getMonacoId(cellId: string): string | undefined {
-        return this.cellIdToMonacoId.get(cellId);
     }
 
     private computeEditorOptions(): monacoEditor.editor.IEditorOptions {

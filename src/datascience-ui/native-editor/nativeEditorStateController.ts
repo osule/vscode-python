@@ -28,15 +28,16 @@ export class NativeEditorStateController extends MainStateController {
                 this.setState({ dirty: true });
                 break;
 
+            case InteractiveWindowMessages.NotebookClean:
+                // Indicate dirty
+                this.setState({ dirty: false });
+                break;
+
             default:
                 break;
         }
 
         return result;
-    }
-
-    public canSave(): boolean {
-        return this.getState().dirty ? true : false;
     }
 
     // Adjust the visibility or collapsed state of a cell

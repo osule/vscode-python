@@ -64,6 +64,7 @@ export namespace InteractiveWindowMessages {
     export const ReExecuteCell = 'rexecute_cell';
     export const NotebookIdentity = 'identity';
     export const NotebookDirty = 'dirty';
+    export const NotebookClean = 'clean';
     export const SaveAll = 'save_all';
 
 }
@@ -256,5 +257,6 @@ export class IInteractiveWindowMapping {
     public [InteractiveWindowMessages.ReExecuteCell]: ISubmitNewCell;
     public [InteractiveWindowMessages.NotebookIdentity]: INotebookIdentity;
     public [InteractiveWindowMessages.NotebookDirty]: never | undefined;
+    public [InteractiveWindowMessages.NotebookClean]: never | undefined;
     public [InteractiveWindowMessages.SaveAll]: ISaveAll;
 }

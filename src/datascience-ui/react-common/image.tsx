@@ -28,7 +28,9 @@ export enum ImageName {
     Next,
     Prev,
     Copy,
-    GatherCode
+    GatherCode,
+    Up,
+    Down
 }
 
 // All of the images must be 'require' so that webpack doesn't rewrite the import as requiring a .default.
@@ -130,6 +132,16 @@ const images: { [key: string] : { light: string; dark: string } } = {
         {
             light: require('./images/Copy/copy.svg'),
             dark : require('./images/Copy/copy_inverse.svg')
+        },
+    Up:
+        {
+            light: require('./images/Up/up.svg'),
+            dark : require('./images/Up/up-inverse.svg')
+        },
+    Down:
+        {
+            light: require('./images/Down/down.svg'),
+            dark : require('./images/Down/down-inverse.svg')
         }
 };
 

@@ -413,6 +413,10 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         }
     }
 
+    protected getNotebook(): INotebook | undefined {
+        return this.notebook;
+    }
+
     // tslint:disable-next-line: max-func-body-length
     protected async submitCode(code: string, file: string, line: number, id?: string, _editor?: TextEditor, debug?: boolean): Promise<boolean> {
         traceInfo(`Submitting code for ${this.id}`);
