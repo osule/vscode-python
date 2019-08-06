@@ -128,7 +128,7 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
                 const yes = localize.DataScience.dirtyNotebookYes();
                 const no = localize.DataScience.dirtyNotebookNo();
                 // tslint:disable-next-line: messages-must-be-localized
-                this.applicationShell.showInformationMessage(`${message1}\n${message2}`, { modal: true }, yes, no).then(v => {
+                this.applicationShell.showInformationMessage(`${message1}\n${message2}`, yes, no).then(v => {
                     if (v === yes) {
                         this.saveContents().ignoreErrors();
                     }
