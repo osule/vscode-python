@@ -266,12 +266,8 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
     private editCellSubmit(e: IKeyboardEvent) {
         if (e.editorInfo && e.editorInfo.contents && this.state.editCellVM) {
             // Prevent shift+enter from turning into a enter
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
+            e.stopPropagation();
+            e.preventDefault();
 
             // Remove empty lines off the end
             let endPos = e.editorInfo.contents.length - 1;

@@ -147,14 +147,15 @@ export class Editor extends React.Component<IEditorProps, IEditorState> {
     }
 
     private onKeyDown = (e: monacoEditor.IKeyboardEvent) => {
-        if (this.state.editor && this.state.model && this.editorRef && this.editorRef.current && !this.editorRef.current.isSuggesting()) {
+        if (this.state.editor && this.state.model && this.editorRef && this.editorRef.current) {
+            const isSuggesting = this.editorRef.current.isSuggesting();
             const cursor = this.state.editor.getPosition();
             const isFirstLine = cursor !== null && cursor.lineNumber === 1;
             const isLastLine = cursor !== null && cursor.lineNumber === this.state.visibleLineCount;
             const isDirty = this.state.model!.getVersionId() > this.lastCleanVersionId;
 
             // See if we need to use the history or not
-            if (cursor && this.props.history && e.code === 'ArrowUp' && isFirstLine) {
+            if (cursor && this.props.history && e.code === 'ArrowUp' && isFirstLine && !isSuggesting) {
                 const currentValue = this.getContents();
                 const newValue = this.props.history.completeUp(currentValue);
                 if (newValue !== currentValue) {
@@ -163,7 +164,7 @@ export class Editor extends React.Component<IEditorProps, IEditorState> {
                     this.state.editor.setPosition({lineNumber: 1, column: 1});
                     e.stopPropagation();
                 }
-            } else if (cursor && this.props.history && e.code === 'ArrowDown' && isLastLine) {
+            } else if (cursor && this.props.history && e.code === 'ArrowDown' && isLastLine && !isSuggesting) {
                 const currentValue = this.getContents();
                 const newValue = this.props.history.completeDown(currentValue);
                 if (newValue !== currentValue) {
@@ -187,6 +188,7 @@ export class Editor extends React.Component<IEditorProps, IEditorState> {
                             isFirstLine,
                             isLastLine,
                             isDirty,
+                            isSuggesting,
                             contents: this.getContents()
                         },
                         shouldClear: () => this.state.model!.setValue(''),

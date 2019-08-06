@@ -40,6 +40,7 @@ export interface IKeyboardEvent {
     readonly editorInfo?: {
         isFirstLine: boolean;
         isLastLine: boolean;
+        isSuggesting: boolean;
         isDirty: boolean;
         contents: string;
     };

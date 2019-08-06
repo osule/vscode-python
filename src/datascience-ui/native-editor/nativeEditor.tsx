@@ -231,7 +231,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
     private keyDownCell = (cellId: string, e: IKeyboardEvent) => {
         switch (e.code) {
             case 'ArrowUp':
-                if (this.state.focusedCell === cellId && e.editorInfo && e.editorInfo.isFirstLine) {
+                if (this.state.focusedCell === cellId && e.editorInfo && e.editorInfo.isFirstLine && !e.editorInfo.isSuggesting) {
                     this.arrowUpFromCell(cellId, e);
                 } else if (!this.state.focusedCell) {
                     this.arrowUpFromCell(cellId, e);
@@ -239,7 +239,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                 break;
 
             case 'ArrowDown':
-                if (this.state.focusedCell === cellId && e.editorInfo && e.editorInfo.isLastLine) {
+                if (this.state.focusedCell === cellId && e.editorInfo && e.editorInfo.isLastLine && !e.editorInfo.isSuggesting) {
                     this.arrowDownFromCell(cellId, e);
                 } else if (!this.state.focusedCell) {
                     this.arrowDownFromCell(cellId, e);
@@ -247,7 +247,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                 break;
 
             case 'Escape':
-                if (this.state.focusedCell) {
+                if (this.state.focusedCell && e.editorInfo && !e.editorInfo.isSuggesting) {
                     this.escapeCell(this.state.focusedCell, e);
                 }
                 break;

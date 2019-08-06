@@ -94,7 +94,7 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
     public focusCell(cellId: string, focusCode: boolean) {
         const ref = this.cellContainerRefs.get(cellId);
         if (ref && ref.current) {
-            ref.current.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' });
+            ref.current.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'nearest' });
             const cellRef = this.cellRefs.get(cellId);
             if (cellRef && cellRef.current) {
                 cellRef.current.giveFocus(focusCode);
