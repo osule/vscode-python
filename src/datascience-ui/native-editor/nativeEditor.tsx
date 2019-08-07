@@ -146,8 +146,8 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                     {this.renderCellType()}
                 </div>
                 <div className='toolbar-extra-button'>
-                <Button onClick={this.stateController.export} disabled={!this.stateController.canExport()} className='toolbar-panel-button' tooltip={getLocString('DataScience.exportAsPythonFileTooltip', 'Export code')}>
-                        <span>{getLocString('DataScience.exportAsPythonFileTitle', 'Export')}</span>
+                <Button onClick={this.stateController.export} disabled={!this.stateController.canExport()} className='toolbar-panel-button' tooltip={getLocString('DataScience.exportAsPythonFileTooltip', 'Convert to a python script')}>
+                        <span>{getLocString('DataScience.exportAsPythonFileTitle', 'Convert')}</span>
                     </Button>
                 </div>
             </div>
@@ -436,7 +436,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         if (this.contentPanelRef.current && cellId) {
             const wasFocused = this.state.focusedCell;
             this.stateController.moveCellUp(cellId);
-            this.contentPanelRef.current.focusCell(cellId, wasFocused ? true : false);
+            setTimeout(() => this.contentPanelRef.current!.focusCell(cellId, wasFocused ? true : false), 1);
         }
     }
 
@@ -444,7 +444,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         if (this.contentPanelRef.current && cellId) {
             const wasFocused = this.state.focusedCell;
             this.stateController.moveCellDown(cellId);
-            this.contentPanelRef.current.focusCell(cellId, wasFocused ? true : false);
+            setTimeout(() => this.contentPanelRef.current!.focusCell(cellId, wasFocused ? true : false), 1);
         }
     }
 

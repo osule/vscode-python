@@ -271,8 +271,8 @@ export namespace DataScience {
     export const dirtyNotebookDialogTitle = localize('DataScience.dirtyNotebookDialogTitle', 'Save');
     export const dirtyNotebookDialogFilter = localize('DataScience.dirtyNotebookDialogFilter', 'Jupyter Notebooks');
     export const remoteDebuggerNotSupported = localize('DataScience.remoteDebuggerNotSupported', 'Debugging while attached to a remote server is not currently supported.');
-    export const exportAsPythonFileTooltip = localize('DataScience.exportAsPythonFileTooltip', 'Generate a python script');
-    export const exportAsPythonFileTitle = localize('DataScience.exportAsPythonFileTitle', 'Export');
+    export const exportAsPythonFileTooltip = localize('DataScience.exportAsPythonFileTooltip', 'Convert to a python script');
+    export const exportAsPythonFileTitle = localize('DataScience.exportAsPythonFileTitle', 'Convert');
     export const runCell = localize('DataScience.runCell', 'Run cell');
     export const deleteCell = localize('DataScience.deleteCell', 'Delete cell');
     export const moveCellUp = localize('DataScience.moveCellUp', 'Move cell up');
