@@ -299,6 +299,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         // If focused, then ignore this call. It should go to the focused cell instead.
         if (!this.state.focusedCell && !e.editorInfo && this.contentPanelRef && this.contentPanelRef.current) {
             e.stopPropagation();
+            e.preventDefault();
 
             // Figure out which cell this is
             const cellvm = this.stateController.findCell(cellId);
@@ -328,12 +329,14 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
 
             // Send to jupyter
             const cellVM = this.findCellViewModel(cellId);
-            if (cellVM && cellVM.cell.data.cell_type === 'code') {
+            if (cellVM) {
                 this.submitInput(content, cellVM);
-            } else if (cellVM && cellVM.cell.data.cell_type === 'markdown') {
-                // If a markdown cell, force focus loss (or the same thing as hitting escape).
-                // Focus loss should cause a submit.
-                this.escapeCell(cellId, e);
+            }
+
+            // If this is a markdown cell (and not the edit cell), force this cell to lose focus
+            // so that the markdown displays
+            if (cellId !== Identifiers.EditCellId && cellVM && cellVM.cell.data.cell_type === 'markdown' && this.contentPanelRef.current) {
+                this.contentPanelRef.current.focusCell(cellId, false);
             }
         }
     }
@@ -407,7 +410,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         // After that's done, make sure the cell is scrolled to
         setTimeout(() => {
             if (this.contentPanelRef && this.contentPanelRef.current) {
-                this.contentPanelRef.current.focusCell(inputCell.cell.id, true);
+                this.contentPanelRef.current.focusCell(inputCell.cell.id, inputCell.cell.data.cell_type === 'code');
             }
         }, 10);
     }

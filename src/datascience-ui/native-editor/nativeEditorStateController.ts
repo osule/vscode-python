@@ -5,8 +5,8 @@ import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 
 import { InteractiveWindowMessages } from '../../client/datascience/interactive-common/interactiveWindowTypes';
 import { ICellViewModel } from '../interactive-common/cell';
-import { IMainStateControllerProps, MainStateController } from '../interactive-common/mainStateController';
 import { extractInputText } from '../interactive-common/mainState';
+import { IMainStateControllerProps, MainStateController } from '../interactive-common/mainStateController';
 import { getSettings } from '../react-common/settingsReactSide';
 
 export class NativeEditorStateController extends MainStateController {
@@ -89,7 +89,7 @@ export class NativeEditorStateController extends MainStateController {
     }
 
     protected onCodeLostFocus(cellId: string) {
-        // See if this is a markdown cell. We need to update the cell's source based on the contents of the editor being used
+        // Update the cell's source
         const cell = this.findCell(cellId);
         if (cell) {
             // Get the model for the monaco editor
@@ -98,12 +98,7 @@ export class NativeEditorStateController extends MainStateController {
                 const model = monacoEditor.editor.getModels().find(m => m.id === monacoId);
                 if (model) {
                     const newValue = model.getValue().replace(/\r/g, '');
-                    if (cell.cell.data.cell_type === 'markdown') {
-                        this.submitInput(newValue, cell);
-                    } else {
-                        // For a code cell, just save the source
-                        cell.cell.data.source = newValue;
-                    }
+                    cell.cell.data.source = newValue;
                 }
             }
         }

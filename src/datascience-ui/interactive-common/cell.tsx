@@ -87,6 +87,7 @@ interface ICellOutput {
 // tslint:disable: react-this-binding-issue
 export class Cell extends React.Component<ICellProps, ICellState> {
     private codeRef: React.RefObject<Code> = React.createRef<Code>();
+    private markdownRef: React.RefObject<Markdown> = React.createRef<Markdown>();
     private cellWrapperRef : React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
 
     constructor(prop: ICellProps) {
@@ -155,6 +156,9 @@ export class Cell extends React.Component<ICellProps, ICellState> {
                     this.codeRef.current.giveFocus();
                 }
             } else if (this.props.allowsMarkdownEditing) {
+                if (this.markdownRef.current) {
+                    this.markdownRef.current.giveFocus();
+                }
                 this.setState({showingMarkdownEditor: true});
             }
         } else if (this.cellWrapperRef && this.cellWrapperRef.current) {
@@ -251,7 +255,7 @@ export class Cell extends React.Component<ICellProps, ICellState> {
     }
 
     private shouldRenderMarkdownEditor = () : boolean => {
-        return (this.isMarkdownCell() && this.state.showingMarkdownEditor);
+        return (this.isMarkdownCell() && (this.state.showingMarkdownEditor || this.props.cellVM.cell.id === Identifiers.EditCellId));
     }
 
     private getRenderableInputCode = () : string => {
@@ -337,6 +341,7 @@ export class Cell extends React.Component<ICellProps, ICellState> {
                         focused={this.onMarkdownFocused}
                         unfocused={this.onMarkdownUnfocused}
                         keyDown={this.onKeyDown}
+                        ref={this.markdownRef}
                         />
                 </div>
             );
@@ -402,7 +407,7 @@ export class Cell extends React.Component<ICellProps, ICellState> {
         // Results depend upon the type of cell
         if (this.isCodeCell()) {
             return this.renderCodeOutputs();
-        } else if (!this.state.showingMarkdownEditor) {
+        } else if (!this.state.showingMarkdownEditor && this.props.cellVM.cell.id !== Identifiers.EditCellId) {
             return this.renderMarkdownOutputs();
         } else {
             return [];
