@@ -243,6 +243,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
         return result;
     }
 
+    // tslint:disable-next-line: cyclomatic-complexity
     private keyDownCell = (cellId: string, e: IKeyboardEvent) => {
         switch (e.code) {
             case 'ArrowUp':
@@ -264,6 +265,20 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             case 'Escape':
                 if (this.state.focusedCell && e.editorInfo && !e.editorInfo.isSuggesting) {
                     this.escapeCell(this.state.focusedCell, e);
+                }
+                break;
+
+            case 'y':
+                if (!this.state.focusedCell && this.state.selectedCell) {
+                    e.stopPropagation();
+                    this.stateController.changeCellType(this.state.selectedCell, 'code');
+                }
+                break;
+
+            case 'm':
+                if (!this.state.focusedCell && this.state.selectedCell) {
+                    e.stopPropagation();
+                    this.stateController.changeCellType(this.state.selectedCell, 'markdown');
                 }
                 break;
 

@@ -410,7 +410,7 @@ export class Cell extends React.Component<ICellProps, ICellState> {
     }
 
     private renderCodeOutputs = () => {
-        if (this.isCodeCell() && this.hasOutput()) {
+        if (this.isCodeCell() && this.hasOutput() && this.getCodeCell().outputs) {
             // Render the outputs
             return this.renderOutputs(this.getCodeCell().outputs);
         }

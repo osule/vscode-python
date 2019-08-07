@@ -6,6 +6,8 @@ import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import { InteractiveWindowMessages } from '../../client/datascience/interactive-common/interactiveWindowTypes';
 import { ICellViewModel } from '../interactive-common/cell';
 import { IMainStateControllerProps, MainStateController } from '../interactive-common/mainStateController';
+import { extractInputText } from '../interactive-common/mainState';
+import { getSettings } from '../react-common/settingsReactSide';
 
 export class NativeEditorStateController extends MainStateController {
     // tslint:disable-next-line:max-func-body-length
@@ -76,20 +78,32 @@ export class NativeEditorStateController extends MainStateController {
     protected alterCellVM(cellVM: ICellViewModel, _visible: boolean, _expanded: boolean): ICellViewModel {
         // cells are always editable
         cellVM.editable = true;
+
+        // Always have the cell input text open
+        const newText = extractInputText(cellVM.cell, getSettings());
+
+        cellVM.inputBlockOpen = true;
+        cellVM.inputBlockText = newText;
+
         return cellVM;
     }
 
     protected onCodeLostFocus(cellId: string) {
         // See if this is a markdown cell. We need to update the cell's source based on the contents of the editor being used
         const cell = this.findCell(cellId);
-        if (cell && cell.cell.data.cell_type === 'markdown') {
+        if (cell) {
             // Get the model for the monaco editor
             const monacoId = this.getMonacoId(cellId);
             if (monacoId) {
                 const model = monacoEditor.editor.getModels().find(m => m.id === monacoId);
                 if (model) {
                     const newValue = model.getValue().replace(/\r/g, '');
-                    this.submitInput(newValue, cell);
+                    if (cell.cell.data.cell_type === 'markdown') {
+                        this.submitInput(newValue, cell);
+                    } else {
+                        // For a code cell, just save the source
+                        cell.cell.data.source = newValue;
+                    }
                 }
             }
         }

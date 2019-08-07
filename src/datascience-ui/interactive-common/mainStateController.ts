@@ -454,6 +454,7 @@ export class MainStateController implements IMessageHandler {
         const cell = this.findCell(cellId);
         if (cell && cell.cell.data.cell_type !== newType) {
             cell.cell.data.cell_type = newType;
+            this.alterCellVM(cell, true, true);
             this.setState({ cellVMs: this.state.cellVMs });
         }
     }
@@ -476,9 +477,11 @@ export class MainStateController implements IMessageHandler {
             // Change type to markdown if necessary
             const split = code.splitLines({ trim: false });
             const firstLine = split[0];
-            if (matcher.isMarkdown(firstLine) || newCell.cell.data.cell_type === 'markdown') {
+            if (matcher.isMarkdown(firstLine)) {
                 newCell.cell.data.cell_type = 'markdown';
                 newCell.cell.data.source = generateMarkdownFromCodeLines(split);
+                newCell.cell.state = CellState.finished;
+            } else if (newCell.cell.data.cell_type === 'markdown') {
                 newCell.cell.state = CellState.finished;
             }
 
