@@ -120,7 +120,9 @@ body, html {
 
 .controls-div {
     grid-column: 1;
-    grid-template-columns: auto;
+    grid-template-columns: max-content min-content;
+    justify-content: grid;
+    grid-template-rows: min-content max-content;
     display: grid;
 }
 
@@ -324,10 +326,13 @@ body, html {
 }
 
 .cell-menu-bar-outer {
-    margin-top: 2px;
-    margin-bottom: 2px;
+    justify-self: right;
+}
+
+.cell-toolbar {
+    justify-self: end;
     display: flex;
-    flex-direction: column;
+    flex-flow: column;
 }
 
 .cell-menu-bar-child-container {

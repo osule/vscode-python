@@ -7,6 +7,9 @@ import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import * as React from 'react';
 import { IDisposable } from '../../client/common/types';
 
+// tslint:disable-next-line:no-require-imports no-var-requires
+const debounce = require('lodash/debounce') as typeof import('lodash/debounce');
+
 import './monacoEditor.css';
 
 const LINE_HEIGHT = 18;
@@ -44,11 +47,13 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
     private enteredHover: boolean = false;
     private lastOffsetLeft: number | undefined;
     private lastOffsetTop: number | undefined;
+    private debouncedUpdateEditorSize : () => void | undefined;
     constructor(props: IMonacoEditorProps) {
         super(props);
-        this.state = { editor: undefined, model: null, visibleLineCount: 0 };
+        this.state = { editor: undefined, model: null, visibleLineCount: -1 };
         this.containerRef = React.createRef<HTMLDivElement>();
         this.measureWidthRef = React.createRef<HTMLDivElement>();
+        this.debouncedUpdateEditorSize = debounce(this.updateEditorSize.bind(this), 150);
     }
 
     public componentDidMount = () => {
@@ -188,6 +193,12 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
             }
         }
 
+        if (this.state.visibleLineCount === -1) {
+            this.updateEditorSize();
+        } else {
+            // Debounce the call. This can happen too fast
+            this.debouncedUpdateEditorSize();
+        }
         // If this is our first time setting the editor, we might need to dynanically modify the styles
         // that the editor generates for the background colors.
         if (!prevState.editor && this.state.editor && this.containerRef.current) {
@@ -291,10 +302,12 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
         if (this.measureWidthRef.current &&
             this.containerRef.current &&
             this.containerRef.current.parentElement &&
+            this.containerRef.current.parentElement.parentElement &&
             this.state.editor &&
             this.state.model) {
             const editorDomNode = this.state.editor.getDomNode();
             if (!editorDomNode) { return; }
+            const grandParent = this.containerRef.current.parentElement.parentElement;
             const container = editorDomNode.getElementsByClassName('view-lines')[0] as HTMLElement;
             const currLineCount = Math.max(container.childElementCount, this.state.model.getLineCount());
             const lineHeightPx = container.firstChild && (container.firstChild as HTMLElement).style.height ?
@@ -302,7 +315,7 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
                 : `${LINE_HEIGHT}px`;
             const lineHeight = lineHeightPx && lineHeightPx.endsWith('px') ? parseInt(lineHeightPx.substr(0, lineHeightPx.length - 2), 10) : LINE_HEIGHT;
             const height = (currLineCount * lineHeight) + 3; // Fudge factor
-            const width = this.measureWidthRef.current.clientWidth - this.containerRef.current.parentElement.offsetLeft - 15; // Leave room for the scroll bar in regular cell table
+            const width = this.measureWidthRef.current.clientWidth - grandParent.offsetLeft - 15; // Leave room for the scroll bar in regular cell table
 
             const layoutInfo = this.state.editor.getLayoutInfo();
             if (layoutInfo.height !== height || layoutInfo.width !== width || currLineCount !== this.state.visibleLineCount) {

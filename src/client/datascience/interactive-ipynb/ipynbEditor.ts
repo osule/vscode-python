@@ -315,6 +315,10 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         interactiveContext.set(visible && active).catch();
     }
 
+    protected async closeBecauseOfFailure(_exc: Error): Promise<void> {
+        // Actually don't close, just let the error bubble out
+    }
+
     private editCell(request: IEditCell) {
         // Apply the changes to the visible cell list. We won't get an update until
         // submission otherwise

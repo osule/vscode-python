@@ -321,17 +321,17 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
 
         return (
             [
-            <div key='0' className='cell-menu-bar-outer'>
-                <ImageButton baseTheme={this.props.baseTheme} onClick={gotoCode} tooltip={getLocString('DataScience.gotoCodeButtonTooltip', 'Go to code')} hidden={hasNoSource}>
-                    <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
-                </ImageButton>
-                <ImageButton baseTheme={this.props.baseTheme} onClick={copyCode} tooltip={getLocString('DataScience.copyBackToSourceButtonTooltip', 'Paste code into file')} hidden={!hasNoSource}>
-                    <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
-                </ImageButton>
-                <ImageButton baseTheme={this.props.baseTheme} onClick={deleteCode} tooltip={getLocString('DataScience.deleteButtonTooltip', 'Remove Cell')}>
-                    <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
-                </ImageButton>
-            </div>
+                <div className='cell-toolbar'>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={gotoCode} tooltip={getLocString('DataScience.gotoCodeButtonTooltip', 'Go to code')} hidden={hasNoSource}>
+                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.GoToSourceCode} />
+                    </ImageButton>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={copyCode} tooltip={getLocString('DataScience.copyBackToSourceButtonTooltip', 'Paste code into file')} hidden={!hasNoSource}>
+                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Copy} />
+                    </ImageButton>
+                    <ImageButton baseTheme={this.props.baseTheme} onClick={deleteCode} tooltip={getLocString('DataScience.deleteButtonTooltip', 'Remove Cell')}>
+                        <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
+                    </ImageButton>
+                </div>
             ]
         );
     }

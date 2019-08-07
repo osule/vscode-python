@@ -408,6 +408,8 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
     protected abstract getNotebookIdentity(): Promise<Uri>;
 
+    protected abstract closeBecauseOfFailure(exc: Error): Promise<void>;
+
     protected clearResult(id: string): void {
         if (this.notebook) {
             this.notebook.clear(id);
@@ -455,7 +457,7 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
             } catch (exc) {
                 // We should dispose ourselves if the load fails. Othewise the user
                 // updates their install and we just fail again because the load promise is the same.
-                this.dispose();
+                await this.closeBecauseOfFailure(exc);
 
                 throw exc;
             }

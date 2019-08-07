@@ -58,7 +58,7 @@ export function generateTestState(inputBlockToggled: (id: string) => void, fileP
     return {
         cellVMs: generateVMs(inputBlockToggled, filePath, editable),
         editCellVM: createEditableCellVM(1),
-        busy: true,
+        busy: false,
         skipNextScroll: false,
         undoStack: [],
         redoStack: [],
@@ -101,7 +101,7 @@ export function createEditableCellVM(executionCount: number): ICellViewModel {
             id: Identifiers.EditCellId,
             file: Identifiers.EmptyFileName,
             line: 0,
-            state: CellState.editing,
+            state: CellState.finished,
             type: 'execute'
         },
         editable: true,

@@ -237,6 +237,10 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
         }
     }
 
+    protected async closeBecauseOfFailure(_exc: Error): Promise<void> {
+        this.dispose();
+    }
+
     @captureTelemetry(Telemetry.ExportNotebook, undefined, false)
     // tslint:disable-next-line: no-any no-empty
     private export(cells: ICell[]) {

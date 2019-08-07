@@ -19,6 +19,7 @@ export namespace Commands {
     export const RunCurrentCellAdvance = 'python.datascience.runcurrentcelladvance';
     export const ShowHistoryPane = 'python.datascience.showhistorypane';
     export const ImportNotebook = 'python.datascience.importnotebook';
+    export const ImportNotebookFile = 'python.datascience.importnotebookfile';
     export const OpenNotebook = 'python.datascience.opennotebook';
     export const SelectJupyterURI = 'python.datascience.selectjupyteruri';
     export const ExportFileAsNotebook = 'python.datascience.exportfileasnotebook';

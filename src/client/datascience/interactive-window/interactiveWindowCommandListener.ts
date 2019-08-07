@@ -62,6 +62,16 @@ export class InteractiveWindowCommandListener implements IDataScienceCommandList
             });
         });
         this.disposableRegistry.push(disposable);
+        disposable = commandManager.registerCommand(Commands.ImportNotebookFile, (file?: Uri, _cmdSource: CommandSource = CommandSource.commandPalette) => {
+            return this.listenForErrors(() => {
+                if (file && file.fsPath) {
+                    return this.importNotebookOnFile(file.fsPath);
+                } else {
+                    return this.importNotebook();
+                }
+            });
+        });
+        this.disposableRegistry.push(disposable);
         disposable = commandManager.registerCommand(Commands.ExportFileAsNotebook, (file?: Uri, _cmdSource: CommandSource = CommandSource.commandPalette) => {
             return this.listenForErrors(() => {
                 if (file && file.fsPath) {

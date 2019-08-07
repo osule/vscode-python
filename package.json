@@ -71,6 +71,7 @@
         "onCommand:python.configureTests",
         "onCommand:python.datascience.showhistorypane",
         "onCommand:python.datascience.importnotebook",
+        "onCommand:python.datascience.importnotebookfile",
         "onCommand:python.datascience.opennotebook",
         "onCommand:python.datascience.selectjupyteruri",
         "onCommand:python.datascience.exportfileasnotebook",
@@ -454,6 +455,11 @@
                 "category": "Python"
             },
             {
+                "command": "python.datascience.importnotebookfile",
+                "title": "%python.command.python.datascience.importnotebookfile.title%",
+                "category": "Python"
+            },
+            {
                 "command": "python.datascience.opennotebook",
                 "title": "%python.command.python.datascience.opennotebook.title%",
                 "category": "Python"
@@ -682,7 +688,7 @@
                 },
                 {
                     "when": "resourceLangId == jupyter",
-                    "command": "python.datascience.importnotebook",
+                    "command": "python.datascience.importnotebookfile",
                     "group": "Python"
                 }
             ],

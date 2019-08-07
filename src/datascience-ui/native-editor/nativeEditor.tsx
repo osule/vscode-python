@@ -7,7 +7,7 @@ import * as React from 'react';
 
 import { concatMultilineString } from '../../client/datascience/common';
 import { Identifiers } from '../../client/datascience/constants';
-import { ICell } from '../../client/datascience/types';
+import { CellState, ICell } from '../../client/datascience/types';
 import { Cell, ICellViewModel } from '../interactive-common/cell';
 import { ContentPanel, IContentPanelProps } from '../interactive-common/contentPanel';
 import { InputHistory } from '../interactive-common/inputHistory';
@@ -470,6 +470,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                 const moveDown = () => this.moveCellDown(cellId);
                 const canMoveUp = this.stateController.canMoveUp(cellId);
                 const canMoveDown = this.stateController.canMoveDown(cellId);
+                const runCellHidden = cell.cell.state !== CellState.finished || this.state.busy;
 
                 const outerPortion =
                     <div className='native-editor-celltoolbar-outer' key={0}>
@@ -486,7 +487,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
 
                 const innerPortion =
                     <div className='native-editor-celltoolbar-inner' key={1}>
-                        <ImageButton baseTheme={this.props.baseTheme} onClick={runCell} tooltip={getLocString('DataScience.runCell', 'Run cell')}>
+                        <ImageButton baseTheme={this.props.baseTheme} onClick={runCell} hidden={runCellHidden} tooltip={getLocString('DataScience.runCell', 'Run cell')}>
                             <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Run} />
                         </ImageButton>
                     </div>;
