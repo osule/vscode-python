@@ -51,6 +51,7 @@
     "python.command.python.datascience.showhistorypane.title": "Show Python Interactive Window",
     "python.command.python.datascience.selectjupyteruri.title": "Specify Jupyter Server URI",
     "python.command.python.datascience.importnotebook.title": "Import Jupyter Notebook",
+    "python.command.python.datascience.opennotebook.title": "Open in Notebook Editor",
     "python.command.python.datascience.importnotebookonfile.title": "Import Jupyter Notebook",
     "python.command.python.enableSourceMapSupport.title": "Enable Source Map Support For Extension Debugging",
     "python.command.python.datascience.exportoutputasnotebook.title": "Export Python Interactive Window as Jupyter Notebook",

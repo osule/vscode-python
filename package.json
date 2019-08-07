@@ -71,6 +71,7 @@
         "onCommand:python.configureTests",
         "onCommand:python.datascience.showhistorypane",
         "onCommand:python.datascience.importnotebook",
+        "onCommand:python.datascience.opennotebook",
         "onCommand:python.datascience.selectjupyteruri",
         "onCommand:python.datascience.exportfileasnotebook",
         "onCommand:python.datascience.exportfileandoutputasnotebook",
@@ -453,6 +454,11 @@
                 "category": "Python"
             },
             {
+                "command": "python.datascience.opennotebook",
+                "title": "%python.command.python.datascience.opennotebook.title%",
+                "category": "Python"
+            },
+            {
                 "command": "python.datascience.exportoutputasnotebook",
                 "title": "%python.command.python.datascience.exportoutputasnotebook.title%",
                 "category": "Python"
@@ -671,6 +677,11 @@
                 },
                 {
                     "when": "resourceLangId == jupyter",
+                    "command": "python.datascience.opennotebook",
+                    "group": "Python"
+                },
+                {
+                    "when": "resourceLangId == jupyter",
                     "command": "python.datascience.importnotebook",
                     "group": "Python"
                 }
@@ -784,6 +795,11 @@
                 {
                     "command": "python.datascience.importnotebook",
                     "title": "%python.command.python.datascience.importnotebook.title%",
+                    "category": "Python"
+                },
+                {
+                    "command": "python.datascience.opennotebook",
+                    "title": "%python.command.python.datascience.opennotebook.title%",
                     "category": "Python"
                 },
                 {
@@ -1562,6 +1578,12 @@
                     "deprecationMessage": "No longer supported. Notebooks open directly in their own editor now.",
                     "default": false,
                     "description": "When opening ipynb files, automatically preview the contents in the Python Interactive window.",
+                    "scope": "resource"
+                },
+                "python.dataScience.autoOpenNotebooks": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "When opening ipynb files, automatically open the file in a separate editor.",
                     "scope": "resource"
                 },
                 "python.dataScience.allowUnauthorizedRemoteConnection": {

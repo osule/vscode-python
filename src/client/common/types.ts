@@ -340,6 +340,7 @@ export interface IDataScienceSettings {
     remoteDebuggerPort?: number;
     colorizeInputBox?: boolean;
     addGotoCodeLenses?: boolean;
+    autoOpenNotebooks?: boolean;
 }
 
 export const IConfigurationService = Symbol('IConfigurationService');

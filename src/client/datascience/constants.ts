@@ -19,6 +19,7 @@ export namespace Commands {
     export const RunCurrentCellAdvance = 'python.datascience.runcurrentcelladvance';
     export const ShowHistoryPane = 'python.datascience.showhistorypane';
     export const ImportNotebook = 'python.datascience.importnotebook';
+    export const OpenNotebook = 'python.datascience.opennotebook';
     export const SelectJupyterURI = 'python.datascience.selectjupyteruri';
     export const ExportFileAsNotebook = 'python.datascience.exportfileasnotebook';
     export const ExportFileAndOutputAsNotebook = 'python.datascience.exportfileandoutputasnotebook';
@@ -176,10 +177,10 @@ export enum Telemetry {
     ScrolledToCell = 'DATASCIENCE.SCROLLED_TO_CELL',
     ExecuteNativeCell = 'DATASCIENCE.EXECUTE_NATIVE_CELL',
     CreateNewNotebook = 'DATASCIENCE.CREATE_NEW_NOTEBOOK',
-
     DebugStepOver = 'DATASCIENCE.DEBUG_STEP_OVER',
     DebugContinue = 'DATASCIENCE.DEBUG_CONTINUE',
-    DebugStop = 'DATASCIENCE.DEBUG_STOP'
+    DebugStop = 'DATASCIENCE.DEBUG_STOP',
+    OpenNotebook = 'DATASCIENCE.OPEN_NOTEBOOK'
 }
 
 export namespace HelpLinks {
