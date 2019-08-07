@@ -46,5 +46,4 @@ export interface IKeyboardEvent {
     };
     preventDefault(): void;
     stopPropagation(): void;
-    shouldClear?(): void;
 }

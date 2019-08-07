@@ -310,41 +310,55 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
     }
 
     private submitCell = (cellId: string, e: IKeyboardEvent) => {
+        let content: string | undefined ;
+        const cellVM = this.findCellViewModel(cellId);
+
+        // If inside editor, submit this code
         if (e.editorInfo && e.editorInfo.contents) {
             // Prevent shift+enter from turning into a enter
             e.stopPropagation();
             e.preventDefault();
+            content = e.editorInfo.contents;
+        } else if (cellVM) {
+            // Outside editor, just use the cell
+            content = concatMultilineString(cellVM.cell.data.source);
+        }
 
-            // Remove empty lines off the end
-            let endPos = e.editorInfo.contents.length - 1;
-            while (endPos >= 0 && e.editorInfo.contents[endPos] === '\n') {
-                endPos -= 1;
-            }
-            const content = e.editorInfo.contents.slice(0, endPos + 1);
+        // Send to jupyter
+        if (cellVM && content) {
+            this.stateController.submitInput(content, cellVM);
+        }
 
-            // Clear our current contents since we submitted if this is the edit cell
-            if (e.shouldClear && cellId === Identifiers.EditCellId) {
-                e.shouldClear();
-            }
-
-            // Send to jupyter
-            const cellVM = this.findCellViewModel(cellId);
-            if (cellVM) {
-                this.submitInput(content, cellVM);
-            }
-
-            // If this is a markdown cell (and not the edit cell), force this cell to lose focus
-            // so that the markdown displays
-            if (cellId !== Identifiers.EditCellId && cellVM && cellVM.cell.data.cell_type === 'markdown' && this.contentPanelRef.current) {
-                this.contentPanelRef.current.focusCell(cellId, false);
+        // If this is not the edit cell, move to our next cell
+        if (cellId !== Identifiers.EditCellId) {
+            const nextCell = this.getNextCellId(cellId);
+            if (nextCell) {
+                this.stateController.selectCell(nextCell, undefined);
             }
         }
+    }
+
+    private getNextCellId(cellId: string): string | undefined {
+        const cells = this.getNonMessageCells();
+
+        // Find the next cell to move to
+        const index = cells.findIndex(c => c.id === cellId);
+        let nextCellId: string | undefined;
+        if (index >= 0) {
+            if (index < cells.length - 1) {
+                nextCellId = cells[index + 1].id;
+            } else if (this.state.editCellVM) {
+                nextCellId = this.state.editCellVM.cell.id;
+            }
+        }
+
+        return nextCellId;
     }
 
     private arrowUpFromCell = (cellId: string, e: IKeyboardEvent) => {
         const cells = this.getNonMessageCells();
 
-        // Find the previous cell index
+        // Find the next cell index
         let index = cells.findIndex(c => c.id === cellId) - 1;
 
         // Might also be the edit cell
@@ -362,18 +376,7 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
     }
 
     private arrowDownFromCell = (cellId: string, e: IKeyboardEvent) => {
-        const cells = this.getNonMessageCells();
-
-        // Find the next cell to move to
-        const index = cells.findIndex(c => c.id === cellId);
-        let nextCellId: string | undefined;
-        if (index >= 0) {
-            if (index < cells.length - 1) {
-                nextCellId = cells[index + 1].id;
-            } else if (this.state.editCellVM) {
-                nextCellId = this.state.editCellVM.cell.id;
-            }
-        }
+        const nextCellId = this.getNextCellId(cellId);
 
         if (nextCellId && this.contentPanelRef.current) {
             e.stopPropagation();
@@ -401,18 +404,6 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             this.contentPanelRef.current.focusCell(cellId, false);
         }
 
-    }
-
-    private submitInput = (code: string, inputCell: ICellViewModel) => {
-        // Send to the state controller
-        this.stateController.submitInput(code, inputCell);
-
-        // After that's done, make sure the cell is scrolled to
-        setTimeout(() => {
-            if (this.contentPanelRef && this.contentPanelRef.current) {
-                this.contentPanelRef.current.focusCell(inputCell.cell.id, inputCell.cell.data.cell_type === 'code');
-            }
-        }, 10);
     }
 
     private codeTypeChanged = (event: React.SyntheticEvent<HTMLSelectElement>) => {
@@ -465,6 +456,9 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                 const runCell = () => {
                     this.stateController.updateCellSource(cellId);
                     this.stateController.submitInput(concatMultilineString(cell.cell.data.source), cell);
+                    if (this.contentPanelRef.current) {
+                        this.contentPanelRef.current.focusCell(cellId, false);
+                    }
                 };
                 const moveUp = () => this.moveCellUp(cellId);
                 const moveDown = () => this.moveCellDown(cellId);

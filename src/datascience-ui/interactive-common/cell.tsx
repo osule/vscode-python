@@ -147,8 +147,18 @@ export class Cell extends React.Component<ICellProps, ICellState> {
         }
     }
 
+    public componentDidUpdate(prevProps: ICellProps) {
+        if (this.props.selectedCell === this.props.cellVM.cell.id && prevProps.selectedCell !== this.props.selectedCell) {
+            this.giveFocus(this.props.focusedCell === this.props.cellVM.cell.id);
+        }
+    }
+
     public giveFocus(giveCodeFocus: boolean) {
-        // Either give it to our code or just ourselves.
+        // Start out with ourselves
+        if (this.cellWrapperRef && this.cellWrapperRef.current) {
+            this.cellWrapperRef.current.focus();
+        }
+        // Then attempt to move into the object
         if (giveCodeFocus) {
             // This depends upon what type of cell we are.
             if (this.props.cellVM.cell.data.cell_type === 'code') {
@@ -161,8 +171,6 @@ export class Cell extends React.Component<ICellProps, ICellState> {
                 }
                 this.setState({showingMarkdownEditor: true});
             }
-        } else if (this.cellWrapperRef && this.cellWrapperRef.current) {
-            this.cellWrapperRef.current.focus();
         }
     }
 

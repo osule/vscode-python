@@ -79,7 +79,7 @@ body, html {
 }
 
 .cell-wrapper:focus {
-    outline: none;
+    outline: green solid 1px;
 }
 
 .cell-wrapper-preview {

@@ -77,12 +77,12 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
         @inject(ICommandManager) private commandManager: ICommandManager,
         @inject(INotebookExporter) jupyterExporter: INotebookExporter,
         @inject(IWorkspaceService) workspaceService: IWorkspaceService,
-        @inject(INotebookEditorProvider) private editorProvider: INotebookEditorProvider,
+        @inject(INotebookEditorProvider) editorProvider: INotebookEditorProvider,
         @inject(IDataViewerProvider) dataExplorerProvider: IDataViewerProvider,
         @inject(IJupyterVariables) jupyterVariables: IJupyterVariables,
         @inject(IJupyterDebugger) jupyterDebugger: IJupyterDebugger,
         @inject(INotebookImporter) private importer: INotebookImporter,
-        @inject(IDataScienceErrorHandler) private errorHandler: IDataScienceErrorHandler
+        @inject(IDataScienceErrorHandler) errorHandler: IDataScienceErrorHandler
     ) {
         super(
             listeners,
@@ -103,6 +103,8 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             dataExplorerProvider,
             jupyterVariables,
             jupyterDebugger,
+            editorProvider,
+            errorHandler,
             path.join(EXTENSION_ROOT_DIR, 'out', 'datascience-ui', 'native-editor', 'index_bundle.js'),
             localize.DataScience.nativeEditorTitle(),
             ViewColumn.Active);
@@ -233,7 +235,7 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             this.submitCode(info.code, Identifiers.EmptyFileName, 0, info.id).ignoreErrors();
 
             // Activate the other side, and send as if came from a file
-            this.editorProvider.show(this.file).then(_v => {
+            this.ipynbProvider.show(this.file).then(_v => {
                 this.shareMessage(InteractiveWindowMessages.RemoteAddCode, { code: info.code, file: Identifiers.EmptyFileName, line: 0, id: info.id, originator: this.id, debug: false });
             }).ignoreErrors();
         }
@@ -254,7 +256,7 @@ export class IpynbEditor extends InteractiveBase implements INotebookEditor {
             this.submitCode(info.code, Identifiers.EmptyFileName, 0, info.id).ignoreErrors();
 
             // Activate the other side, and send as if came from a file
-            this.editorProvider.show(this.file).then(_v => {
+            this.ipynbProvider.show(this.file).then(_v => {
                 this.shareMessage(InteractiveWindowMessages.RemoteAddCode, { code: info.code, file: Identifiers.EmptyFileName, line: 0, id: info.id, originator: this.id, debug: false });
             }).ignoreErrors();
         }

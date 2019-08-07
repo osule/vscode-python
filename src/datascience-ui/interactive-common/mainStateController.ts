@@ -485,6 +485,13 @@ export class MainStateController implements IMessageHandler {
                 newCell.cell.state = CellState.finished;
             }
 
+            // Clear the input cell as it's the edit cell
+            const monacoId = this.getMonacoId(Identifiers.EditCellId);
+            const editor = monacoEditor.editor.getModels().find(m => m.id === monacoId);
+            if (editor) {
+                editor.setValue('');
+            }
+
             // Update input controls (always show expanded since we just edited it.)
             newCell = createCellVM(newCell.cell, getSettings(), this.inputBlockToggled, this.props.defaultEditable);
             const collapseInputs = getSettings().collapseCellInputCodeByDefault;

@@ -191,7 +191,6 @@ export class Editor extends React.Component<IEditorProps, IEditorState> {
                             isSuggesting,
                             contents: this.getContents()
                         },
-                        shouldClear: () => this.state.model!.setValue(''),
                         stopPropagation: () => e.stopPropagation(),
                         preventDefault: () => e.preventDefault()
                     });

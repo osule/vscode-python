@@ -91,6 +91,7 @@
     "DataScience.exportDialogComplete": "Notebook written to {0}",
     "DataScience.exportDialogFailed": "Failed to export notebook. {0}",
     "DataScience.exportOpenQuestion": "Open in browser",
+    "DataScience.exportOpenQuestion1": "Open in editor",
     "DataScience.collapseInputTooltip": "Collapse input block",
     "DataScience.collapseVariableExplorerTooltip": "Collapse variable explorer",
     "DataScience.collapseVariableExplorerLabel": "Variables",

@@ -28,6 +28,7 @@ import { InteractiveWindowMessages, ISubmitNewCell } from '../interactive-common
 import {
     ICell,
     ICodeCssGenerator,
+    IDataScienceErrorHandler,
     IDataViewerProvider,
     IInteractiveWindow,
     IInteractiveWindowInfo,
@@ -36,6 +37,7 @@ import {
     IJupyterDebugger,
     IJupyterExecution,
     IJupyterVariables,
+    INotebookEditorProvider,
     INotebookExporter,
     INotebookServerOptions,
     IStatusProvider,
@@ -67,7 +69,9 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
         @inject(IInteractiveWindowProvider) private interactiveWindowProvider: IInteractiveWindowProvider,
         @inject(IDataViewerProvider) dataExplorerProvider: IDataViewerProvider,
         @inject(IJupyterVariables) jupyterVariables: IJupyterVariables,
-        @inject(IJupyterDebugger) jupyterDebugger: IJupyterDebugger
+        @inject(IJupyterDebugger) jupyterDebugger: IJupyterDebugger,
+        @inject(INotebookEditorProvider) editorProvider: INotebookEditorProvider,
+        @inject(IDataScienceErrorHandler) errorHandler: IDataScienceErrorHandler
     ) {
         super(
             listeners,
@@ -88,6 +92,8 @@ export class InteractiveWindow extends InteractiveBase implements IInteractiveWi
             dataExplorerProvider,
             jupyterVariables,
             jupyterDebugger,
+            editorProvider,
+            errorHandler,
             path.join(EXTENSION_ROOT_DIR, 'out', 'datascience-ui', 'history-react', 'index_bundle.js'),
             localize.DataScience.historyTitle(),
             ViewColumn.Two);

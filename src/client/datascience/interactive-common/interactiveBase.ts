@@ -53,6 +53,7 @@ import {
     ICell,
     ICodeCssGenerator,
     IConnection,
+    IDataScienceErrorHandler,
     IDataViewerProvider,
     IInteractiveBase,
     IInteractiveWindowInfo,
@@ -64,6 +65,7 @@ import {
     IJupyterVariablesResponse,
     IMessageCell,
     INotebook,
+    INotebookEditorProvider,
     INotebookExporter,
     INotebookServerOptions,
     InterruptResult,
@@ -106,6 +108,8 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         @unmanaged() private dataExplorerProvider: IDataViewerProvider,
         @unmanaged() private jupyterVariables: IJupyterVariables,
         @unmanaged() private jupyterDebugger: IJupyterDebugger,
+        @unmanaged() protected ipynbProvider: INotebookEditorProvider,
+        @unmanaged() protected errorHandler: IDataScienceErrorHandler,
         @unmanaged() indexPath: string,
         @unmanaged() title: string,
         @unmanaged() viewColumn: ViewColumn
@@ -616,12 +620,20 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
 
             try {
                 // tslint:disable-next-line: no-any
-                await this.fileSystem.writeFile(file, JSON.stringify(notebook), { encoding: 'utf8', flag: 'w' });
-                const openQuestion = (await this.jupyterExecution.isSpawnSupported()) ? localize.DataScience.exportOpenQuestion() : undefined;
-                this.showInformationMessage(localize.DataScience.exportDialogComplete().format(file), openQuestion).then((str: string | undefined) => {
-                    if (str && this.notebook) {
-                        // If the user wants to, open the notebook they just generated.
-                        this.jupyterExecution.spawnNotebook(file).ignoreErrors();
+                const contents = JSON.stringify(notebook);
+                await this.fileSystem.writeFile(file, contents, { encoding: 'utf8', flag: 'w' });
+                const openQuestion1 = localize.DataScience.exportOpenQuestion1();
+                const openQuestion2 = (await this.jupyterExecution.isSpawnSupported()) ? localize.DataScience.exportOpenQuestion() : undefined;
+                this.showInformationMessage(localize.DataScience.exportDialogComplete().format(file), openQuestion1, openQuestion2).then(async (str: string | undefined) => {
+                    try {
+                        if (str === openQuestion2 && openQuestion2 && this.notebook) {
+                            // If the user wants to, open the notebook they just generated.
+                            await this.jupyterExecution.spawnNotebook(file);
+                        } else if (str === openQuestion1) {
+                            await this.ipynbProvider.open(Uri.file(file), contents);
+                        }
+                    } catch (e) {
+                        this.errorHandler.handleError(e).ignoreErrors();
                     }
                 });
             } catch (exc) {
@@ -938,11 +950,11 @@ export abstract class InteractiveBase extends WebViewHost<IInteractiveWindowMapp
         }
     }
 
-    private showInformationMessage(message: string, question?: string): Thenable<string | undefined> {
-        if (question) {
-            return this.applicationShell.showInformationMessage(message, question);
+    private showInformationMessage(message: string, question1: string, question2?: string): Thenable<string | undefined> {
+        if (question2) {
+            return this.applicationShell.showInformationMessage(message, question1,  question2);
         } else {
-            return this.applicationShell.showInformationMessage(message);
+            return this.applicationShell.showInformationMessage(message, question1);
         }
     }
 

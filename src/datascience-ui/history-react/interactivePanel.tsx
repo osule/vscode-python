@@ -281,11 +281,6 @@ export class InteractivePanel extends React.Component<IInteractivePanelProps, IM
                 this.state.history.add(content, e.editorInfo.isDirty);
             }
 
-            // Clear our current contents since we submitted
-            if (e.shouldClear) {
-                e.shouldClear();
-            }
-
             // Send to jupyter
             this.stateController.submitInput(content, this.state.editCellVM);
         }
