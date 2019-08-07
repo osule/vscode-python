@@ -420,9 +420,9 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
             const value = event.currentTarget.value === 'code' ? 'code' : 'markdown';
             this.stateController.changeCellType(this.state.selectedCell, value);
 
-            // If this cell is the last cell, immediately give it focus
+            // If this cell is the last cell, give it focus after we change time
             if (this.state.selectedCell === Identifiers.EditCellId && this.contentPanelRef.current) {
-                this.contentPanelRef.current.focusCell(this.state.selectedCell, true);
+                setTimeout(() => this.contentPanelRef.current!.focusCell(this.state.selectedCell!, true), 1);
             }
         }
     }
