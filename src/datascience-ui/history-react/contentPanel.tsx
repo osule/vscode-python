@@ -128,10 +128,10 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
     }
 
     private scrollToBottom() {
-        if (this.bottomRef.current && !this.props.skipNextScroll && !this.props.testMode && this.containerRef.current) {
+        if (this.bottomRef.current && !this.props.skipNextScroll && !this.props.testMode && this.containerRef.current
+            && this.bottomRef.current.getBoundingClientRect().bottom <= window.innerHeight) {
             // Make sure to debounce this so it doesn't take up too much time.
             this.throttledScrollIntoView();
         }
     }
-
 }
