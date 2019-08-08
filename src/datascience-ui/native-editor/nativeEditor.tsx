@@ -15,6 +15,7 @@ import { createEditableCellVM, IMainState } from '../interactive-common/mainStat
 import { IVariablePanelProps, VariablePanel } from '../interactive-common/variablePanel';
 import { Button } from '../react-common/button';
 import { IKeyboardEvent } from '../react-common/event';
+import { Flyout } from '../react-common/flyout';
 import { Image, ImageName } from '../react-common/image';
 import { ImageButton } from '../react-common/imageButton';
 import { getLocString } from '../react-common/locReactSide';
@@ -465,18 +466,22 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                 const canMoveUp = this.stateController.canMoveUp(cellId);
                 const canMoveDown = this.stateController.canMoveDown(cellId);
                 const runCellHidden = cell.cell.state !== CellState.finished || this.state.busy;
+                const flyoutClass = cell.cell.id === this.state.focusedCell ? 'native-editor-cellflyout native-editor-cellflyout-focused'
+                    : 'native-editor-cellflyout native-editor-cellflyout-selected';
 
                 const outerPortion =
                     <div className='native-editor-celltoolbar-outer' key={0}>
-                        <ImageButton baseTheme={this.props.baseTheme} onClick={moveUp} disabled={!canMoveUp} tooltip={getLocString('DataScience.moveCellUp', 'Move cell up')}>
-                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Up} />
-                        </ImageButton>
-                        <ImageButton baseTheme={this.props.baseTheme} onClick={deleteCell} tooltip={getLocString('DataScience.deleteCell', 'Delete cell')}>
-                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
-                        </ImageButton>
-                        <ImageButton baseTheme={this.props.baseTheme} onClick={moveDown} disabled={!canMoveDown} tooltip={getLocString('DataScience.moveCellDown', 'Move cell down')}>
-                            <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Down} />
-                        </ImageButton>
+                        <Flyout buttonClassName='native-editor-flyout-button' buttonContent={<span>...</span>} flyoutContainerName={flyoutClass}>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={moveUp} disabled={!canMoveUp} tooltip={getLocString('DataScience.moveCellUp', 'Move cell up')}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Up} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={deleteCell} tooltip={getLocString('DataScience.deleteCell', 'Delete cell')}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={moveDown} disabled={!canMoveDown} tooltip={getLocString('DataScience.moveCellDown', 'Move cell down')}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Down} />
+                            </ImageButton>
+                        </Flyout>
                     </div>;
 
                 const innerPortion =
