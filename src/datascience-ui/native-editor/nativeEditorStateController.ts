@@ -5,6 +5,7 @@ import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import * as uuid from 'uuid/v4';
 
 import { concatMultilineString } from '../../client/datascience/common';
+import { Identifiers } from '../../client/datascience/constants';
 import { InteractiveWindowMessages } from '../../client/datascience/interactive-common/interactiveWindowTypes';
 import { ICellViewModel } from '../interactive-common/cell';
 import { createEmptyCell, extractInputText } from '../interactive-common/mainState';
@@ -55,22 +56,24 @@ export class NativeEditorStateController extends MainStateController {
     }
 
     public canRunAbove = (cellId?: string) => {
-        const index = this.getState().cellVMs.findIndex(cvm => cvm.cell.id === cellId);
+        const cells = this.getState().cellVMs;
+        const index = cellId === Identifiers.EditCellId ? cells.length : cells.findIndex(cvm => cvm.cell.id === cellId);
 
         // Any code cells above, we can run above
-        return index > 0 && this.getState().cellVMs.find((cvm, i) => i < index && cvm.cell.data.cell_type === 'code');
+        return index > 0 && cells.find((cvm, i) => i < index && cvm.cell.data.cell_type === 'code');
     }
 
     public canRunBelow = (cellId?: string) => {
-        const index = this.getState().cellVMs.findIndex(cvm => cvm.cell.id === cellId);
+        const cells = this.getState().cellVMs;
+        const index = cells.findIndex(cvm => cvm.cell.id === cellId);
 
         // Any code cells below, we can run below
-        return index > 0 && this.getState().cellVMs.find((cvm, i) => i >= index && cvm.cell.data.cell_type === 'code');
+        return index > 0 && cells.find((cvm, i) => i >= index && cvm.cell.data.cell_type === 'code');
     }
 
     public runAbove = (cellId?: string) => {
         const cells = this.getState().cellVMs;
-        const index = cells.findIndex(cvm => cvm.cell.id === cellId);
+        const index = cellId === Identifiers.EditCellId ? cells.length : cells.findIndex(cvm => cvm.cell.id === cellId);
         if (index > 0) {
             cells.filter((cvm, i) => i < index && cvm.cell.data.cell_type === 'code').
                 forEach(cvm => this.submitInput(concatMultilineString(cvm.cell.data.source), cvm));
@@ -151,6 +154,13 @@ export class NativeEditorStateController extends MainStateController {
                     cell.cell.data.source = cell.inputBlockText = newValue;
                 }
             }
+        }
+
+        // Special case markdown in the edit cell. Submit it.
+        if (cell && cell.cell.id === Identifiers.EditCellId && cell.cell.data.cell_type === 'markdown') {
+            const code = cell.inputBlockText;
+            cell.cell.data.source = cell.inputBlockText = '';
+            this.submitInput(code, cell);
         }
     }
 }
