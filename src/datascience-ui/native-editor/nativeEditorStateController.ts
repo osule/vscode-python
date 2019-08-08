@@ -2,10 +2,12 @@
 // Licensed under the MIT License.
 'use strict';
 import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
+import * as uuid from 'uuid/v4';
 
+import { concatMultilineString } from '../../client/datascience/common';
 import { InteractiveWindowMessages } from '../../client/datascience/interactive-common/interactiveWindowTypes';
 import { ICellViewModel } from '../interactive-common/cell';
-import { extractInputText } from '../interactive-common/mainState';
+import { createEmptyCell, extractInputText } from '../interactive-common/mainState';
 import { IMainStateControllerProps, MainStateController } from '../interactive-common/mainStateController';
 import { getSettings } from '../react-common/settingsReactSide';
 
@@ -50,6 +52,54 @@ export class NativeEditorStateController extends MainStateController {
     public canMoveDown = (cellId?: string) => {
         const index = this.getState().cellVMs.findIndex(cvm => cvm.cell.id === cellId);
         return (index < this.getState().cellVMs.length - 1);
+    }
+
+    public canRunAbove = (cellId?: string) => {
+        const index = this.getState().cellVMs.findIndex(cvm => cvm.cell.id === cellId);
+
+        // Any code cells above, we can run above
+        return index > 0 && this.getState().cellVMs.find((cvm, i) => i < index && cvm.cell.data.cell_type === 'code');
+    }
+
+    public canRunBelow = (cellId?: string) => {
+        const index = this.getState().cellVMs.findIndex(cvm => cvm.cell.id === cellId);
+
+        // Any code cells below, we can run below
+        return index > 0 && this.getState().cellVMs.find((cvm, i) => i >= index && cvm.cell.data.cell_type === 'code');
+    }
+
+    public runAbove = (cellId?: string) => {
+        const cells = this.getState().cellVMs;
+        const index = cells.findIndex(cvm => cvm.cell.id === cellId);
+        if (index > 0) {
+            cells.filter((cvm, i) => i < index && cvm.cell.data.cell_type === 'code').
+                forEach(cvm => this.submitInput(concatMultilineString(cvm.cell.data.source), cvm));
+        }
+    }
+
+    public runBelow = (cellId?: string) => {
+        const cells = this.getState().cellVMs;
+        const index = cells.findIndex(cvm => cvm.cell.id === cellId);
+        if (index >= 0) {
+            cells.filter((cvm, i) => i >= index && cvm.cell.data.cell_type === 'code').
+                forEach(cvm => this.submitInput(concatMultilineString(cvm.cell.data.source), cvm));
+        }
+    }
+
+    public insertAbove = (cellId?: string) => {
+        const cells = this.getState().cellVMs;
+        const index = cells.findIndex(cvm => cvm.cell.id === cellId);
+        if (index >= 0) {
+            this.insertCell(createEmptyCell(uuid(), null), index);
+        }
+    }
+
+    public insertBelow = (cellId?: string) => {
+        const cells = this.getState().cellVMs;
+        const index = cells.findIndex(cvm => cvm.cell.id === cellId);
+        if (index >= 0) {
+            this.insertCell(createEmptyCell(uuid(), null), index + 1);
+        }
     }
 
     public moveCellUp = (cellId?: string) => {
@@ -98,7 +148,7 @@ export class NativeEditorStateController extends MainStateController {
                 const model = monacoEditor.editor.getModels().find(m => m.id === monacoId);
                 if (model) {
                     const newValue = model.getValue().replace(/\r/g, '');
-                    cell.cell.data.source = newValue;
+                    cell.cell.data.source = cell.inputBlockText = newValue;
                 }
             }
         }

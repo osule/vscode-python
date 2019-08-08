@@ -465,21 +465,46 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                 const moveDown = () => this.moveCellDown(cellId);
                 const canMoveUp = this.stateController.canMoveUp(cellId);
                 const canMoveDown = this.stateController.canMoveDown(cellId);
+                const runAbove = () => this.stateController.runAbove(cellId);
+                const runBelow = () => this.stateController.runBelow(cellId);
+                const canRunAbove = this.stateController.canRunAbove(cellId);
+                const canRunBelow = this.stateController.canRunBelow(cellId);
+                const insertAbove = () => this.stateController.insertAbove(cellId);
+                const insertBelow = () => this.stateController.insertBelow(cellId);
                 const runCellHidden = cell.cell.state !== CellState.finished || this.state.busy;
                 const flyoutClass = cell.cell.id === this.state.focusedCell ? 'native-editor-cellflyout native-editor-cellflyout-focused'
                     : 'native-editor-cellflyout native-editor-cellflyout-selected';
-
+                const switchTooltip = cell.cell.data.cell_type === 'code' ? getLocString('DataScience.switchToMarkdown', 'Change to markdown') :
+                    getLocString('DataScience.switchToCode', 'Change to code');
+                const switchImage = cell.cell.data.cell_type === 'code' ? ImageName.SwitchToMarkdown : ImageName.SwitchToCode;
+                const switchCell = cell.cell.data.cell_type === 'code' ? () => this.stateController.changeCellType(cellId, 'markdown') :
+                    () => this.stateController.changeCellType(cellId, 'code');
                 const outerPortion =
                     <div className='native-editor-celltoolbar-outer' key={0}>
                         <Flyout buttonClassName='native-editor-flyout-button' buttonContent={<span>...</span>} flyoutContainerName={flyoutClass}>
                             <ImageButton baseTheme={this.props.baseTheme} onClick={moveUp} disabled={!canMoveUp} tooltip={getLocString('DataScience.moveCellUp', 'Move cell up')}>
                                 <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Up} />
                             </ImageButton>
-                            <ImageButton baseTheme={this.props.baseTheme} onClick={deleteCell} tooltip={getLocString('DataScience.deleteCell', 'Delete cell')}>
-                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
-                            </ImageButton>
                             <ImageButton baseTheme={this.props.baseTheme} onClick={moveDown} disabled={!canMoveDown} tooltip={getLocString('DataScience.moveCellDown', 'Move cell down')}>
                                 <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Down} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={runAbove} disabled={!canRunAbove} tooltip={getLocString('DataScience.runAbove', 'Run cells above')}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.RunAbove} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={runBelow} disabled={!canRunBelow} tooltip={getLocString('DataScience.runBelow', 'Run cell and below')}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.RunBelow} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={insertAbove} tooltip={getLocString('DataScience.insertAbove', 'Insert cell above')}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.InsertAbove} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={insertBelow} disabled={!canMoveDown} tooltip={getLocString('DataScience.insertBelow', 'Insert cell below')}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.InsertBelow} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={switchCell} tooltip={switchTooltip}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={switchImage} />
+                            </ImageButton>
+                            <ImageButton baseTheme={this.props.baseTheme} onClick={deleteCell} tooltip={getLocString('DataScience.deleteCell', 'Delete cell')}>
+                                <Image baseTheme={this.props.baseTheme} class='image-button-image' image={ImageName.Cancel} />
                             </ImageButton>
                         </Flyout>
                     </div>;

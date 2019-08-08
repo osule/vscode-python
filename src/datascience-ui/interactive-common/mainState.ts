@@ -86,24 +86,27 @@ export function generateTestState(inputBlockToggled: (id: string) => void, fileP
     };
 }
 
+export function createEmptyCell(id: string | undefined, executionCount: number | null): ICell {
+    return {
+        data:
+        {
+            cell_type: 'code', // We should eventually allow this to change to entering of markdown?
+            execution_count: executionCount,
+            metadata: {},
+            outputs: [],
+            source: ''
+        },
+        id: id ? id : Identifiers.EditCellId,
+        file: Identifiers.EmptyFileName,
+        line: 0,
+        state: CellState.finished,
+        type: 'execute'
+    };
+}
+
 export function createEditableCellVM(executionCount: number): ICellViewModel {
     return {
-        cell:
-        {
-            data:
-            {
-                cell_type: 'code', // We should eventually allow this to change to entering of markdown?
-                execution_count: executionCount,
-                metadata: {},
-                outputs: [],
-                source: ''
-            },
-            id: Identifiers.EditCellId,
-            file: Identifiers.EmptyFileName,
-            line: 0,
-            state: CellState.finished,
-            type: 'execute'
-        },
+        cell: createEmptyCell(undefined, executionCount),
         editable: true,
         inputBlockOpen: true,
         inputBlockShow: true,

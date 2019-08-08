@@ -303,7 +303,7 @@ export class MainStateController implements IMessageHandler {
             if (modelId) {
                 const model = models.find(m => m.id === modelId);
                 if (model) {
-                    cvm.cell.data.source = model.getValue().replace(/\r/g, '');
+                    cvm.cell.data.source = cvm.inputBlockText = model.getValue().replace(/\r/g, '');
                 }
             }
         }
@@ -537,6 +537,7 @@ export class MainStateController implements IMessageHandler {
         } else if (inputCell.cell.data.cell_type === 'markdown') {
             // Change the input on the cell
             inputCell.cell.data.source = code;
+            inputCell.inputBlockText = code;
 
             // Update our state to display the new status
             this.setState({
@@ -629,6 +630,40 @@ export class MainStateController implements IMessageHandler {
 
         // Just assume it's the edit cell if not found.
         return Identifiers.EditCellId;
+    }
+
+    protected addCell(cell: ICell) {
+        this.insertCell(cell);
+    }
+
+    protected insertCell(cell: ICell, position?: number) {
+        if (cell) {
+            const showInputs = getSettings().showCellInputCode;
+            const collapseInputs = getSettings().collapseCellInputCodeByDefault;
+            let cellVM: ICellViewModel = createCellVM(cell, getSettings(), this.inputBlockToggled, this.props.defaultEditable);
+
+            // Set initial cell visibility and collapse
+            cellVM = this.alterCellVM(cellVM, showInputs, !collapseInputs);
+
+            if (cellVM) {
+                const newList = this.state.cellVMs;
+                // Make sure to use the same array so our entire state doesn't update
+                if (position && position >= 0) {
+                    newList.splice(position, 0, cellVM);
+                } else {
+                    newList.push(cellVM);
+                }
+                this.setState({
+                    cellVMs: newList,
+                    undoStack: this.pushStack(this.state.undoStack, this.state.cellVMs),
+                    redoStack: this.state.redoStack,
+                    skipNextScroll: false
+                });
+
+                // Tell other side, we changed our number of cells
+                this.sendInfo();
+            }
+        }
     }
 
     private computeEditorOptions(): monacoEditor.editor.IEditorOptions {
@@ -750,34 +785,6 @@ export class MainStateController implements IMessageHandler {
 
         // Tell other side, we changed our number of cells
         this.sendInfo();
-    }
-
-    // tslint:disable-next-line:no-any
-    private addCell = (payload?: any) => {
-        // Get our settings for if we should display input code and if we should collapse by default
-        const showInputs = getSettings().showCellInputCode;
-        const collapseInputs = getSettings().collapseCellInputCodeByDefault;
-
-        if (payload) {
-            const cell = payload as ICell;
-            let cellVM: ICellViewModel = createCellVM(cell, getSettings(), this.inputBlockToggled, this.props.defaultEditable);
-
-            // Set initial cell visibility and collapse
-            cellVM = this.alterCellVM(cellVM, showInputs, !collapseInputs);
-
-            if (cellVM) {
-                const newList = [...this.state.cellVMs, cellVM];
-                this.setState({
-                    cellVMs: newList,
-                    undoStack: this.pushStack(this.state.undoStack, this.state.cellVMs),
-                    redoStack: this.state.redoStack,
-                    skipNextScroll: false
-                });
-
-                // Tell other side, we changed our number of cells
-                this.sendInfo();
-            }
-        }
     }
 
     private inputBlockToggled = (id: string) => {
