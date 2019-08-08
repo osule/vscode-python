@@ -122,14 +122,13 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
     private scrollIntoView() {
         // Force auto here as smooth scrolling can be canceled by updates to the window
         // from elsewhere (and keeping track of these would make this hard to maintain)
-        if (this.bottomRef.current) {
+        if (this.bottomRef.current && this.bottomRef.current.getBoundingClientRect().bottom <= window.innerHeight) {
             this.bottomRef.current.scrollIntoView({ behavior: 'auto', block: 'start', inline: 'nearest' });
         }
     }
 
     private scrollToBottom() {
-        if (this.bottomRef.current && !this.props.skipNextScroll && !this.props.testMode && this.containerRef.current
-            && this.bottomRef.current.getBoundingClientRect().bottom <= window.innerHeight) {
+        if (this.bottomRef.current && !this.props.skipNextScroll && !this.props.testMode && this.containerRef.current) {
             // Make sure to debounce this so it doesn't take up too much time.
             this.throttledScrollIntoView();
         }
