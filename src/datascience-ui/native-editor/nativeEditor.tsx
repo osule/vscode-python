@@ -283,6 +283,20 @@ export class NativeEditor extends React.Component<INativeEditorProps, IMainState
                 }
                 break;
 
+            case 'l':
+                if (!this.state.focusedCell && this.state.selectedCell) {
+                    e.stopPropagation();
+                    this.stateController.toggleLineNumbers(this.state.selectedCell);
+                }
+                break;
+
+            case 'o':
+                if (!this.state.focusedCell && this.state.selectedCell) {
+                    e.stopPropagation();
+                    this.stateController.toggleOutput(this.state.selectedCell);
+                }
+                break;
+
             case 'Enter':
                 if (e.shiftKey) {
                     this.submitCell(cellId, e);

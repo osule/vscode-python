@@ -48,6 +48,8 @@ interface ICellProps {
     selectedCell?: string;
     focusedCell?: string;
     allowsMarkdownEditing?: boolean;
+    hideOutput?: boolean;
+    showLineNumbers?: boolean;
     onCodeChange(changes: monacoEditor.editor.IModelContentChange[], cellId: string, modelId: string): void;
     onCodeCreated(code: string, file: string, cellId: string, modelId: string): void;
     openLink(uri: monacoEditor.Uri): void;
@@ -68,6 +70,8 @@ export interface ICellViewModel {
     inputBlockCollapseNeeded: boolean;
     editable: boolean;
     directInput?: boolean;
+    showLineNumbers?: boolean;
+    hideOutput?: boolean;
     inputBlockToggled(id: string): void;
 }
 
@@ -321,6 +325,7 @@ export class Cell extends React.Component<ICellProps, ICellState> {
                         focused={this.onCodeFocused}
                         unfocused={this.onCodeUnfocused}
                         keyDown={this.onKeyDown}
+                        showLineNumbers={this.props.showLineNumbers}
                         />
                 </div>
             );
@@ -423,7 +428,7 @@ export class Cell extends React.Component<ICellProps, ICellState> {
     }
 
     private renderCodeOutputs = () => {
-        if (this.isCodeCell() && this.hasOutput() && this.getCodeCell().outputs) {
+        if (this.isCodeCell() && this.hasOutput() && this.getCodeCell().outputs && !this.props.hideOutput) {
             // Render the outputs
             return this.renderOutputs(this.getCodeCell().outputs);
         }

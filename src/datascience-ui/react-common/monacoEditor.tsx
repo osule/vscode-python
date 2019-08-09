@@ -48,12 +48,16 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
     private lastOffsetLeft: number | undefined;
     private lastOffsetTop: number | undefined;
     private debouncedUpdateEditorSize : () => void | undefined;
+    private styleObserver : MutationObserver;
+    private watchingMargin: boolean = false;
+
     constructor(props: IMonacoEditorProps) {
         super(props);
         this.state = { editor: undefined, model: null, visibleLineCount: -1 };
         this.containerRef = React.createRef<HTMLDivElement>();
         this.measureWidthRef = React.createRef<HTMLDivElement>();
         this.debouncedUpdateEditorSize = debounce(this.updateEditorSize.bind(this), 150);
+        this.styleObserver = new MutationObserver(this.watchStyles);
     }
 
     public componentDidMount = () => {
@@ -133,6 +137,9 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
                 }
             }));
 
+            // Update our margin to include the correct line number style
+            this.updateMargin(editor);
+
             // Make sure our suggest and hover windows show up on top of other stuff
             this.updateWidgetParent(editor);
 
@@ -175,6 +182,8 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
         if (this.state.editor) {
             this.state.editor.dispose();
         }
+
+        this.styleObserver.disconnect();
     }
 
     public componentDidUpdate(prevProps: IMonacoEditorProps, prevState: IMonacoEditorState) {
@@ -186,6 +195,9 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
                 monacoEditor.editor.setTheme(this.props.theme);
             }
             if (prevProps.options !== this.props.options) {
+                if (prevProps.options.lineNumbers !== this.props.options.lineNumbers) {
+                    this.updateMargin(this.state.editor);
+                }
                 this.state.editor.updateOptions(this.props.options);
             }
             if (prevProps.value !== this.props.value && this.state.model) {
@@ -225,6 +237,28 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
             return this.isElementVisible(suggestWidget) || this.isElementVisible(signatureHelpWidget);
         }
         return false;
+    }
+
+    private watchStyles = (mutations: MutationRecord[], _observer: MutationObserver): void => {
+        try {
+            if (mutations && mutations.length > 0) {
+                mutations.forEach(m => {
+                    if (m.type === 'attributes' && m.attributeName === 'style') {
+                        const element = m.target as HTMLDivElement;
+                        if (element && element.style && element.style.left) {
+                            const left = element.style.left.endsWith('px') ? parseInt(element.style.left.substr(0, element.style.left.length - 2), 10) : -1;
+                            if (left > 10) {
+                                this.styleObserver.disconnect();
+                                element.style.left = `${left + 3}px`;
+                                this.styleObserver.observe(element, { attributes: true, attributeFilter: ['style']});
+                            }
+                        }
+                    }
+                });
+            }
+        } catch {
+            // Skip doing anything if it fails
+        }
     }
 
     private isElementVisible(element: HTMLElement | undefined): boolean {
@@ -363,6 +397,34 @@ export class MonacoEditor extends React.Component<IMonacoEditorProps, IMonacoEdi
         if (this.state.editor && !this.enteredHover) {
             // If we haven't already entered hover, then act like it shuts down
             this.onHoverLeave();
+        }
+    }
+
+    private updateMargin(editor: monacoEditor.editor.IStandaloneCodeEditor) {
+        const editorNode = editor.getDomNode();
+        if (editorNode) {
+            try {
+                const elements = editorNode.getElementsByClassName('margin-view-overlays');
+                if (elements && elements.length) {
+                    const margin = elements[0] as HTMLDivElement;
+
+                    // Create  special class name based on the line number property
+                    const specialExtra = `margin-view-overlays-border-${this.props.options.lineNumbers}`;
+                    if (margin.className && !margin.className.includes(specialExtra)) {
+                        margin.className = `margin-view-overlays ${specialExtra}`;
+                    }
+
+                    // Watch the scrollable element (it's where the code lines up)
+                    const scrollable = editorNode.getElementsByClassName('monaco-scrollable-element');
+                    if (!this.watchingMargin && scrollable && scrollable.length) {
+                        const watching = scrollable[0] as HTMLDivElement;
+                        this.watchingMargin = true;
+                        this.styleObserver.observe(watching, { attributes: true, attributeFilter: ['style'] });
+                    }
+                }
+            } catch {
+                // Ignore if we can't get modify the margin class
+            }
         }
     }
 

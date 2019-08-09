@@ -21,6 +21,7 @@ export interface IEditorProps {
     history: InputHistory | undefined;
     editorMeasureClassName?: string;
     language: string;
+    showLineNumbers?: boolean;
     onCreated(code: string, modelId: string): void;
     onChange(changes: monacoEditor.editor.IModelContentChange[], model: monacoEditor.editor.ITextModel): void;
     openLink(uri: monacoEditor.Uri): void;
@@ -63,7 +64,7 @@ export class Editor extends React.Component<IEditorProps, IEditorState> {
                 vertical: 'hidden',
                 horizontal: 'hidden'
             },
-            lineNumbers: 'off',
+            lineNumbers: this.props.showLineNumbers ? 'on' : 'off',
             renderLineHighlight: 'none',
             highlightActiveIndentGuide: false,
             autoIndent: true,

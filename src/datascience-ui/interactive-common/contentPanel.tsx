@@ -159,6 +159,8 @@ export class ContentPanel extends React.Component<IContentPanelProps> {
                         allowsMarkdownEditing={this.props.allowsMarkdownEditing}
                         onDoubleClick={this.props.doubleClickCell}
                         renderCellToolbar={this.props.renderCellToolbar}
+                        showLineNumbers={cellVM.showLineNumbers}
+                        hideOutput={cellVM.hideOutput}
                     />
                 </ErrorBoundary>
             </div>);

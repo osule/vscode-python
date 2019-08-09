@@ -561,6 +561,22 @@ export class MainStateController implements IMessageHandler {
         return this.cellIdToMonacoId.get(cellId);
     }
 
+    public toggleLineNumbers = (cellId: string) => {
+        const cell = this.findCell(cellId);
+        if (cell) {
+            cell.showLineNumbers = !cell.showLineNumbers;
+            this.setState({ cellVMs: this.state.cellVMs });
+        }
+    }
+
+    public toggleOutput = (cellId: string) => {
+        const cell = this.findCell(cellId);
+        if (cell) {
+            cell.hideOutput = !cell.hideOutput;
+            this.setState({ cellVMs: this.state.cellVMs });
+        }
+    }
+
     // Adjust the visibility or collapsed state of a cell
     protected alterCellVM(cellVM: ICellViewModel, visible: boolean, expanded: boolean): ICellViewModel {
         if (cellVM.cell.data.cell_type === 'code') {
