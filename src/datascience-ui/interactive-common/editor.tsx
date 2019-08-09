@@ -152,7 +152,7 @@ export class Editor extends React.Component<IEditorProps, IEditorState> {
             const isSuggesting = this.editorRef.current.isSuggesting();
             const cursor = this.state.editor.getPosition();
             const isFirstLine = cursor !== null && cursor.lineNumber === 1;
-            const isLastLine = cursor !== null && cursor.lineNumber === this.state.visibleLineCount;
+            const isLastLine = cursor !== null && cursor.lineNumber === this.state.model!.getLineCount();
             const isDirty = this.state.model!.getVersionId() > this.lastCleanVersionId;
 
             // See if we need to use the history or not
